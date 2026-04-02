@@ -1,5 +1,6 @@
 "use client";
 
+import type { ChangeEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 
 const MAX_TOTAL_UPLOAD_BYTES = 45 * 1024 * 1024;
@@ -56,10 +57,7 @@ async function optimizeImageFile(file: File) {
 
   try {
     const image = await loadImage(file);
-    const scale = Math.min(
-      1,
-      MAX_IMAGE_DIMENSION / Math.max(image.width, image.height),
-    );
+    const scale = Math.min(1, MAX_IMAGE_DIMENSION / Math.max(image.width, image.height));
     const targetWidth = Math.max(1, Math.round(image.width * scale));
     const targetHeight = Math.max(1, Math.round(image.height * scale));
     const canvas = document.createElement("canvas");
@@ -130,9 +128,7 @@ export function PhotoUploadField() {
         `압축 후에도 총 용량이 ${formatBytes(totalBytes)}입니다. 45MB 이하로 줄이려면 사진 수를 조금 줄여주세요.`,
       );
     } else if (processed.some((item) => item.file.type === "image/webp")) {
-      setMessage(
-        `자동 최적화 완료 · 총 ${formatBytes(totalBytes)} 업로드 예정`,
-      );
+      setMessage(`자동 최적화 완료 · 총 ${formatBytes(totalBytes)} 업로드 예정`);
     } else {
       setMessage(`총 ${formatBytes(totalBytes)} 업로드 예정`);
     }
@@ -153,15 +149,12 @@ export function PhotoUploadField() {
         url: URL.createObjectURL(item.file),
         name: item.file.name,
         sizeText: formatBytes(item.file.size),
-        helperText:
-          index === 0
-            ? `${item.helperText} · 대표 사진`
-            : item.helperText,
+        helperText: index === 0 ? `${item.helperText} · 대표 사진` : item.helperText,
       }));
     });
   }
 
-  async function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
+  async function handleChange(event: ChangeEvent<HTMLInputElement>) {
     const selectedFiles = Array.from(event.target.files ?? []);
 
     setIsProcessing(true);
@@ -192,11 +185,14 @@ export function PhotoUploadField() {
   }
 
   return (
-    <div className="uploadField">
-      <label className="uploadDropzone">
-        <span className="uploadLabel">사진 첨부</span>
-        <span className="uploadSubtext">
+    <div className="grid gap-4">
+      <label className="grid cursor-pointer gap-2 rounded-[26px] border border-dashed border-[#dcb79e] bg-gradient-to-br from-[#fffaf7] to-[#fff3eb] p-5 transition hover:border-[#c98a6b]">
+        <span className="text-sm font-semibold text-[#7b626a]">사진 첨부</span>
+        <span className="text-sm leading-7 text-[#8b6a63]">
           JPG, PNG, WEBP는 브라우저에서 자동 압축됩니다. HEIC/HEIF는 원본으로 업로드됩니다.
+        </span>
+        <span className="inline-flex min-h-11 w-full items-center justify-center rounded-full border border-[#d8b28a] bg-white px-4 text-sm font-semibold text-[#7b6049] sm:w-fit">
+          사진 선택하기
         </span>
         <input
           ref={inputRef}
@@ -205,32 +201,39 @@ export function PhotoUploadField() {
           accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
           multiple
           onChange={handleChange}
-          className="uploadInput"
+          className="sr-only"
         />
       </label>
 
-      <div className="uploadMessageRow">
-        <span className="uploadMessage">{message}</span>
-        {isProcessing ? <span className="uploadStatus">사진 최적화 중...</span> : null}
+      <div className="flex flex-col gap-2 rounded-[22px] border border-[#ead8cf] bg-white/88 px-4 py-3 text-sm text-[#6d5961] sm:flex-row sm:items-center sm:justify-between">
+        <span>{message}</span>
+        {isProcessing ? <span className="font-semibold text-[#b46d59]">사진 최적화 중...</span> : null}
       </div>
 
       {previews.length ? (
-        <div className="uploadPreviewGrid">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {previews.map((preview, index) => (
-            <article key={preview.id} className="uploadPreviewCard">
+            <article
+              key={preview.id}
+              className="overflow-hidden rounded-[24px] border border-[#ead8cf] bg-white shadow-[0_14px_32px_rgba(143,95,89,0.08)]"
+            >
               <div
-                className="uploadPreviewImage"
+                className="aspect-[4/5] bg-[#fff5ef] bg-cover bg-center"
                 style={{ backgroundImage: `url(${preview.url})` }}
               />
-              <div className="uploadPreviewMeta">
+              <div className="grid gap-3 p-4">
                 <div>
-                  <strong>{preview.name}</strong>
-                  <span>{preview.helperText}</span>
+                  <strong className="block break-all text-sm font-semibold text-[#24161c]">
+                    {preview.name}
+                  </strong>
+                  <span className="mt-2 block text-xs leading-6 text-[#8b6a63]">
+                    {preview.helperText}
+                  </span>
                 </div>
-                <div className="uploadPreviewActions">
-                  <span className="uploadPreviewSize">{preview.sizeText}</span>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-semibold text-[#b46d59]">{preview.sizeText}</span>
                   <button
-                    className="ghostButton uploadRemoveButton"
+                    className="inline-flex min-h-9 items-center rounded-full border border-[#ead8cf] bg-white px-3 text-xs font-semibold text-[#5e4850]"
                     type="button"
                     onClick={() => {
                       void removeFile(index);

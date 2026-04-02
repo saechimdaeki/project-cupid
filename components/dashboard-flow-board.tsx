@@ -1,5 +1,6 @@
 "use client";
 
+import type { DragEvent } from "react";
 import Link from "next/link";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -66,6 +67,13 @@ type DashboardFlowBoardProps = {
   role: AppRole;
 };
 
+const surfaceClass =
+  "rounded-[28px] border border-[#ead8cf] bg-white/88 shadow-[0_18px_40px_rgba(143,95,89,0.08)] backdrop-blur-sm";
+const ghostButtonClass =
+  "inline-flex min-h-11 items-center justify-center rounded-full border border-[#ead8cf] bg-white/90 px-4 text-sm font-semibold text-[#2d1e24] transition hover:-translate-y-0.5";
+const primaryButtonClass =
+  "inline-flex min-h-11 items-center justify-center rounded-full border border-[#d8b28a] bg-gradient-to-r from-[#f2c98d] to-[#c78662] px-4 text-sm font-semibold text-[#2b1b11] shadow-[0_10px_24px_rgba(198,132,99,0.18)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60";
+
 function canAccessCandidateDetail(role: AppRole) {
   return role === "admin" || role === "super_admin";
 }
@@ -121,6 +129,21 @@ function getEligiblePairOptions(
 
     return true;
   });
+}
+
+function getLaneTone(status: CandidateStatus, isTarget: boolean) {
+  const base =
+    status === "active"
+      ? "border-[#ecdcc8] bg-gradient-to-b from-white to-[#fff8ef]"
+      : status === "matched"
+        ? "border-[#f0d8dd] bg-gradient-to-b from-white to-[#fff7f8]"
+        : status === "couple"
+          ? "border-[#dbe7dd] bg-gradient-to-b from-white to-[#f7fbf5]"
+          : status === "graduated"
+            ? "border-[#dce6d7] bg-gradient-to-b from-white to-[#f8fbf3]"
+            : "border-[#e5dede] bg-gradient-to-b from-white to-[#fbf8f8]";
+
+  return `${base}${isTarget ? " ring-2 ring-[#d59d7f] ring-offset-2 ring-offset-transparent" : ""}`;
 }
 
 export function DashboardFlowBoard({
@@ -258,40 +281,54 @@ export function DashboardFlowBoard({
           : candidate.status === "couple"
             ? "커플완성"
             : candidate.status;
+
     const cardBody = (
-      <article className={`candidateCard boardCandidateCard${draggingId === candidate.id ? " dragging" : ""}`}>
-        <div className="cardTop">
+      <article
+        className={`rounded-[24px] border border-[#ead8cf] bg-white/96 p-4 shadow-[0_12px_28px_rgba(143,95,89,0.08)] transition ${
+          draggingId === candidate.id ? "scale-[0.985] opacity-70" : ""
+        } ${isPending ? "opacity-70" : ""}`}
+      >
+        <div className="flex items-start justify-between gap-3">
           <div>
-            <div className="cardRegion">{candidate.region || "지역 미정"}</div>
-            <h3 className="cardName">{candidate.full_name}</h3>
+            <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[#b46d59]">
+              {candidate.region || "지역 미정"}
+            </div>
+            <h3 className="mt-2 text-[clamp(1.4rem,4vw,2rem)] font-semibold tracking-[-0.05em] text-[#24161c]">
+              {candidate.full_name}
+            </h3>
           </div>
           <StatusBadge tone={statusToneMap[candidate.status]}>{statusLabel}</StatusBadge>
         </div>
 
-        <p className="candidateMeta">
+        <p className="mt-3 text-sm leading-7 text-[#6d5961]">
           {metaItems.length ? metaItems.join(" · ") : "기본 정보는 상세 화면에서 확인합니다"}
         </p>
 
-        <p className="cardHeadline">
+        <p className="mt-3 text-sm leading-7 text-[#6d5961]">
           {candidate.personality_summary || "소개 메모는 아직 입력되지 않았습니다."}
         </p>
 
         {pairedCandidate ? (
-          <div className="boardPairMeta">
-            현재 연결 상대: <strong>{pairedCandidate.full_name}</strong>
+          <div className="mt-4 rounded-[18px] border border-[#ead8cf] bg-[#fffaf6] px-4 py-3 text-sm text-[#6d5961]">
+            현재 연결 상대: <strong className="text-[#24161c]">{pairedCandidate.full_name}</strong>
           </div>
         ) : null}
 
-        <div className="tagRow">
-          {candidate.highlight_tags.slice(0, 3).map((tag) => (
-            <span key={tag} className="tag">
-              {tag}
-            </span>
-          ))}
-        </div>
+        {candidate.highlight_tags.length ? (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {candidate.highlight_tags.slice(0, 3).map((tag) => (
+              <span
+                key={tag}
+                className="inline-flex min-h-8 items-center rounded-full border border-[#ead8cf] bg-[#fff8f3] px-3 text-xs font-semibold text-[#8b6a63]"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        ) : null}
 
         {canOperate ? (
-          <div className="boardDragHint">
+          <div className="mt-4 text-xs font-medium leading-6 text-[#b46d59]">
             {candidate.status === "active"
               ? "매칭진행중/커플완성으로 드래그하면 상대 후보 선택이 열립니다"
               : "드래그해서 다른 레인으로 이동"}
@@ -299,50 +336,37 @@ export function DashboardFlowBoard({
         ) : null}
 
         {!canAccessCandidateDetail(role) ? (
-          <div className="viewerHint">{getRoleLabel(role)} 권한은 목록만 열람할 수 있습니다</div>
+          <div className="mt-4 rounded-[18px] border border-[#ead8cf] bg-[#fffaf6] px-4 py-3 text-xs leading-6 text-[#8b6a63]">
+            {getRoleLabel(role)} 권한은 목록만 열람할 수 있습니다
+          </div>
         ) : null}
       </article>
     );
 
-    const shellClassName = `dashboardBoardCardWrap${isPending ? " pending" : ""}`;
+    const wrapperProps = {
+      draggable: canOperate,
+      onDragStart: (event: DragEvent<HTMLDivElement>) => {
+        event.dataTransfer.setData("text/plain", candidate.id);
+        event.dataTransfer.effectAllowed = "move";
+        setDraggingId(candidate.id);
+      },
+      onDragEnd: () => {
+        setDraggingId(null);
+        setDropTarget(null);
+      },
+    };
 
     if (!canAccessCandidateDetail(role)) {
       return (
-        <div
-          key={candidate.id}
-          className={shellClassName}
-          draggable={canOperate}
-          onDragStart={(event) => {
-            event.dataTransfer.setData("text/plain", candidate.id);
-            event.dataTransfer.effectAllowed = "move";
-            setDraggingId(candidate.id);
-          }}
-          onDragEnd={() => {
-            setDraggingId(null);
-            setDropTarget(null);
-          }}
-        >
-          <div className="cardLink disabled">{cardBody}</div>
+        <div key={candidate.id} {...wrapperProps}>
+          {cardBody}
         </div>
       );
     }
 
     return (
-      <div
-        key={candidate.id}
-        className={shellClassName}
-        draggable={canOperate}
-        onDragStart={(event) => {
-          event.dataTransfer.setData("text/plain", candidate.id);
-          event.dataTransfer.effectAllowed = "move";
-          setDraggingId(candidate.id);
-        }}
-        onDragEnd={() => {
-          setDraggingId(null);
-          setDropTarget(null);
-        }}
-      >
-        <Link href={`/profiles/${candidate.id}`} className="cardLink">
+      <div key={candidate.id} {...wrapperProps}>
+        <Link href={`/profiles/${candidate.id}`} className="block">
           {cardBody}
         </Link>
       </div>
@@ -356,12 +380,11 @@ export function DashboardFlowBoard({
     auxiliary = false,
   ) => {
     const laneItems = groupCandidatesByStatus(items, status);
-    const laneClassName = `dashboardLane status-${status}${dropTarget === status ? " is-target" : ""}`;
 
     return (
       <article
         key={status}
-        className={laneClassName}
+        className={`${surfaceClass} ${getLaneTone(status, dropTarget === status)} p-4 sm:p-5`}
         onDragOver={(event) => {
           if (!canOperate) {
             return;
@@ -382,9 +405,7 @@ export function DashboardFlowBoard({
 
           event.preventDefault();
           const droppedCandidateId = event.dataTransfer.getData("text/plain") || draggingId;
-          const candidate = droppedCandidateId
-            ? candidateDirectory.get(droppedCandidateId)
-            : null;
+          const candidate = droppedCandidateId ? candidateDirectory.get(droppedCandidateId) : null;
 
           if (!candidate) {
             return;
@@ -411,11 +432,15 @@ export function DashboardFlowBoard({
           moveSingleItem(candidate.id, status);
         }}
       >
-        <div className="dashboardLaneHeader">
+        <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="eyebrow">{title}</p>
-            <h3>{laneItems.length}명</h3>
-            <p>{description}</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#b46d59]">
+              {title}
+            </p>
+            <h3 className="mt-3 text-5xl font-semibold leading-none tracking-[-0.07em] text-[#24161c]">
+              {laneItems.length}명
+            </h3>
+            <p className="mt-3 text-sm leading-7 text-[#6d5961]">{description}</p>
           </div>
           {auxiliary ? (
             <StatusBadge tone={status === "archived" ? "muted" : "success"}>
@@ -424,11 +449,11 @@ export function DashboardFlowBoard({
           ) : null}
         </div>
 
-        <div className="dashboardLaneBody">
+        <div className="mt-5 grid gap-4">
           {laneItems.length ? (
             laneItems.map(renderCandidateCard)
           ) : (
-            <div className="emptyState matchEmptyState">
+            <div className="rounded-[22px] border border-dashed border-[#e6d5ca] bg-[#fffaf6] px-4 py-10 text-center text-sm leading-7 text-[#8b6a63]">
               현재 이 단계에 있는 후보가 없습니다.
             </div>
           )}
@@ -438,30 +463,33 @@ export function DashboardFlowBoard({
   };
 
   return (
-    <div className="dashboardBoardSection">
-      {notice ? <div className="notice">{notice}</div> : null}
+    <div className="grid gap-5">
+      {notice ? (
+        <div className={`${surfaceClass} px-5 py-4 text-sm font-medium text-[#6d5961]`}>
+          {notice}
+        </div>
+      ) : null}
 
-      <div className="dashboardBoard">
-        {PRIMARY_LANES.map((lane) =>
-          renderLane(lane.key, lane.title, lane.description),
-        )}
+      <div className="grid gap-4 xl:grid-cols-3">
+        {PRIMARY_LANES.map((lane) => renderLane(lane.key, lane.title, lane.description))}
       </div>
 
       <details
-        className="auxBoardSection"
-        open={items.some((candidate) =>
-          candidate.status === "graduated" || candidate.status === "archived",
+        className={`${surfaceClass} overflow-hidden`}
+        open={items.some(
+          (candidate) => candidate.status === "graduated" || candidate.status === "archived",
         )}
       >
-        <summary>
-          보조 레인 열기
-          <span>
+        <summary className="flex cursor-pointer list-none flex-col gap-2 px-5 py-4 text-left sm:flex-row sm:items-center sm:justify-between">
+          <span className="text-base font-semibold tracking-[-0.04em] text-[#24161c]">
+            보조 레인 열기
+          </span>
+          <span className="text-sm leading-7 text-[#8b6a63]">
             졸업 {groupCandidatesByStatus(items, "graduated").length}명 · 보관{" "}
             {groupCandidatesByStatus(items, "archived").length}명
           </span>
         </summary>
-
-        <div className="dashboardBoard auxiliary">
+        <div className="grid gap-4 border-t border-[#f0e2d8] px-4 py-4 xl:grid-cols-2">
           {AUXILIARY_LANES.map((lane) =>
             renderLane(lane.key, lane.title, lane.description, true),
           )}
@@ -469,51 +497,54 @@ export function DashboardFlowBoard({
       </details>
 
       {pairComposer ? (
-        <div className="pairComposerOverlay" role="dialog" aria-modal="true">
-          <div className="pairComposerCard">
-            <p className="eyebrow">
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-[rgba(35,24,28,0.3)] px-4 py-4 backdrop-blur-[2px] sm:items-center"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="w-full max-w-xl rounded-[32px] border border-[#ead8cf] bg-white p-6 shadow-[0_28px_80px_rgba(35,24,28,0.18)] sm:p-7">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#b46d59]">
               {pairComposer.targetStatus === "matched" ? "매칭 시작" : "커플 확정"}
             </p>
-            <h3>
-              {candidateDirectory.get(pairComposer.candidateId)?.full_name}와 누구를 연결할지
-              선택해주세요
+            <h3 className="mt-3 text-[clamp(1.8rem,7vw,2.6rem)] font-semibold tracking-[-0.07em] text-[#24161c]">
+              {candidateDirectory.get(pairComposer.candidateId)?.full_name}와 누구를 연결할지 선택해주세요
             </h3>
-            <p className="pageMeta">
+            <p className="mt-4 text-sm leading-7 text-[#6d5961]">
               상대 후보를 선택해야만{" "}
-              {pairComposer.targetStatus === "matched" ? "매칭진행중" : "커플완성"}으로
-              이동합니다. 저장하면 두 후보의 상태가 함께 이동하고 타임라인도 양쪽에 남습니다.
+              {pairComposer.targetStatus === "matched" ? "매칭진행중" : "커플완성"}으로 이동합니다.
+              저장하면 두 후보의 상태가 함께 이동하고 타임라인도 양쪽에 남습니다.
             </p>
 
-            <label className="filterField">
-              <span>상대 후보 선택</span>
+            <label className="mt-6 grid gap-2">
+              <span className="text-sm font-semibold text-[#7b626a]">상대 후보 선택</span>
               <select
                 value={pairComposer.counterpartId}
                 onChange={(event) =>
                   setPairComposer((current) =>
-                    current
-                      ? { ...current, counterpartId: event.target.value }
-                      : current,
+                    current ? { ...current, counterpartId: event.target.value } : current,
                   )
                 }
+                className="min-h-12 rounded-[18px] border border-[#ead8cf] bg-white px-4 text-sm font-medium text-[#2d1e24] outline-none ring-0"
               >
                 <option value="">후보를 선택하세요</option>
                 {pairOptions.map((candidate) => (
                   <option key={candidate.id} value={candidate.id}>
-                    {candidate.full_name} · {candidate.gender} · {candidate.birth_year}년생 · {candidate.occupation}
+                    {candidate.full_name} · {candidate.gender} · {candidate.birth_year}년생 ·{" "}
+                    {candidate.occupation}
                   </option>
                 ))}
               </select>
             </label>
 
             {!pairOptions.length ? (
-              <div className="viewerHint">
+              <div className="mt-4 rounded-[20px] border border-dashed border-[#e6d5ca] bg-[#fffaf6] px-4 py-4 text-sm leading-7 text-[#8b6a63]">
                 현재 이 후보와 연결 가능한 반대 성별 후보가 없습니다.
               </div>
             ) : null}
 
-            <div className="pairComposerActions">
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
               <button
-                className="ghostButton"
+                className={ghostButtonClass}
                 type="button"
                 onClick={() => {
                   setPairComposer(null);
@@ -524,7 +555,7 @@ export function DashboardFlowBoard({
                 취소
               </button>
               <button
-                className="primaryButton"
+                className={primaryButtonClass}
                 type="button"
                 disabled={isPending || !pairComposer.counterpartId}
                 onClick={confirmPairMove}

@@ -55,6 +55,15 @@ export type MatchRecord = {
   happened_on: string;
 };
 
+export type TimelineEvent = {
+  id: string;
+  title: string;
+  summary: string;
+  happened_on: string;
+  outcome: MatchOutcome;
+  candidate_ids: string[];
+};
+
 export type Membership = {
   user_id: string;
   username: string;

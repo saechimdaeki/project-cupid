@@ -1,6 +1,12 @@
 import { mockCandidates, mockMatchRecords, mockMemberships } from "@/lib/mock-data";
 import { createClient } from "@/lib/supabase/server";
-import type { Candidate, CandidatePhoto, MatchRecord, Membership } from "@/lib/types";
+import type {
+  Candidate,
+  CandidatePhoto,
+  MatchRecord,
+  Membership,
+  TimelineEvent,
+} from "@/lib/types";
 
 const CANDIDATE_PHOTOS_BUCKET = "sogaeting";
 const SIGNED_URL_TTL_SECONDS = 60 * 60;
@@ -205,6 +211,65 @@ export async function getMatchRecords(candidateId?: string) {
   }
 
   return data.map(mapMatchRecord);
+}
+
+function dedupeTimelineEvents(
+  records: MatchRecord[],
+  candidateDirectory: Map<string, Candidate>,
+) {
+  const seen = new Set<string>();
+  const events: TimelineEvent[] = [];
+
+  for (const record of records) {
+    const pairIds = record.counterpart_candidate_id
+      ? [record.candidate_id, record.counterpart_candidate_id].sort()
+      : [record.candidate_id];
+    const dedupeKey = [
+      pairIds.join(":"),
+      record.outcome,
+      record.happened_on,
+      record.summary.trim(),
+    ].join("|");
+
+    if (seen.has(dedupeKey)) {
+      continue;
+    }
+
+    seen.add(dedupeKey);
+
+    const sourceCandidate = candidateDirectory.get(record.candidate_id);
+    const counterpartCandidate = record.counterpart_candidate_id
+      ? candidateDirectory.get(record.counterpart_candidate_id)
+      : null;
+
+    const title =
+      sourceCandidate && counterpartCandidate
+        ? `${sourceCandidate.full_name} × ${counterpartCandidate.full_name}`
+        : sourceCandidate
+          ? `${sourceCandidate.full_name} · ${sourceCandidate.birth_year}년생 · ${sourceCandidate.occupation}`
+          : record.counterpart_label;
+
+    events.push({
+      id: dedupeKey,
+      title,
+      summary: record.summary,
+      happened_on: record.happened_on,
+      outcome: record.outcome,
+      candidate_ids: pairIds,
+    });
+  }
+
+  return events;
+}
+
+export async function getTimelineEvents() {
+  const [records, candidates] = await Promise.all([
+    getMatchRecords(),
+    getCandidates({ includeImages: false }),
+  ]);
+  const candidateDirectory = new Map(candidates.map((candidate) => [candidate.id, candidate]));
+
+  return dedupeTimelineEvents(records, candidateDirectory);
 }
 
 export async function getCandidatePhotos(candidateId: string) {

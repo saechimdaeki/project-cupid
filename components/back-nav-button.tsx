@@ -13,7 +13,7 @@ export function BackNavButton({
 
   return (
     <button
-      className="ghostButton"
+      className="inline-flex min-h-12 items-center justify-center rounded-full border border-[#ead8cf] bg-white/90 px-5 text-sm font-semibold text-[#2d1e24] transition hover:-translate-y-0.5"
       type="button"
       onClick={() => {
         if (window.history.length > 1) {

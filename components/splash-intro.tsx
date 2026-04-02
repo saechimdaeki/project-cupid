@@ -3,75 +3,60 @@
 import { useEffect, useState } from "react";
 
 export function SplashIntro() {
-  const [isVisible, setIsVisible] = useState(false);
-  const [isLeaving, setIsLeaving] = useState(false);
-
-  function closeSplash() {
-    setIsLeaving(true);
-    window.setTimeout(() => {
-      window.sessionStorage.setItem("cupid-splash-seen", "1");
-      setIsVisible(false);
-    }, 320);
-  }
+  const [visible, setVisible] = useState(false);
+  const [leaving, setLeaving] = useState(false);
 
   useEffect(() => {
     if (window.sessionStorage.getItem("cupid-splash-seen") === "1") {
-      setIsVisible(false);
       return;
     }
 
-    setIsVisible(true);
+    setVisible(true);
 
-    const startLeave = window.setTimeout(() => {
-      setIsLeaving(true);
-    }, 1800);
+    const leaveTimer = window.setTimeout(() => {
+      setLeaving(true);
+    }, 900);
 
-    const finish = window.setTimeout(() => {
+    const doneTimer = window.setTimeout(() => {
       window.sessionStorage.setItem("cupid-splash-seen", "1");
-      setIsVisible(false);
-    }, 2250);
+      setVisible(false);
+    }, 1280);
 
     return () => {
-      window.clearTimeout(startLeave);
-      window.clearTimeout(finish);
+      window.clearTimeout(leaveTimer);
+      window.clearTimeout(doneTimer);
     };
   }, []);
 
-  if (!isVisible) {
+  if (!visible) {
     return null;
   }
 
   return (
     <div
-      className={`splashOverlay ${isLeaving ? "leave" : ""}`}
-      onClick={closeSplash}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          closeSplash();
-        }
-      }}
+      className={`splashOverlay ${leaving ? "leave" : ""}`}
+      aria-hidden="true"
     >
       <button
-        className="splashSkip"
         type="button"
-        onClick={(event) => {
-          event.stopPropagation();
-          closeSplash();
+        className="splashSkip"
+        onClick={() => {
+          window.sessionStorage.setItem("cupid-splash-seen", "1");
+          setLeaving(true);
+          window.setTimeout(() => setVisible(false), 520);
         }}
       >
-        Skip
+        건너뛰기
       </button>
 
       <div className="splashScene">
         <div className="splashAura" />
         <div className="splashAura second" />
-        <div className="splashFloatHeart one">♥</div>
-        <div className="splashFloatHeart two">♥</div>
-        <div className="splashFloatHeart three">♥</div>
-        <div className="splashFloatHeart four">♥</div>
-        <div className="splashFloatHeart five">♥</div>
+        <span className="splashFloatHeart one">♥</span>
+        <span className="splashFloatHeart two">♥</span>
+        <span className="splashFloatHeart three">♥</span>
+        <span className="splashFloatHeart four">♥</span>
+        <span className="splashFloatHeart five">♥</span>
 
         <div className="splashPair">
           <div className="splashOrb left">
@@ -79,6 +64,7 @@ export function SplashIntro() {
           </div>
           <div className="splashHeartCore">
             <div className="heartPulse" />
+            <div className="heartPulse" style={{ animationDelay: "0.9s" }} />
             <div className="heartGlyph">♥</div>
           </div>
           <div className="splashOrb right">
@@ -87,11 +73,12 @@ export function SplashIntro() {
         </div>
 
         <div className="splashCopy">
-          <p className="eyebrow">Project Cupid</p>
-          <h1>좋은 두 사람의 시작을 만듭니다</h1>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#b46d59]">
+            Project Cupid
+          </p>
+          <h1>좋은 인연을 잇습니다</h1>
           <p>
-            신뢰할 수 있는 사람들만 모여, 첫 소개부터 커플 성사까지의 흐름을
-            밝고 선명하게 설계하는 프라이빗 매칭 스튜디오
+            첫 소개부터 커플 성사까지, 흐름을 차분하게 정리하는 프라이빗 매칭 워크스페이스
           </p>
         </div>
       </div>

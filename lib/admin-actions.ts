@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { canEditCandidates, canManageRoles, getCurrentMembership } from "@/lib/permissions";
-import type { CandidateStatus } from "@/lib/types";
+import type { CandidateStatus, Membership } from "@/lib/types";
 
 const CANDIDATE_PHOTOS_BUCKET = "sogaeting";
 const MAX_TOTAL_UPLOAD_BYTES = 45 * 1024 * 1024;
@@ -33,17 +33,31 @@ const MATCH_OUTCOME_VALUES = new Set([
 const PAIR_REQUIRED_STATUS_VALUES = new Set(["matched", "couple"]);
 const GENDER_VALUES = new Set(["남", "여"]);
 
-async function requireMembership() {
+function redirectWithMessage(path: string, message: string) {
+  redirect(`${path}?message=${encodeURIComponent(message)}`);
+}
+
+async function requireMembership(): Promise<Membership> {
   const membership = await getCurrentMembership();
 
   if (!membership || membership.status !== "approved") {
-    redirect("/login?message=승인된 계정만 접근할 수 있습니다.");
+    redirectWithMessage("/login", "승인된 계정만 접근할 수 있습니다.");
   }
 
-  return membership;
+  return membership as Membership;
 }
 
 type SupabaseServerClient = NonNullable<Awaited<ReturnType<typeof createClient>>>;
+
+async function requireSupabaseClient(path: string): Promise<SupabaseServerClient> {
+  const supabase = await createClient();
+
+  if (!supabase) {
+    redirectWithMessage(path, "Supabase 환경변수가 없습니다.");
+  }
+
+  return supabase as SupabaseServerClient;
+}
 
 function cleanText(value: FormDataEntryValue | null) {
   return String(value ?? "").trim();
@@ -151,14 +165,10 @@ export async function updateMembershipRole(formData: FormData) {
   const userId = String(formData.get("userId") ?? "");
   const nextRole = String(formData.get("role") ?? "viewer");
   const nextStatus = String(formData.get("status") ?? "approved");
-  const supabase = await createClient();
+  const supabase = await requireSupabaseClient("/admin");
 
   if (userId === membership.user_id) {
-    redirect("/admin?message=자기 자신의 권한은 여기서 변경할 수 없습니다.");
-  }
-
-  if (!supabase) {
-    redirect("/admin?message=Supabase 환경변수가 없습니다.");
+    redirectWithMessage("/admin", "자기 자신의 권한은 여기서 변경할 수 없습니다.");
   }
 
   const { error } = await supabase
@@ -178,7 +188,7 @@ export async function updateMembershipRole(formData: FormData) {
   revalidatePath("/admin");
   revalidatePath("/dashboard");
   revalidatePath("/pending");
-  redirect("/admin?message=권한이 반영되었습니다.");
+  redirectWithMessage("/admin", "권한이 반영되었습니다.");
 }
 
 export async function rejectMembership(formData: FormData) {
@@ -189,11 +199,7 @@ export async function rejectMembership(formData: FormData) {
   }
 
   const userId = String(formData.get("userId") ?? "");
-  const supabase = await createClient();
-
-  if (!supabase) {
-    redirect("/admin?message=Supabase 환경변수가 없습니다.");
-  }
+  const supabase = await requireSupabaseClient("/admin");
 
   const { error } = await supabase
     .from("cupid_memberships")
@@ -210,7 +216,7 @@ export async function rejectMembership(formData: FormData) {
 
   revalidatePath("/admin");
   revalidatePath("/pending");
-  redirect("/admin?message=가입 요청을 거절했습니다.");
+  redirectWithMessage("/admin", "가입 요청을 거절했습니다.");
 }
 
 export async function createCandidate(formData: FormData) {
@@ -220,11 +226,7 @@ export async function createCandidate(formData: FormData) {
     redirect("/dashboard?message=forbidden");
   }
 
-  const supabase = await createClient();
-
-  if (!supabase) {
-    redirect("/candidates/new?message=Supabase 환경변수가 없습니다.");
-  }
+  const supabase = await requireSupabaseClient("/candidates/new");
 
   const highlightTags = cleanText(formData.get("highlightTags"))
     .split(",")
@@ -330,11 +332,7 @@ export async function updateCandidate(formData: FormData) {
     redirect("/dashboard?message=forbidden");
   }
 
-  const supabase = await createClient();
-
-  if (!supabase) {
-    redirect("/dashboard?message=Supabase 환경변수가 없습니다.");
-  }
+  const supabase = await requireSupabaseClient("/dashboard");
 
   const candidateId = cleanText(formData.get("candidateId"));
 
@@ -507,11 +505,7 @@ export async function updateCandidateStatus(formData: FormData) {
     redirect("/dashboard?message=forbidden");
   }
 
-  const supabase = await createClient();
-
-  if (!supabase) {
-    redirect("/dashboard?message=Supabase 환경변수가 없습니다.");
-  }
+  const supabase = await requireSupabaseClient("/dashboard");
 
   const candidateId = cleanText(formData.get("candidateId"));
   const status = normalizeCandidateStatus(cleanText(formData.get("status")));
@@ -761,11 +755,7 @@ export async function createMatchRecord(formData: FormData) {
     redirect("/dashboard?message=forbidden");
   }
 
-  const supabase = await createClient();
-
-  if (!supabase) {
-    redirect("/dashboard?message=Supabase 환경변수가 없습니다.");
-  }
+  const supabase = await requireSupabaseClient("/dashboard");
 
   const candidateId = cleanText(formData.get("candidateId"));
   const counterpartLabel = cleanText(formData.get("counterpartLabel"));
@@ -817,11 +807,7 @@ export async function deleteMatchRecord(formData: FormData) {
     redirect("/dashboard?message=forbidden");
   }
 
-  const supabase = await createClient();
-
-  if (!supabase) {
-    redirect("/dashboard?message=Supabase 환경변수가 없습니다.");
-  }
+  const supabase = await requireSupabaseClient("/dashboard");
 
   const candidateId = cleanText(formData.get("candidateId"));
   const recordId = cleanText(formData.get("recordId"));

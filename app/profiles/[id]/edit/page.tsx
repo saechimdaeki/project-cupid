@@ -2,18 +2,19 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { GenderToggleField } from "@/components/gender-toggle-field";
 import { PhotoUploadField } from "@/components/photo-upload-field";
-import { updateCandidate } from "@/lib/admin-actions";
 import { getCandidateById, getCandidatePhotos } from "@/lib/data";
+import { updateCandidate } from "@/lib/admin-actions";
 
 type EditCandidatePageProps = {
   params: Promise<{ id: string }>;
   searchParams: Promise<{ message?: string }>;
 };
 
-export default async function EditCandidatePage({
-  params,
-  searchParams,
-}: EditCandidatePageProps) {
+function FieldLabel({ children }: { children: React.ReactNode }) {
+  return <span className="text-[0.96rem] font-bold text-[#725761]">{children}</span>;
+}
+
+export default async function EditCandidatePage({ params, searchParams }: EditCandidatePageProps) {
   const { id } = await params;
   const { message } = await searchParams;
   const candidate = await getCandidateById(id);
@@ -25,81 +26,75 @@ export default async function EditCandidatePage({
   const photos = await getCandidatePhotos(id);
 
   return (
-    <main className="pageFrame workspacePage">
-      <div className="landingWrap">
-        <div className="pageHeader">
+    <main className="min-h-screen bg-[linear-gradient(180deg,#fff8f2_0%,#fff3ec_42%,#fffaf6_100%)] text-[#24161c]">
+      <div className="mx-auto flex w-full max-w-[1320px] flex-col gap-6 px-4 pb-10 pt-4 sm:px-6 lg:px-8">
+        <section className="flex flex-col gap-4 rounded-[34px] border border-[#ead8cf] bg-[linear-gradient(135deg,rgba(255,255,255,0.92),rgba(255,244,239,0.96))] p-6 shadow-[0_24px_70px_rgba(143,95,89,0.12)] sm:flex-row sm:items-end sm:justify-between sm:p-8">
           <div>
-            <p className="eyebrow">Candidate Edit</p>
-            <h1 className="pageTitle">매물 수정</h1>
-            <p className="pageMeta">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#b46d59]">Candidate Edit</p>
+            <h1 className="mt-4 text-[clamp(2.2rem,9vw,4.2rem)] font-semibold tracking-[-0.08em] text-[#24161c]">매물 수정</h1>
+            <p className="mt-4 max-w-[60ch] text-[15px] leading-7 text-[#6d5961] sm:text-base">
               상세페이지로 돌아가지 않고도 기본 정보, 사진, 상태를 한 번에 정리합니다.
             </p>
           </div>
-          <div className="heroActions">
-            <Link className="ghostButton" href={`/profiles/${candidate.id}`}>
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+            <Link className="inline-flex min-h-12 w-full items-center justify-center rounded-full border border-[#ead8cf] bg-white/90 px-5 text-sm font-semibold text-[#2d1e24]" href={`/profiles/${candidate.id}`}>
               상세로 돌아가기
             </Link>
-            <Link className="ghostButton" href="/dashboard">
+            <Link className="inline-flex min-h-12 w-full items-center justify-center rounded-full border border-[#ead8cf] bg-white/90 px-5 text-sm font-semibold text-[#2d1e24]" href="/dashboard">
               대시보드
             </Link>
           </div>
-        </div>
+        </section>
 
-        {message ? <div className="notice">{message}</div> : null}
+        {message ? (
+          <div className="rounded-2xl border border-[#f0ddd2] bg-[#fff8f3] px-4 py-3 text-sm font-medium text-[#8a6b74]">
+            {message}
+          </div>
+        ) : null}
 
-        <form action={updateCandidate}>
+        <form action={updateCandidate} className="grid gap-5">
           <input type="hidden" name="candidateId" value={candidate.id} />
-
-          <section className="detailColumns">
-            <article className="detailPanel">
-              <p className="eyebrow">Basic Info</p>
-              <h3>기본 프로필</h3>
-              <div className="authForm">
-                <label>
-                  이름
-                  <input name="fullName" defaultValue={candidate.full_name} required />
+          <section className="grid gap-5 xl:grid-cols-2">
+            <article className="rounded-[30px] border border-[#ead8cf] bg-white/90 p-5 shadow-[0_18px_44px_rgba(143,95,89,0.08)] sm:p-6">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#b46d59]">Basic Info</p>
+              <h2 className="mt-3 text-[clamp(1.6rem,7vw,2.4rem)] font-semibold tracking-[-0.05em] text-[#24161c]">기본 프로필</h2>
+              <div className="mt-6 grid gap-4">
+                <label className="grid gap-2">
+                  <FieldLabel>이름</FieldLabel>
+                  <input name="fullName" defaultValue={candidate.full_name} required className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]" />
                 </label>
-                <label>
-                  출생연도
-                  <input
-                    name="birthYear"
-                    type="number"
-                    defaultValue={candidate.birth_year}
-                    required
-                  />
+                <label className="grid gap-2">
+                  <FieldLabel>출생연도</FieldLabel>
+                  <input name="birthYear" type="number" defaultValue={candidate.birth_year} required className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]" />
                 </label>
-                <GenderToggleField
-                  name="gender"
-                  defaultValue={candidate.gender}
-                  required
-                />
-                <label>
-                  지역
-                  <input name="region" defaultValue={candidate.region} />
+                <GenderToggleField name="gender" defaultValue={candidate.gender} required />
+                <label className="grid gap-2">
+                  <FieldLabel>지역</FieldLabel>
+                  <input name="region" defaultValue={candidate.region} className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]" />
                 </label>
-                <label>
-                  직업
-                  <input name="occupation" defaultValue={candidate.occupation} required />
+                <label className="grid gap-2">
+                  <FieldLabel>직업</FieldLabel>
+                  <input name="occupation" defaultValue={candidate.occupation} required className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]" />
                 </label>
-                <label>
-                  직장 / 직무
-                  <input name="workSummary" defaultValue={candidate.work_summary} />
+                <label className="grid gap-2">
+                  <FieldLabel>직장 / 직무</FieldLabel>
+                  <input name="workSummary" defaultValue={candidate.work_summary} className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]" />
                 </label>
-                <label>
-                  학력
-                  <input name="education" defaultValue={candidate.education} />
+                <label className="grid gap-2">
+                  <FieldLabel>학력</FieldLabel>
+                  <input name="education" defaultValue={candidate.education} className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]" />
                 </label>
-                <label>
-                  종교
-                  <input name="religion" defaultValue={candidate.religion} />
+                <label className="grid gap-2">
+                  <FieldLabel>종교</FieldLabel>
+                  <input name="religion" defaultValue={candidate.religion} className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]" />
                 </label>
-                <label>
-                  MBTI
-                  <input name="mbti" defaultValue={candidate.mbti ?? ""} />
+                <label className="grid gap-2">
+                  <FieldLabel>MBTI</FieldLabel>
+                  <input name="mbti" defaultValue={candidate.mbti ?? ""} className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]" />
                 </label>
-                <label>
-                  상태
-                  <select name="status" defaultValue={candidate.status}>
+                <label className="grid gap-2">
+                  <FieldLabel>상태</FieldLabel>
+                  <select name="status" defaultValue={candidate.status} className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]">
                     <option value="active">active</option>
                     <option value="matched">matched</option>
                     <option value="couple">couple</option>
@@ -110,84 +105,52 @@ export default async function EditCandidatePage({
               </div>
             </article>
 
-            <article className="detailPanel">
-              <p className="eyebrow">Story & Photos</p>
-              <h3>소개 판단용 정보</h3>
-              <div className="authForm">
-                <label>
-                  인상 요약
-                  <textarea
-                    name="personalitySummary"
-                    rows={4}
-                    defaultValue={candidate.personality_summary}
-                  />
+            <article className="rounded-[30px] border border-[#ead8cf] bg-white/90 p-5 shadow-[0_18px_44px_rgba(143,95,89,0.08)] sm:p-6">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#b46d59]">Story & Photos</p>
+              <h2 className="mt-3 text-[clamp(1.6rem,7vw,2.4rem)] font-semibold tracking-[-0.05em] text-[#24161c]">소개 판단용 정보</h2>
+              <div className="mt-6 grid gap-4">
+                <label className="grid gap-2">
+                  <FieldLabel>인상 요약</FieldLabel>
+                  <textarea name="personalitySummary" rows={4} defaultValue={candidate.personality_summary} className="rounded-[22px] border border-[#ead8cf] bg-white/95 px-4 py-3 text-sm font-semibold text-[#37232b]" />
                 </label>
-                <label>
-                  이상형
-                  <textarea
-                    name="idealType"
-                    rows={3}
-                    defaultValue={candidate.ideal_type}
-                  />
+                <label className="grid gap-2">
+                  <FieldLabel>이상형</FieldLabel>
+                  <textarea name="idealType" rows={3} defaultValue={candidate.ideal_type} className="rounded-[22px] border border-[#ead8cf] bg-white/95 px-4 py-3 text-sm font-semibold text-[#37232b]" />
                 </label>
-                <label>
-                  비공개 메모
-                  <textarea
-                    name="notesPrivate"
-                    rows={4}
-                    defaultValue={candidate.notes_private}
-                  />
+                <label className="grid gap-2">
+                  <FieldLabel>비공개 메모</FieldLabel>
+                  <textarea name="notesPrivate" rows={4} defaultValue={candidate.notes_private} className="rounded-[22px] border border-[#ead8cf] bg-white/95 px-4 py-3 text-sm font-semibold text-[#37232b]" />
                 </label>
-                <label>
-                  태그
-                  <input
-                    name="highlightTags"
-                    defaultValue={candidate.highlight_tags.join(", ")}
-                  />
+                <label className="grid gap-2">
+                  <FieldLabel>태그</FieldLabel>
+                  <input name="highlightTags" defaultValue={candidate.highlight_tags.join(", ")} className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]" />
                 </label>
                 <PhotoUploadField />
-                <button className="primaryButton" type="submit">
+                <button className="inline-flex min-h-12 items-center justify-center rounded-full border border-[#d8b28a] bg-gradient-to-r from-[#f2c98d] to-[#c78662] px-6 text-sm font-semibold text-[#2b1b11]" type="submit">
                   수정 내용 저장
                 </button>
               </div>
             </article>
           </section>
 
-          <section className="sectionBlock">
-            <div className="sectionHeader">
-              <div>
-                <p className="eyebrow">Existing Photos</p>
-                <h2 className="pageTitle">현재 등록된 사진 관리</h2>
-                <p className="pageMeta">
-                  대표 사진을 바꾸거나, 필요 없는 사진을 제거할 수 있습니다. 대표를 선택하지 않으면 현재 대표 또는 첫 사진이 유지됩니다.
-                </p>
-              </div>
-            </div>
-
+          <section className="rounded-[30px] border border-[#ead8cf] bg-white/90 p-5 shadow-[0_18px_44px_rgba(143,95,89,0.08)] sm:p-6">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#b46d59]">Existing Photos</p>
+            <h2 className="mt-3 text-[clamp(1.6rem,7vw,2.4rem)] font-semibold tracking-[-0.05em] text-[#24161c]">현재 등록된 사진 관리</h2>
+            <p className="mt-3 text-[15px] leading-7 text-[#6d5961] sm:text-base">
+              대표 사진을 바꾸거나, 필요 없는 사진을 제거할 수 있습니다.
+            </p>
             {photos.length ? (
-              <div className="existingPhotoGrid">
+              <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {photos.map((photo) => (
-                  <article key={photo.id} className="existingPhotoCard">
-                    <div
-                      className="existingPhotoPreview"
-                      style={{ backgroundImage: `url(${photo.image_url})` }}
-                    />
-                    <div className="existingPhotoMeta">
-                      <label className="existingPhotoOption">
-                        <input
-                          type="radio"
-                          name="primaryPhoto"
-                          value={`existing:${photo.id}`}
-                          defaultChecked={photo.is_primary}
-                        />
+                  <article key={photo.id} className="grid gap-3 rounded-[24px] border border-[#ead8cf] bg-[#fffaf7] p-4">
+                    <div className="min-h-[220px] rounded-[20px] bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${photo.image_url})` }} />
+                    <div className="grid gap-3 text-sm font-medium text-[#5f4951]">
+                      <label className="flex items-center gap-3">
+                        <input type="radio" name="primaryPhoto" value={`existing:${photo.id}`} defaultChecked={photo.is_primary} />
                         대표 사진으로 유지
                       </label>
-                      <label className="existingPhotoOption">
-                        <input
-                          type="checkbox"
-                          name="removedPhotoIds"
-                          value={photo.id}
-                        />
+                      <label className="flex items-center gap-3">
+                        <input type="checkbox" name="removedPhotoIds" value={photo.id} />
                         이 사진 제거
                       </label>
                     </div>
@@ -195,7 +158,9 @@ export default async function EditCandidatePage({
                 ))}
               </div>
             ) : (
-              <div className="emptyState">아직 등록된 사진이 없습니다.</div>
+              <div className="mt-5 rounded-[24px] border border-[#f0ddd2] bg-[#fff8f3] px-5 py-6 text-center text-[#8a6b74]">
+                아직 등록된 사진이 없습니다.
+              </div>
             )}
           </section>
         </form>
