@@ -110,7 +110,16 @@ function mapPhoto(row: any): CandidatePhoto {
   };
 }
 
-export async function getCandidates(filter?: string) {
+type GetCandidatesOptions =
+  | string
+  | {
+      filter?: string;
+      includeImages?: boolean;
+    };
+
+export async function getCandidates(options?: GetCandidatesOptions) {
+  const filter = typeof options === "string" ? options : options?.filter;
+  const includeImages = typeof options === "string" ? true : options?.includeImages ?? true;
   const supabase = await createClient();
 
   if (!supabase) {
@@ -127,6 +136,10 @@ export async function getCandidates(filter?: string) {
 
   if (error || !data) {
     return filter ? mockCandidates.filter((candidate) => candidate.status === filter) : mockCandidates;
+  }
+
+  if (!includeImages) {
+    return data.map((row) => mapCandidate(row));
   }
 
   return Promise.all(

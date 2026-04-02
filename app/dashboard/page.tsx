@@ -20,7 +20,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const { filter, religion, gender, q, message } = await searchParams;
   const membership = await getCurrentMembershipWithFallback();
   const [allCandidates, recentMatches] = await Promise.all([
-    getCandidates(),
+    getCandidates({ includeImages: false }),
     getMatchRecords(),
   ]);
   const query = (q ?? "").trim().toLowerCase();

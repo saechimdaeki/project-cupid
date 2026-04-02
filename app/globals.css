@@ -1240,6 +1240,8 @@ button {
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) 380px;
   gap: 18px;
+  content-visibility: auto;
+  contain-intrinsic-size: 960px;
 }
 
 .glassCard,
@@ -2391,6 +2393,11 @@ button {
   contain: layout paint style;
 }
 
+.landingPage .landingPreview {
+  content-visibility: auto;
+  contain-intrinsic-size: 760px;
+}
+
 .loveCanvas {
   transform-style: flat;
 }
@@ -2448,6 +2455,81 @@ button {
 .scenePetalBlur {
   opacity: 0.42;
   transform: scale(1.28);
+}
+
+.dashboardLoadingHero,
+.dashboardLoadingBlock {
+  overflow: hidden;
+}
+
+.dashboardLoadingGrid,
+.dashboardLoadingBoard {
+  display: grid;
+  gap: 18px;
+}
+
+.dashboardLoadingGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.dashboardLoadingBoard {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.loadingCard,
+.loadingBoardLane,
+.loadingLine {
+  position: relative;
+  overflow: hidden;
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 246, 240, 0.88));
+  border: 1px solid rgba(176, 109, 85, 0.12);
+}
+
+.loadingCard::after,
+.loadingBoardLane::after,
+.loadingLine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.72), transparent);
+  animation: loadingSweep 1.2s ease-in-out infinite;
+}
+
+.loadingCard {
+  min-height: 146px;
+}
+
+.loadingBoardLane {
+  min-height: 320px;
+}
+
+.loadingLine {
+  border-radius: 999px;
+}
+
+.loadingLineEyebrow {
+  width: 160px;
+  height: 18px;
+  margin-bottom: 18px;
+}
+
+.loadingLineTitle {
+  width: min(720px, 88%);
+  height: 62px;
+  margin-bottom: 14px;
+}
+
+.loadingLineBody {
+  width: min(560px, 72%);
+  height: 22px;
+}
+
+@keyframes loadingSweep {
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 .scenePetal1 {
