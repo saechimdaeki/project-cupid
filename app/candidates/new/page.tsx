@@ -110,7 +110,7 @@ export default async function NewCandidatePage({ searchParams }: NewCandidatePag
                   <FieldLabel>태그</FieldLabel>
                   <input name="highlightTags" placeholder="대화잘함, 서울거주, 비흡연" className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]" />
                 </label>
-                <PhotoUploadField />
+                <PhotoUploadField storageFolderId={submissionKey} />
                 <FormSubmitButton
                   idleLabel="매물 등록하기"
                   pendingLabel="등록 중..."

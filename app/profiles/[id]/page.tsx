@@ -114,6 +114,15 @@ function buildTagMeta(tag: string, index: number) {
   };
 }
 
+function isRenderableImageUrl(value: string | null | undefined) {
+  return Boolean(
+    value &&
+      (value.startsWith("/") ||
+        value.startsWith("http://") ||
+        value.startsWith("https://")),
+  );
+}
+
 function groupMatchRecords(records: MatchRecord[]) {
   return MATCH_COLUMNS.map((column) => ({
     ...column,
@@ -144,6 +153,9 @@ export default async function CandidateDetailPage({
     getCandidatePhotos(candidate.id),
     getCurrentMembership(),
   ]);
+  const heroImageUrl = isRenderableImageUrl(candidate.image_url)
+    ? candidate.image_url
+    : photos[0]?.image_url ?? null;
   const counterpartCandidate = candidate.paired_candidate_id
     ? await getCandidateById(candidate.paired_candidate_id)
     : null;
@@ -204,12 +216,12 @@ export default async function CandidateDetailPage({
 
         <section className="grid gap-5 xl:grid-cols-[minmax(0,1.3fr)_380px]">
           <article className="detailPanel overflow-hidden rounded-[34px] border border-[#ead8cf] bg-[linear-gradient(145deg,rgba(255,255,255,0.92),rgba(255,244,239,0.96))] p-4 shadow-[0_24px_70px_rgba(143,95,89,0.12)] sm:p-5">
-            <div className="grid gap-5 lg:grid-cols-[minmax(0,1.08fr)_minmax(260px,0.92fr)] lg:items-end">
-              <div className="relative overflow-hidden rounded-[28px] bg-[#fff7f2] p-3">
+            <div className="grid gap-5 lg:grid-cols-[minmax(0,1.08fr)_minmax(260px,0.92fr)] lg:items-stretch">
+              <div className="portraitPanel relative overflow-hidden rounded-[28px] bg-[#fff7f2] p-3">
                 <PersonPreview
-                  imageUrl={candidate.image_url}
+                  imageUrl={heroImageUrl}
                   gender={candidate.gender}
-                  className="min-h-[320px] rounded-[24px] sm:min-h-[420px] lg:min-h-[520px]"
+                  className="portraitPreview min-h-[320px] rounded-[24px] sm:min-h-[420px] lg:min-h-[520px]"
                   size="lg"
                 />
                 <div className="pointer-events-none absolute inset-x-0 bottom-0 rounded-b-[24px] bg-gradient-to-t from-[rgba(33,19,26,0.78)] via-[rgba(33,19,26,0.24)] to-transparent p-5 text-white sm:p-6">

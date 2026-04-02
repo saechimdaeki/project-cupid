@@ -126,7 +126,7 @@ export default async function EditCandidatePage({ params, searchParams }: EditCa
                   <FieldLabel>태그</FieldLabel>
                   <input name="highlightTags" defaultValue={candidate.highlight_tags.join(", ")} className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]" />
                 </label>
-                <PhotoUploadField />
+                <PhotoUploadField storageFolderId={candidate.id} />
                 <FormSubmitButton
                   idleLabel="수정 내용 저장"
                   pendingLabel="저장 중..."

@@ -127,6 +127,13 @@ async function uploadCandidatePhotos(
   return uploadedPaths;
 }
 
+function normalizeUploadedPhotoPaths(formData: FormData) {
+  return formData
+    .getAll("uploadedPhotoPaths")
+    .map((value) => String(value).trim())
+    .filter(Boolean);
+}
+
 function normalizeCandidateStatus(value: string) {
   return CANDIDATE_STATUS_VALUES.has(value) ? value : "active";
 }
@@ -240,11 +247,13 @@ export async function createCandidate(formData: FormData) {
     .filter(Boolean);
   const submissionKey = cleanText(formData.get("submissionKey"));
   const candidateId = isUuid(submissionKey) ? submissionKey : crypto.randomUUID();
-  const files = formData
-    .getAll("photos")
-    .filter((value): value is File => value instanceof File && value.size > 0);
-  const uploadedPaths: string[] = [];
+  const uploadedPaths = normalizeUploadedPhotoPaths(formData);
   let candidateInserted = false;
+  let existingCandidateId: string | null = null;
+
+  if (cleanText(formData.get("photoUploadState")) === "uploading") {
+    redirect(`/candidates/new?message=${encodeURIComponent("사진 업로드가 끝난 뒤 다시 등록해주세요.")}`);
+  }
 
   try {
     const { data: existingCandidate } = await supabase
@@ -254,82 +263,79 @@ export async function createCandidate(formData: FormData) {
       .maybeSingle();
 
     if (existingCandidate) {
-      revalidatePath("/dashboard");
-      redirect(`/profiles/${candidateId}`);
-    }
+      existingCandidateId = existingCandidate.id;
+    } else {
+      const birthYear = Number(formData.get("birthYear") ?? 0);
 
-    uploadedPaths.push(...(await uploadCandidatePhotos(supabase, candidateId, files)));
+      const payload = {
+        id: candidateId,
+        full_name: cleanText(formData.get("fullName")),
+        birth_year: birthYear,
+        gender: normalizeGender(cleanText(formData.get("gender"))),
+        region: cleanText(formData.get("region")),
+        occupation: cleanText(formData.get("occupation")),
+        work_summary: cleanText(formData.get("workSummary")),
+        education: cleanText(formData.get("education")),
+        religion: cleanText(formData.get("religion")),
+        mbti: cleanText(formData.get("mbti")) || null,
+        personality_summary: cleanText(formData.get("personalitySummary")),
+        ideal_type: cleanText(formData.get("idealType")),
+        notes_private: cleanText(formData.get("notesPrivate")),
+        status: normalizeCandidateStatus(cleanText(formData.get("status"))),
+        highlight_tags: highlightTags,
+        image_url: uploadedPaths[0] ?? null,
+        created_by: membership.user_id,
+      };
 
-    const birthYear = Number(formData.get("birthYear") ?? 0);
-
-    const payload = {
-      id: candidateId,
-      full_name: cleanText(formData.get("fullName")),
-      birth_year: birthYear,
-      gender: normalizeGender(cleanText(formData.get("gender"))),
-      region: cleanText(formData.get("region")),
-      occupation: cleanText(formData.get("occupation")),
-      work_summary: cleanText(formData.get("workSummary")),
-      education: cleanText(formData.get("education")),
-      religion: cleanText(formData.get("religion")),
-      mbti: cleanText(formData.get("mbti")) || null,
-      personality_summary: cleanText(formData.get("personalitySummary")),
-      ideal_type: cleanText(formData.get("idealType")),
-      notes_private: cleanText(formData.get("notesPrivate")),
-      status: normalizeCandidateStatus(cleanText(formData.get("status"))),
-      highlight_tags: highlightTags,
-      image_url: uploadedPaths[0] ?? null,
-      created_by: membership.user_id,
-    };
-
-    if (!payload.full_name) {
-      throw new Error("이름은 필수입니다.");
-    }
-
-    if (!GENDER_VALUES.has(payload.gender)) {
-      throw new Error("성별은 남 또는 여만 선택할 수 있습니다.");
-    }
-
-    if (!payload.occupation) {
-      throw new Error("직업은 필수입니다.");
-    }
-
-    if (!Number.isInteger(birthYear) || birthYear < 1960 || birthYear > 2010) {
-      throw new Error("출생연도는 1960-2010 사이로 입력해주세요.");
-    }
-
-    const { error: candidateError } = await supabase
-      .from("cupid_candidates")
-      .insert(payload);
-
-    if (candidateError) {
-      const duplicateInsert =
-        candidateError.code === "23505" ||
-        candidateError.message.toLowerCase().includes("duplicate key");
-
-      if (duplicateInsert) {
-        throw new Error("__DUPLICATE_CANDIDATE_SUBMISSION__");
+      if (!payload.full_name) {
+        throw new Error("이름은 필수입니다.");
       }
 
-      throw new Error(candidateError.message);
-    }
+      if (!GENDER_VALUES.has(payload.gender)) {
+        throw new Error("성별은 남 또는 여만 선택할 수 있습니다.");
+      }
 
-    candidateInserted = true;
+      if (!payload.occupation) {
+        throw new Error("직업은 필수입니다.");
+      }
 
-    if (uploadedPaths.length) {
-      const photosPayload = uploadedPaths.map((imagePath, index) => ({
-        candidate_id: candidateId,
-        image_url: imagePath,
-        sort_order: index,
-        is_primary: index === 0,
-      }));
+      if (!Number.isInteger(birthYear) || birthYear < 1960 || birthYear > 2010) {
+        throw new Error("출생연도는 1960-2010 사이로 입력해주세요.");
+      }
 
-      const { error: photosError } = await supabase
-        .from("cupid_candidate_photos")
-        .insert(photosPayload);
+      const { error: candidateError } = await supabase
+        .from("cupid_candidates")
+        .insert(payload);
 
-      if (photosError) {
-        throw new Error(photosError.message);
+      if (candidateError) {
+        const duplicateInsert =
+          candidateError.code === "23505" ||
+          candidateError.message.toLowerCase().includes("duplicate key");
+
+        if (duplicateInsert) {
+          throw new Error("__DUPLICATE_CANDIDATE_SUBMISSION__");
+        }
+
+        throw new Error(candidateError.message);
+      }
+
+      candidateInserted = true;
+
+      if (uploadedPaths.length) {
+        const photosPayload = uploadedPaths.map((imagePath, index) => ({
+          candidate_id: candidateId,
+          image_url: imagePath,
+          sort_order: index,
+          is_primary: index === 0,
+        }));
+
+        const { error: photosError } = await supabase
+          .from("cupid_candidate_photos")
+          .insert(photosPayload);
+
+        if (photosError) {
+          throw new Error(photosError.message);
+        }
       }
     }
   } catch (error) {
@@ -352,6 +358,12 @@ export async function createCandidate(formData: FormData) {
     const message =
       error instanceof Error ? error.message : "등록에 실패했습니다.";
     redirect(`/candidates/new?message=${encodeURIComponent(message)}`);
+  }
+
+  if (existingCandidateId) {
+    revalidatePath("/dashboard");
+    revalidatePath(`/profiles/${existingCandidateId}`);
+    redirect(`/profiles/${existingCandidateId}`);
   }
 
   revalidatePath("/dashboard");
@@ -378,14 +390,17 @@ export async function updateCandidate(formData: FormData) {
     .split(",")
     .map((tag) => tag.trim())
     .filter(Boolean);
-  const files = formData
-    .getAll("photos")
-    .filter((value): value is File => value instanceof File && value.size > 0);
-  const uploadedPaths: string[] = [];
+  const uploadedPaths = normalizeUploadedPhotoPaths(formData);
   const removedPhotoIds = new Set(
     formData.getAll("removedPhotoIds").map((value) => String(value)),
   );
   const primaryPhoto = cleanText(formData.get("primaryPhoto"));
+
+  if (cleanText(formData.get("photoUploadState")) === "uploading") {
+    redirect(
+      `/profiles/${candidateId}/edit?message=${encodeURIComponent("사진 업로드가 끝난 뒤 다시 저장해주세요.")}`,
+    );
+  }
 
   try {
     const {
@@ -400,8 +415,6 @@ export async function updateCandidate(formData: FormData) {
     if (existingPhotosError) {
       throw new Error(existingPhotosError.message);
     }
-
-    uploadedPaths.push(...(await uploadCandidatePhotos(supabase, candidateId, files)));
 
     const remainingPhotos = (existingPhotos ?? []).filter(
       (photo) => !removedPhotoIds.has(photo.id),
