@@ -2,6 +2,50 @@ import type { Candidate, MatchRecord, Membership } from "@/lib/types";
 
 export const mockCandidates: Candidate[] = [
   {
+    id: "mock-test-female",
+    full_name: "테스트 여성",
+    birth_year: 1998,
+    gender: "여",
+    region: "강북구",
+    occupation: "약사",
+    work_summary: "이쁨",
+    education: "테스트대학교",
+    religion: "무교",
+    mbti: "ISFJ",
+    personality_summary:
+      "테스트용으로 항상 노출되는 여성 프로필입니다.",
+    ideal_type: "테스트 남성과 매칭 확인",
+    notes_private: "대시보드 노출 확인용 데이터",
+    status: "active",
+    highlight_tags: ["테스트", "강북구", "약사"],
+    image_url: "/99년생 여자 기획자.png",
+    paired_candidate_id: null,
+    created_at: "2026-04-02T09:00:00.000Z",
+    created_by_name: "시스템",
+  },
+  {
+    id: "mock-test-male",
+    full_name: "테스트 남성",
+    birth_year: 1996,
+    gender: "남",
+    region: "성수동",
+    occupation: "개발자",
+    work_summary: "훈훈함",
+    education: "테스트대학교",
+    religion: "무교",
+    mbti: "INTJ",
+    personality_summary:
+      "테스트용으로 항상 노출되는 남성 프로필입니다.",
+    ideal_type: "테스트 여성과 흐름 보드 확인",
+    notes_private: "타임라인/보드 회귀 확인용 데이터",
+    status: "active",
+    highlight_tags: ["테스트", "성수동", "개발자"],
+    image_url: "/94년생 남자 개발자.png",
+    paired_candidate_id: null,
+    created_at: "2026-04-02T09:05:00.000Z",
+    created_by_name: "시스템",
+  },
+  {
     id: "cand-1",
     full_name: "김서연",
     birth_year: 1994,
@@ -48,6 +92,16 @@ export const mockCandidates: Candidate[] = [
 ];
 
 export const mockMatchRecords: MatchRecord[] = [
+  {
+    id: "match-test-1",
+    candidate_id: "mock-test-male",
+    counterpart_label: "테스트 여성",
+    counterpart_candidate_id: "mock-test-female",
+    matchmaker_name: "시스템",
+    outcome: "intro_sent",
+    summary: "테스트 남성과 테스트 여성의 매칭 진행을 시작했습니다.",
+    happened_on: "2026-04-02",
+  },
   {
     id: "match-1",
     candidate_id: "cand-1",

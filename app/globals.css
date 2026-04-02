@@ -1372,11 +1372,14 @@ button {
 
 .authWrap {
   min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
-  place-items: center;
-  padding: 28px;
+  justify-items: center;
+  align-items: start;
+  padding: max(20px, env(safe-area-inset-top)) 28px max(28px, env(safe-area-inset-bottom));
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .authPage {
@@ -1416,6 +1419,7 @@ button {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(360px, 0.9fr);
   gap: 18px;
+  align-items: start;
 }
 
 .authStack {
@@ -4234,6 +4238,36 @@ button {
 }
 
 @media (max-width: 420px) {
+  .authWrap {
+    padding: max(12px, env(safe-area-inset-top)) 12px max(20px, env(safe-area-inset-bottom));
+  }
+
+  .authLayout,
+  .authStack {
+    width: 100%;
+    gap: 12px;
+  }
+
+  .authForm {
+    margin-top: 18px;
+    gap: 12px;
+  }
+
+  .authHeart.heartOne {
+    top: 4%;
+    left: 4%;
+  }
+
+  .authHeart.heartTwo {
+    top: 10%;
+    right: 5%;
+  }
+
+  .authHeart.heartThree {
+    bottom: 8%;
+    left: 8%;
+  }
+
   .landingWrap {
     padding: 10px 10px 0;
   }

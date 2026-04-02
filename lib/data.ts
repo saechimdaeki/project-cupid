@@ -31,6 +31,34 @@ const IMAGE_TRANSFORMS = {
   },
 };
 
+function mergeCandidates(primary: Candidate[], secondary: Candidate[]) {
+  const merged = new Map<string, Candidate>();
+
+  for (const candidate of [...primary, ...secondary]) {
+    if (!merged.has(candidate.id)) {
+      merged.set(candidate.id, candidate);
+    }
+  }
+
+  return Array.from(merged.values()).sort((left, right) =>
+    right.created_at.localeCompare(left.created_at),
+  );
+}
+
+function mergeMatchRecords(primary: MatchRecord[], secondary: MatchRecord[]) {
+  const merged = new Map<string, MatchRecord>();
+
+  for (const record of [...primary, ...secondary]) {
+    if (!merged.has(record.id)) {
+      merged.set(record.id, record);
+    }
+  }
+
+  return Array.from(merged.values()).sort((left, right) =>
+    right.happened_on.localeCompare(left.happened_on),
+  );
+}
+
 function normalizeGender(value: string | null | undefined) {
   if (value === "남" || value === "남성") {
     return "남";
@@ -222,7 +250,7 @@ export async function getCandidates(options?: GetCandidatesOptions) {
     "card",
   );
 
-  return candidates.map((candidate) => ({
+  const resolvedCandidates = candidates.map((candidate) => ({
     ...candidate,
     image_url: candidate.image_url
       ? isDirectImageUrl(candidate.image_url)
@@ -230,6 +258,11 @@ export async function getCandidates(options?: GetCandidatesOptions) {
         : signedImageMap.get(candidate.image_url) ?? null
       : null,
   }));
+
+  return mergeCandidates(
+    resolvedCandidates,
+    filter ? mockCandidates.filter((candidate) => candidate.status === filter) : mockCandidates,
+  );
 }
 
 export async function getDashboardCandidates() {
@@ -250,7 +283,7 @@ export async function getDashboardCandidates() {
     return mockCandidates;
   }
 
-  return data.map((row) => mapDashboardCandidate(row));
+  return mergeCandidates(data.map((row) => mapDashboardCandidate(row)), mockCandidates);
 }
 
 export async function getCandidateById(id: string) {
@@ -304,7 +337,12 @@ export async function getMatchRecords(candidateId?: string) {
       : mockMatchRecords;
   }
 
-  return data.map(mapMatchRecord);
+  return mergeMatchRecords(
+    data.map(mapMatchRecord),
+    candidateId
+      ? mockMatchRecords.filter((record) => record.candidate_id === candidateId)
+      : mockMatchRecords,
+  );
 }
 
 export async function getDashboardMatchRecords() {
@@ -325,7 +363,7 @@ export async function getDashboardMatchRecords() {
     return mockMatchRecords;
   }
 
-  return data.map(mapMatchRecord);
+  return mergeMatchRecords(data.map(mapMatchRecord), mockMatchRecords);
 }
 
 export function buildTimelineEvents(
