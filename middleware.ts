@@ -2,21 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { canAccessAdmin, canAccessCandidateDetail, canEditCandidates } from "@/lib/permissions";
 
-const publicRoutes = new Set(["/", "/login", "/pending", "/auth/callback", "/auth/continue"]);
 const adminRoutes = ["/admin"];
-
-function isProtectedPath(pathname: string) {
-  if (publicRoutes.has(pathname)) {
-    return false;
-  }
-
-  return (
-    pathname.startsWith("/dashboard") ||
-    pathname.startsWith("/profiles") ||
-    pathname.startsWith("/admin") ||
-    pathname.startsWith("/candidates")
-  );
-}
 
 export async function middleware(request: NextRequest) {
   const response = NextResponse.next({
@@ -52,10 +38,6 @@ export async function middleware(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
-  if (!isProtectedPath(request.nextUrl.pathname)) {
-    return response;
-  }
 
   if (!user) {
     const redirectUrl = request.nextUrl.clone();
@@ -130,5 +112,10 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    "/dashboard/:path*",
+    "/profiles/:path*",
+    "/admin/:path*",
+    "/candidates/:path*",
+  ],
 };

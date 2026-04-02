@@ -15,12 +15,12 @@ export function SplashIntro() {
 
     const leaveTimer = window.setTimeout(() => {
       setLeaving(true);
-    }, 900);
+    }, 420);
 
     const doneTimer = window.setTimeout(() => {
       window.sessionStorage.setItem("cupid-splash-seen", "1");
       setVisible(false);
-    }, 1280);
+    }, 760);
 
     return () => {
       window.clearTimeout(leaveTimer);
