@@ -4357,6 +4357,34 @@ button {
   }
 }
 
+.dashboardDeferredSection {
+  content-visibility: auto;
+  contain-intrinsic-size: 720px;
+}
+
+@media (max-width: 768px) {
+  .workspacePage .pageGlow,
+  .workspacePage .blossomPetal,
+  .workspacePage .floatingHeart,
+  .workspacePage .loveSpark {
+    display: none;
+  }
+
+  .workspacePage .dashboardHero,
+  .workspacePage .sectionBlock,
+  .workspacePage .metricCard,
+  .workspacePage .candidateCard,
+  .workspacePage .dashboardLane,
+  .workspacePage .accountPanel {
+    box-shadow: 0 10px 24px rgba(143, 95, 89, 0.06);
+    backdrop-filter: none;
+  }
+
+  .dashboardDeferredSection {
+    contain-intrinsic-size: 560px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .splashAura,
   .splashFloatHeart,

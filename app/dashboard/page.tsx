@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { AccountPanel } from "@/components/account-panel";
 import { CandidateCard } from "@/components/candidate-card";
-import { DashboardFlowBoard } from "@/components/dashboard-flow-board";
+import {
+  DashboardFlowBoard,
+  type DashboardBoardCandidate,
+} from "@/components/dashboard-flow-board";
 import { LandingScene } from "@/components/landing-scene";
 import { WorkspaceDecorations } from "@/components/workspace-decorations";
 import {
@@ -142,6 +145,20 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     }
     return true;
   });
+  const boardCandidates: DashboardBoardCandidate[] = allCandidates.map((candidate) => ({
+    id: candidate.id,
+    full_name: candidate.full_name,
+    birth_year: candidate.birth_year,
+    gender: candidate.gender,
+    region: candidate.region,
+    occupation: candidate.occupation,
+    status: candidate.status,
+    paired_candidate_id: candidate.paired_candidate_id,
+  }));
+  const visibleCandidateIds = new Set(visibleCandidates.map((candidate) => candidate.id));
+  const visibleBoardCandidates = boardCandidates.filter((candidate) =>
+    visibleCandidateIds.has(candidate.id),
+  );
   const boardRole = isPreviewMode ? "viewer" : membership.role;
 
   const heroBadges =
@@ -160,7 +177,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   return (
     <main className="workspacePage min-h-screen bg-[linear-gradient(180deg,#fff8f2_0%,#fff3ec_42%,#fffaf6_100%)] text-[#24161c]">
       <div className="landingWrap relative mx-auto flex w-full max-w-[1400px] flex-col gap-6 px-4 pb-10 pt-4 sm:px-6 lg:px-8">
-        <WorkspaceDecorations density="soft" />
+        <WorkspaceDecorations density="soft" className="hidden md:block" />
         <header className="flex flex-col gap-4 rounded-[30px] border border-[#ead8cf] bg-white/85 p-4 shadow-[0_14px_40px_rgba(143,95,89,0.08)] backdrop-blur-sm lg:flex-row lg:items-start lg:justify-between">
           <Link href="/" className="flex min-w-0 items-center gap-4">
             <div className="grid h-12 w-12 shrink-0 place-items-center rounded-[18px] border border-[#e9d7cf] bg-gradient-to-br from-[#fffaf7] to-[#fff1e8] text-2xl font-semibold text-[#d1a06b]">
@@ -192,7 +209,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         </header>
 
         <section className="dashboardHero relative overflow-hidden rounded-[34px] border border-[#ead8cf] bg-[linear-gradient(135deg,rgba(255,255,255,0.92),rgba(255,244,239,0.96))] p-4 shadow-[0_24px_70px_rgba(143,95,89,0.12)] sm:p-6 xl:grid xl:grid-cols-[minmax(0,1.05fr)_minmax(420px,0.95fr)] xl:items-stretch">
-          <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="pointer-events-none absolute inset-0 hidden overflow-hidden md:block">
             <div className="absolute left-[8%] top-[10%] h-44 w-44 rounded-full bg-pink-200/40 blur-3xl" />
             <div className="absolute right-[12%] top-[12%] h-52 w-52 rounded-full bg-amber-200/40 blur-3xl" />
             <div className="absolute bottom-[8%] left-[28%] h-40 w-40 rounded-full bg-rose-100/40 blur-3xl" />
@@ -368,14 +385,14 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           </div>
         </section>
 
-        <section className="metricStrip grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <section className="metricStrip dashboardDeferredSection grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <MetricCard label="Active Board" value={allCandidates.filter((item) => item.status === "active").length} description="지금 바로 연결 가능한 매물" />
           <MetricCard label="In Progress" value={allCandidates.filter((item) => item.status === "matched").length} description="소개 이후 후속 만남 진행 중" />
           <MetricCard label="Couple" value={allCandidates.filter((item) => item.status === "couple").length} description="커플 성사 상태" />
           <MetricCard label="Timeline" value={timelineCount} description="누적 매칭 이력" />
         </section>
 
-        <section className="rounded-[34px] border border-[#ead8cf] bg-white/88 p-5 shadow-[0_18px_44px_rgba(143,95,89,0.08)] sm:p-6">
+        <section className="dashboardDeferredSection rounded-[34px] border border-[#ead8cf] bg-white/88 p-5 shadow-[0_18px_44px_rgba(143,95,89,0.08)] sm:p-6">
           <div className="sectionHeader mb-5">
             <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#b46d59]">Flow Board</p>
             <h2 className="mt-3 text-[clamp(1.8rem,8vw,3rem)] font-semibold tracking-[-0.06em] text-[#24161c]">지금 관계 흐름이 어떻게 움직이는지 바로 봅니다</h2>
@@ -388,10 +405,14 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               </div>
             ) : null}
           </div>
-          <DashboardFlowBoard candidates={visibleCandidates} allCandidates={allCandidates} role={boardRole} />
+          <DashboardFlowBoard
+            candidates={visibleBoardCandidates}
+            allCandidates={boardCandidates}
+            role={boardRole}
+          />
         </section>
 
-        <section className="grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)]">
+        <section className="dashboardDeferredSection grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)]">
           <div className="sectionBlock rounded-[34px] border border-[#ead8cf] bg-white/88 p-5 shadow-[0_18px_44px_rgba(143,95,89,0.08)] sm:p-6">
             <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#b46d59]">Curated Inventory</p>
             <h2 className="mt-3 text-[clamp(1.8rem,8vw,3rem)] font-semibold tracking-[-0.06em] text-[#24161c]">전체 후보를 카드로 다시 훑어봅니다</h2>

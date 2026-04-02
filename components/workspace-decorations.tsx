@@ -1,14 +1,19 @@
 type WorkspaceDecorationsProps = {
   density?: "full" | "soft";
+  className?: string;
 };
 
 export function WorkspaceDecorations({
   density = "full",
+  className = "",
 }: WorkspaceDecorationsProps) {
   const showExtended = density === "full";
 
   return (
-    <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+    <div
+      aria-hidden="true"
+      className={`pointer-events-none absolute inset-0 overflow-hidden ${className}`.trim()}
+    >
       <span className="pageGlow glowLeft" />
       <span className="pageGlow glowRight" />
       <span className="blossomPetal petal1" />

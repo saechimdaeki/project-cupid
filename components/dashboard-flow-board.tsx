@@ -8,6 +8,18 @@ import { StatusBadge } from "@/components/status-badge";
 import { moveCandidatePairStatus, moveCandidateStatus } from "@/lib/admin-actions";
 import type { AppRole, Candidate, CandidateStatus } from "@/lib/types";
 
+export type DashboardBoardCandidate = Pick<
+  Candidate,
+  | "id"
+  | "full_name"
+  | "birth_year"
+  | "gender"
+  | "region"
+  | "occupation"
+  | "status"
+  | "paired_candidate_id"
+>;
+
 const statusToneMap = {
   active: "default",
   matched: "warning",
@@ -62,8 +74,8 @@ type PairComposerState = {
 };
 
 type DashboardFlowBoardProps = {
-  candidates: Candidate[];
-  allCandidates: Candidate[];
+  candidates: DashboardBoardCandidate[];
+  allCandidates: DashboardBoardCandidate[];
   role: AppRole;
 };
 
@@ -93,13 +105,16 @@ function getRoleLabel(role: AppRole) {
   }
 }
 
-function groupCandidatesByStatus(candidates: Candidate[], status: CandidateStatus) {
+function groupCandidatesByStatus(
+  candidates: DashboardBoardCandidate[],
+  status: CandidateStatus,
+) {
   return candidates.filter((candidate) => candidate.status === status);
 }
 
 function getEligiblePairOptions(
-  source: Candidate | undefined,
-  allCandidates: Candidate[],
+  source: DashboardBoardCandidate | undefined,
+  allCandidates: DashboardBoardCandidate[],
   targetStatus: "matched" | "couple",
 ) {
   if (!source) {
@@ -264,7 +279,7 @@ export function DashboardFlowBoard({
     });
   };
 
-  const renderCandidateCard = (candidate: Candidate) => {
+  const renderCandidateCard = (candidate: DashboardBoardCandidate) => {
     const metaItems = [
       candidate.birth_year ? `${candidate.birth_year}년생` : null,
       candidate.gender || null,
@@ -304,26 +319,9 @@ export function DashboardFlowBoard({
           {metaItems.length ? metaItems.join(" · ") : "기본 정보는 상세 화면에서 확인합니다"}
         </p>
 
-        <p className="mt-3 text-sm leading-7 text-[#6d5961]">
-          {candidate.personality_summary || "소개 메모는 아직 입력되지 않았습니다."}
-        </p>
-
         {pairedCandidate ? (
           <div className="mt-4 rounded-[18px] border border-[#ead8cf] bg-[#fffaf6] px-4 py-3 text-sm text-[#6d5961]">
             현재 연결 상대: <strong className="text-[#24161c]">{pairedCandidate.full_name}</strong>
-          </div>
-        ) : null}
-
-        {candidate.highlight_tags.length ? (
-          <div className="mt-4 flex flex-wrap gap-2">
-            {candidate.highlight_tags.slice(0, 3).map((tag) => (
-              <span
-                key={tag}
-                className="inline-flex min-h-8 items-center rounded-full border border-[#ead8cf] bg-[#fff8f3] px-3 text-xs font-semibold text-[#8b6a63]"
-              >
-                {tag}
-              </span>
-            ))}
           </div>
         ) : null}
 
