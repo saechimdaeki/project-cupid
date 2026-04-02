@@ -5,7 +5,7 @@ import { LandingScene } from "@/components/landing-scene";
 import { WorkspaceDecorations } from "@/components/workspace-decorations";
 import { rejectMembership, updateMembershipRole } from "@/lib/admin-actions";
 import { getMembershipDirectory, getPendingMemberships } from "@/lib/data";
-import { mockCandidates } from "@/lib/mock-data";
+import { previewSceneCandidates } from "@/lib/preview-scene";
 import { requireMembershipRole } from "@/lib/permissions";
 
 type AdminPageProps = {
@@ -68,7 +68,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             </div>
           </div>
           <div className="overflow-hidden rounded-[30px] border border-[#ead8cf] bg-white/66 p-3 shadow-[0_18px_44px_rgba(143,95,89,0.08)]">
-            <LandingScene leftCandidate={mockCandidates[0]} rightCandidate={mockCandidates[1] ?? mockCandidates[0]} />
+            <LandingScene
+              leftCandidate={previewSceneCandidates[0]}
+              rightCandidate={previewSceneCandidates[1]}
+            />
           </div>
         </section>
 

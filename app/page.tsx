@@ -4,6 +4,7 @@ import { LazyHomeAccountShell } from "@/components/lazy-home-account-shell";
 import { LazySplashIntro } from "@/components/lazy-splash-intro";
 import { PersonPreview } from "@/components/person-preview";
 import { mockCandidates } from "@/lib/mock-data";
+import { previewSceneCandidates } from "@/lib/preview-scene";
 
 function QuickStat({
   label,
@@ -64,7 +65,7 @@ function InventoryCard({
 }
 
 export default function HomePage() {
-  const previewCandidates = mockCandidates.slice(0, 2);
+  const previewCandidates = previewSceneCandidates;
   const leftCandidate = previewCandidates[0];
   const rightCandidate = previewCandidates[1] ?? previewCandidates[0];
 
@@ -187,17 +188,23 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
-            {mockCandidates.map((candidate, index) => (
-              <InventoryCard
-                key={candidate.id}
-                tone={index % 2 === 0 ? "rose" : "gold"}
-                imageUrl={candidate.image_url}
-                title={`${candidate.full_name} · ${candidate.region}`}
-                subtitle={`${candidate.birth_year}년생 · ${candidate.gender} · ${candidate.occupation}`}
-              />
-            ))}
-          </div>
+          {mockCandidates.length ? (
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
+              {mockCandidates.map((candidate, index) => (
+                <InventoryCard
+                  key={candidate.id}
+                  tone={index % 2 === 0 ? "rose" : "gold"}
+                  imageUrl={candidate.image_url}
+                  title={`${candidate.full_name} · ${candidate.region}`}
+                  subtitle={`${candidate.birth_year}년생 · ${candidate.gender} · ${candidate.occupation}`}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="mt-6 rounded-[28px] border border-[#f0ddd2] bg-[#fff8f3] px-5 py-6 text-center text-[#8a6b74]">
+              현재 표시할 기본 후보가 없습니다.
+            </div>
+          )}
         </section>
       </div>
     </main>

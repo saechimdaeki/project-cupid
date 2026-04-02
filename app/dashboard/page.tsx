@@ -9,7 +9,7 @@ import {
   getDashboardCandidates,
   getDashboardMatchRecords,
 } from "@/lib/data";
-import { mockCandidates } from "@/lib/mock-data";
+import { previewSceneCandidates } from "@/lib/preview-scene";
 import { canEditCandidates, requireApprovedMembership, roleLabel } from "@/lib/permissions";
 
 type DashboardPageProps = {
@@ -296,8 +296,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
           <div className="relative hidden overflow-hidden rounded-[30px] border border-[#ead8cf] bg-white/66 p-3 shadow-[0_18px_44px_rgba(143,95,89,0.08)] xl:block">
             <LandingScene
-              leftCandidate={mockCandidates[0]}
-              rightCandidate={mockCandidates[1] ?? mockCandidates[0]}
+              leftCandidate={previewSceneCandidates[0]}
+              rightCandidate={previewSceneCandidates[1]}
             />
           </div>
           {message === "viewer-role" ? (
