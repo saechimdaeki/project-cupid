@@ -9,7 +9,7 @@ import {
   getDashboardCandidates,
   getDashboardMatchRecords,
 } from "@/lib/data";
-import { previewSceneCandidates } from "@/lib/preview-scene";
+import { dashboardPreviewMatchRecords, homePreviewCandidates, previewSceneCandidates } from "@/lib/preview-scene";
 import { canEditCandidates, requireApprovedMembership, roleLabel } from "@/lib/permissions";
 
 type DashboardPageProps = {
@@ -85,10 +85,13 @@ function FilterSelect({
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const { filter, religion, gender, q, message } = await searchParams;
   const membership = await requireApprovedMembership();
-  const [allCandidates, recentMatches] = await Promise.all([
+  const [fetchedCandidates, fetchedMatches] = await Promise.all([
     getDashboardCandidates(),
     getDashboardMatchRecords(),
   ]);
+  const isPreviewMode = fetchedCandidates.length === 0;
+  const allCandidates = isPreviewMode ? homePreviewCandidates : fetchedCandidates;
+  const recentMatches = isPreviewMode ? dashboardPreviewMatchRecords : fetchedMatches;
   const timelineEvents = buildTimelineEvents(
     recentMatches,
     new Map(allCandidates.map((candidate) => [candidate.id, candidate])),
@@ -131,6 +134,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     }
     return true;
   });
+  const boardRole = isPreviewMode ? "viewer" : membership.role;
 
   const heroBadges =
     membership.role === "viewer"
@@ -370,8 +374,13 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             <p className="mt-3 text-[15px] leading-7 text-[#6d5961] sm:text-base">
               필터 결과가 그대로 운영 칸반에 반영되어, 지금 손대야 할 후보와 이미 감정선이 붙은 후보를 한눈에 나눠볼 수 있습니다.
             </p>
+            {isPreviewMode ? (
+              <div className="mt-4 rounded-2xl border border-[#f0ddd2] bg-[#fff8f3] px-4 py-3 text-sm font-medium text-[#8a6b74]">
+                아직 실제 매물이 없어 홈 프리뷰 후보를 대시보드에 표시하고 있습니다.
+              </div>
+            ) : null}
           </div>
-          <DashboardFlowBoard candidates={visibleCandidates} allCandidates={allCandidates} role={membership.role} />
+          <DashboardFlowBoard candidates={visibleCandidates} allCandidates={allCandidates} role={boardRole} />
         </section>
 
         <section className="grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)]">
@@ -385,7 +394,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             {visibleCandidates.length ? (
               <div className="mt-6 grid gap-4 md:grid-cols-2">
                 {visibleCandidates.map((candidate) => (
-                  <CandidateCard key={candidate.id} candidate={candidate} role={membership.role} />
+                  <CandidateCard key={candidate.id} candidate={candidate} role={boardRole} />
                 ))}
               </div>
             ) : (

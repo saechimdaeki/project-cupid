@@ -192,6 +192,14 @@ button {
   height: 190px;
 }
 
+.homeInventoryPreview.personPreview.sm {
+  height: clamp(240px, 24vw, 320px);
+}
+
+.homeInventoryCard .px-1.pb-1.pt-4 {
+  min-height: 92px;
+}
+
 .personPreview.lg {
   position: absolute;
   inset: 0;

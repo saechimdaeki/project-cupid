@@ -3,8 +3,7 @@ import { LandingScene } from "@/components/landing-scene";
 import { LazyHomeAccountShell } from "@/components/lazy-home-account-shell";
 import { LazySplashIntro } from "@/components/lazy-splash-intro";
 import { PersonPreview } from "@/components/person-preview";
-import { mockCandidates } from "@/lib/mock-data";
-import { previewSceneCandidates } from "@/lib/preview-scene";
+import { homePreviewCandidates } from "@/lib/preview-scene";
 
 function QuickStat({
   label,
@@ -41,7 +40,7 @@ function InventoryCard({
 }) {
   return (
     <article
-      className={`overflow-hidden rounded-[28px] border p-4 shadow-[0_16px_36px_rgba(143,95,89,0.1)] ${
+      className={`homeInventoryCard flex h-full flex-col overflow-hidden rounded-[28px] border p-4 shadow-[0_16px_36px_rgba(143,95,89,0.1)] ${
         tone === "rose"
           ? "border-[#f0d8dd] bg-gradient-to-br from-white via-[#fff7f8] to-[#fff1ec]"
           : "border-[#ecdcc8] bg-gradient-to-br from-white via-[#fff9f1] to-[#fff4eb]"
@@ -53,7 +52,7 @@ function InventoryCard({
           size="sm"
           fit="cover"
           position="top"
-          className="min-h-[220px] rounded-[20px] bg-[#fffaf7]"
+          className="homeInventoryPreview rounded-[20px] bg-[#fffaf7]"
         />
       </div>
       <div className="px-1 pb-1 pt-4">
@@ -65,7 +64,7 @@ function InventoryCard({
 }
 
 export default function HomePage() {
-  const previewCandidates = previewSceneCandidates;
+  const previewCandidates = homePreviewCandidates;
   const leftCandidate = previewCandidates[0];
   const rightCandidate = previewCandidates[1] ?? previewCandidates[0];
 
@@ -155,7 +154,7 @@ export default function HomePage() {
 
             <div className="mt-8 grid gap-3 sm:grid-cols-3">
               <QuickStat label="Access Model" value="3단계 권한" description="viewer, admin, super_admin으로 분리" />
-              <QuickStat label="Candidate Photos" value={`${mockCandidates.length}건`} description="대표 사진과 상세 갤러리를 함께 관리" />
+              <QuickStat label="Candidate Photos" value={`${previewCandidates.length}건`} description="대표 사진과 상세 갤러리를 함께 관리" />
               <QuickStat label="Trusted Flow" value="승인 기반 운영" description="누가 어디까지 볼지 화면 단위로 제어" />
             </div>
           </article>
@@ -188,9 +187,9 @@ export default function HomePage() {
             </div>
           </div>
 
-          {mockCandidates.length ? (
+          {previewCandidates.length ? (
             <div className="mt-6 grid gap-4 md:grid-cols-2">
-              {mockCandidates.map((candidate, index) => (
+              {previewCandidates.map((candidate, index) => (
                 <InventoryCard
                   key={candidate.id}
                   tone={index % 2 === 0 ? "rose" : "gold"}

@@ -1,4 +1,50 @@
 import type { Candidate } from "@/lib/types";
+import type { MatchRecord } from "@/lib/types";
+
+export const homePreviewCandidates: Candidate[] = [
+  {
+    id: "home-preview-female",
+    full_name: "김서연",
+    birth_year: 1994,
+    gender: "여",
+    region: "서울",
+    occupation: "기획자",
+    work_summary: "INNOVATE · 서비스 기획",
+    education: "",
+    religion: "",
+    mbti: null,
+    personality_summary: "랜딩 홈 프리뷰용 여성 프로필입니다.",
+    ideal_type: "",
+    notes_private: "",
+    status: "active",
+    highlight_tags: [],
+    image_url: "/99년생 여자 기획자.png",
+    paired_candidate_id: null,
+    created_at: "2026-04-02T00:00:00.000Z",
+    created_by_name: "system",
+  },
+  {
+    id: "home-preview-male",
+    full_name: "박도윤",
+    birth_year: 1991,
+    gender: "남",
+    region: "판교",
+    occupation: "개발자",
+    work_summary: "INNOVATE · 백엔드 개발",
+    education: "",
+    religion: "",
+    mbti: null,
+    personality_summary: "랜딩 홈 프리뷰용 남성 프로필입니다.",
+    ideal_type: "",
+    notes_private: "",
+    status: "active",
+    highlight_tags: [],
+    image_url: "/94년생 남자 개발자.png",
+    paired_candidate_id: null,
+    created_at: "2026-04-02T00:00:01.000Z",
+    created_by_name: "system",
+  },
+];
 
 export const previewSceneCandidates: Candidate[] = [
   {
@@ -17,7 +63,7 @@ export const previewSceneCandidates: Candidate[] = [
     notes_private: "",
     status: "active",
     highlight_tags: [],
-    image_url: null,
+    image_url: "/99년생 여자 기획자.png",
     paired_candidate_id: null,
     created_at: "2026-04-02T00:00:00.000Z",
     created_by_name: "system",
@@ -38,9 +84,22 @@ export const previewSceneCandidates: Candidate[] = [
     notes_private: "",
     status: "active",
     highlight_tags: [],
-    image_url: null,
+    image_url: "/94년생 남자 개발자.png",
     paired_candidate_id: null,
     created_at: "2026-04-02T00:00:01.000Z",
     created_by_name: "system",
+  },
+];
+
+export const dashboardPreviewMatchRecords: MatchRecord[] = [
+  {
+    id: "dashboard-preview-match-1",
+    candidate_id: "home-preview-female",
+    counterpart_label: "박도윤",
+    counterpart_candidate_id: "home-preview-male",
+    matchmaker_name: "프리뷰",
+    outcome: "intro_sent",
+    summary: "대시보드 프리뷰용 연결 흐름입니다.",
+    happened_on: "2026-04-02",
   },
 ];
