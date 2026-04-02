@@ -151,6 +151,11 @@ function normalizeGender(value: string) {
   return "";
 }
 
+function normalizeHeightText(value: FormDataEntryValue | null) {
+  const text = String(value ?? "").trim();
+  return text || "모름";
+}
+
 function buildCounterpartLabel(candidate: {
   full_name: string;
   birth_year: number;
@@ -260,11 +265,13 @@ export async function createCandidate(formData: FormData) {
       existingCandidateId = existingCandidate.id;
     } else {
       const birthYear = Number(formData.get("birthYear") ?? 0);
+      const heightText = normalizeHeightText(formData.get("heightText"));
 
       const payload = {
         id: candidateId,
         full_name: cleanText(formData.get("fullName")),
         birth_year: birthYear,
+        height_text: heightText,
         gender: normalizeGender(cleanText(formData.get("gender"))),
         region: cleanText(formData.get("region")),
         occupation: cleanText(formData.get("occupation")),
@@ -427,9 +434,11 @@ export async function updateCandidate(formData: FormData) {
       null;
 
     const birthYear = Number(formData.get("birthYear") ?? 0);
+    const heightText = normalizeHeightText(formData.get("heightText"));
     const payload = {
       full_name: cleanText(formData.get("fullName")),
       birth_year: birthYear,
+      height_text: heightText,
       gender: normalizeGender(cleanText(formData.get("gender"))),
       region: cleanText(formData.get("region")),
       occupation: cleanText(formData.get("occupation")),

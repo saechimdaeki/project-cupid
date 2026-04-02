@@ -17,6 +17,7 @@ export type Candidate = {
   id: string;
   full_name: string;
   birth_year: number;
+  height_text: string;
   gender: string;
   region: string;
   occupation: string;

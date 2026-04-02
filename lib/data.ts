@@ -72,6 +72,11 @@ function normalizeGender(value: string | null | undefined) {
   return value ?? "";
 }
 
+function normalizeHeightText(value: unknown) {
+  const text = String(value ?? "").trim();
+  return text || "모름";
+}
+
 function isDirectImageUrl(value: string | null | undefined) {
   return Boolean(
     value &&
@@ -132,6 +137,7 @@ function mapCandidate(row: any): Candidate {
     id: row.id,
     full_name: row.full_name,
     birth_year: row.birth_year,
+    height_text: normalizeHeightText(row.height_text),
     gender: normalizeGender(row.gender),
     region: row.region,
     occupation: row.occupation,
@@ -193,6 +199,7 @@ function mapDashboardCandidate(row: any): Candidate {
     id: row.id,
     full_name: row.full_name,
     birth_year: row.birth_year,
+    height_text: normalizeHeightText(row.height_text),
     gender: normalizeGender(row.gender),
     region: row.region ?? "",
     occupation: row.occupation ?? "",
@@ -276,7 +283,7 @@ export async function getDashboardCandidates() {
   const { data, error } = await supabase
     .from("cupid_candidates")
     .select(
-      "id, full_name, birth_year, gender, region, occupation, work_summary, religion, personality_summary, status, highlight_tags, paired_candidate_id, created_at",
+      "id, full_name, birth_year, height_text, gender, region, occupation, work_summary, religion, personality_summary, status, highlight_tags, paired_candidate_id, created_at",
     )
     .order("created_at", { ascending: false });
 

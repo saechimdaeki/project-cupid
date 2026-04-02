@@ -1,11 +1,155 @@
+"use client";
+
 import Link from "next/link";
-import { LandingScene } from "@/components/landing-scene";
-import { LazyHomeAccountShell } from "@/components/lazy-home-account-shell";
-import { LazySplashIntro } from "@/components/lazy-splash-intro";
+import type { CSSProperties } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PersonPreview } from "@/components/person-preview";
 import { homePreviewCandidates } from "@/lib/preview-scene";
 
-function QuickStat({
+const LOGIN_STORAGE_KEY = "isLoggedIn";
+const ROLE_STORAGE_KEY = "userRole";
+const NAME_STORAGE_KEY = "userName";
+
+const PETAL_SVG = `data:image/svg+xml;utf8,${encodeURIComponent(`
+<svg width="36" height="28" viewBox="0 0 36 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M17.853 2.392c2.86-3.19 9.626-2.57 12.199 1.519 1.943 3.09 1.22 7.76-1.5 10.363-2.802 2.68-6.712 5.68-10.626 11.334C13.16 20.195 9.123 17.28 6.177 14.675c-2.86-2.528-3.874-7.342-1.756-10.625C7.194-.231 13.96-.712 17.853 2.392Z" fill="#F9A8D4"/>
+  <path d="M18.166 5.31c2.297-2.317 6.44-1.965 8.319.705" stroke="white" stroke-opacity=".6" stroke-width="1.4" stroke-linecap="round"/>
+</svg>
+`)}`;
+
+type SakuraPetal = {
+  fallDelay: string;
+  fallDuration: string;
+  left: string;
+  opacity: number;
+  rotate: string;
+  scale: string;
+  swayDelay: string;
+  swayDuration: string;
+  swayDistance: string;
+  width: string;
+};
+
+function createSakuraPetals(count: number) {
+  return Array.from({ length: count }, (_, index) => {
+    const width = 12 + ((index * 5) % 14);
+    const left = `${((index * 7.3) + ((index * 11) % 19)) % 100}%`;
+    const fallDuration = 15 + ((index * 3) % 16);
+    const fallDelay = -((index * 1.4) % 24);
+    const swayDuration = 4 + ((index * 5) % 5);
+    const swayDelay = -((index * 0.8) % 6);
+    const swayDistance = 14 + ((index * 4) % 24);
+    const opacity = 0.22 + ((index * 2) % 6) * 0.08;
+    const scale = 0.58 + ((index * 3) % 7) * 0.08;
+    const rotate = -30 + ((index * 13) % 60);
+
+    return {
+      width: `${width}px`,
+      left,
+      fallDelay: `${fallDelay}s`,
+      fallDuration: `${fallDuration}s`,
+      swayDuration: `${swayDuration}s`,
+      swayDelay: `${swayDelay}s`,
+      swayDistance: `${swayDistance}px`,
+      opacity,
+      scale: `${scale}`,
+      rotate: `${rotate}deg`,
+    } satisfies SakuraPetal;
+  });
+}
+
+type AuthState = {
+  isLoggedIn: boolean;
+  userName: string;
+  userRole: "super_admin" | "";
+};
+
+const defaultAuthState: AuthState = {
+  isLoggedIn: true,
+  userName: "김준성",
+  userRole: "super_admin",
+};
+
+function saveAuthState(nextState: AuthState) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(LOGIN_STORAGE_KEY, String(nextState.isLoggedIn));
+  window.localStorage.setItem(ROLE_STORAGE_KEY, nextState.userRole);
+  window.localStorage.setItem(NAME_STORAGE_KEY, nextState.userName);
+}
+
+function Header({
+  auth,
+  onLogin,
+  onLogout,
+}: {
+  auth: AuthState;
+  onLogin: () => void;
+  onLogout: () => void;
+}) {
+  return (
+    <header className="fixed inset-x-0 top-0 z-40 border-b border-white/50 bg-white/30 backdrop-blur-lg">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+        <div className="flex min-w-0 items-center gap-4">
+          <Link href="/" className="flex min-w-0 items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-3xl border border-white/60 bg-white/70 text-sm font-semibold text-rose-500 shadow-[0_8px_30px_rgb(244,114,182,0.12)]">
+              C
+            </div>
+            <div className="min-w-0">
+              <strong className="block truncate text-sm font-semibold tracking-[-0.02em] text-slate-800 sm:text-base">
+                Project Cupid
+              </strong>
+              <span className="block truncate text-xs text-slate-500">
+                사랑이 피어나는 스튜디오
+              </span>
+            </div>
+          </Link>
+
+          {auth.isLoggedIn && auth.userRole === "super_admin" ? (
+            <nav className="hidden items-center gap-6 lg:flex">
+              <Link href="/dashboard" className="text-sm font-medium text-slate-500 transition hover:text-rose-500">
+                대시보드
+              </Link>
+              <Link href="/dashboard?view=inventory" className="text-sm font-medium text-slate-500 transition hover:text-rose-500">
+                매물 관리
+              </Link>
+              <Link href="/admin" className="text-sm font-medium text-slate-500 transition hover:text-rose-500">
+                승인 관리
+              </Link>
+            </nav>
+          ) : null}
+        </div>
+
+        {auth.isLoggedIn ? (
+          <div className="flex items-center gap-2 rounded-full border border-white/50 bg-white/60 px-2 py-1.5 shadow-[0_8px_30px_rgb(244,114,182,0.1)] backdrop-blur-md">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-rose-100 to-orange-100 text-sm font-semibold text-slate-700">
+              김
+            </div>
+            <p className="hidden text-sm font-medium text-slate-600 md:block">
+              환영합니다, <span className="text-slate-800">{auth.userName}님</span> ❤️
+            </p>
+            <button
+              type="button"
+              onClick={onLogout}
+              className="px-2 text-sm font-medium text-slate-500 transition hover:text-rose-500"
+            >
+              로그아웃
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={onLogin}
+            className="soft-pulse inline-flex h-11 items-center justify-center rounded-full border border-white/60 bg-white/65 px-5 text-sm font-semibold text-slate-700 shadow-[0_8px_30px_rgb(244,114,182,0.1)] backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/80"
+          >
+            회원가입 / 로그인
+          </button>
+        )}
+      </div>
+    </header>
+  );
+}
+
+function StatCard({
   label,
   value,
   description,
@@ -15,15 +159,129 @@ function QuickStat({
   description: string;
 }) {
   return (
-    <article className="rounded-[28px] border border-[#e8d8cf] bg-white/80 p-5 shadow-[0_14px_36px_rgba(143,95,89,0.08)] backdrop-blur-sm">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#b46d59]">
+    <article className="rounded-3xl border border-white/50 bg-white/60 p-5 shadow-[0_8px_30px_rgb(244,114,182,0.1)] backdrop-blur-md">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
         {label}
       </p>
-      <strong className="mt-3 block text-2xl font-semibold tracking-[-0.04em] text-[#24161c]">
+      <strong className="mt-3 block text-2xl font-semibold tracking-[-0.04em] text-slate-800">
         {value}
       </strong>
-      <span className="mt-2 block text-sm leading-6 text-[#6d5961]">{description}</span>
+      <p className="mt-2 text-sm leading-6 text-slate-500">{description}</p>
     </article>
+  );
+}
+
+function PreviewCard({
+  imageUrl,
+  title,
+  subtitle,
+  align,
+}: {
+  imageUrl: string | null;
+  title: string;
+  subtitle: string;
+  align: "left" | "right";
+}) {
+  return (
+    <article
+      className={`absolute top-16 w-[13.8rem] rounded-[32px] border border-white/60 bg-white/70 p-3 shadow-[0_8px_30px_rgb(244,114,182,0.12)] backdrop-blur-lg ${
+        align === "left" ? "left-4 rotate-[-13deg] sm:left-8" : "right-4 rotate-[12deg] sm:right-8"
+      }`}
+    >
+      <div className="overflow-hidden rounded-[24px] border border-white/70 bg-rose-50/40">
+        <PersonPreview
+          imageUrl={imageUrl}
+          size="sm"
+          fit="cover"
+          position="top"
+          className="h-44 bg-rose-50/40"
+        />
+      </div>
+      <div className="px-1 pb-1 pt-4">
+        <strong className="block text-sm font-semibold tracking-[-0.03em] text-slate-800">
+          {title}
+        </strong>
+        <p className="mt-1 text-xs leading-5 text-slate-500">{subtitle}</p>
+      </div>
+    </article>
+  );
+}
+
+function ConnectionPreview() {
+  const leftCandidate = homePreviewCandidates[0];
+  const rightCandidate = homePreviewCandidates[1] ?? homePreviewCandidates[0];
+
+  return (
+    <section className="relative overflow-hidden rounded-[36px] border border-white/50 bg-white/60 p-4 shadow-[0_8px_30px_rgb(244,114,182,0.1)] backdrop-blur-lg sm:p-5">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute left-1/4 top-14 h-36 w-36 rounded-full bg-rose-200/45 blur-3xl" />
+        <div className="absolute right-1/4 top-20 h-40 w-40 rounded-full bg-orange-200/35 blur-3xl" />
+        <div className="absolute left-1/2 top-1/2 h-28 w-28 -translate-x-1/2 -translate-y-1/2 rounded-full bg-pink-100/35 blur-3xl" />
+      </div>
+
+      <div className="relative flex items-center justify-between">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+          Cupid Preview
+        </p>
+        <span className="inline-flex rounded-full border border-white/60 bg-white/70 px-3 py-1 text-[11px] font-medium text-slate-500">
+          love in motion
+        </span>
+      </div>
+
+      <div className="relative mt-4 min-h-[25rem] rounded-[30px] border border-white/60 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.68),rgba(255,247,244,0.62),rgba(255,250,248,0.72))]">
+        <PreviewCard
+          imageUrl={leftCandidate.image_url}
+          align="left"
+          title={`${String(leftCandidate.birth_year).slice(2)}년생 서울 기획자`}
+          subtitle={`${leftCandidate.full_name} · ${leftCandidate.work_summary}`}
+        />
+        <PreviewCard
+          imageUrl={rightCandidate.image_url}
+          align="right"
+          title={`${String(rightCandidate.birth_year).slice(2)}년생 경기 개발자`}
+          subtitle={`${rightCandidate.full_name} · ${rightCandidate.work_summary}`}
+        />
+
+        <svg viewBox="0 0 700 360" className="absolute inset-0 h-full w-full" aria-hidden="true">
+          <defs>
+            <linearGradient id="beam" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="rgb(251 113 133 / 0.22)" />
+              <stop offset="50%" stopColor="rgb(251 191 36 / 0.22)" />
+              <stop offset="100%" stopColor="rgb(244 114 182 / 0.18)" />
+            </linearGradient>
+          </defs>
+          <path
+            d="M120 150 C220 80, 300 240, 400 180 S560 110, 620 150"
+            fill="none"
+            stroke="url(#beam)"
+            strokeWidth="2.6"
+            strokeLinecap="round"
+          />
+          <circle cx="250" cy="138" r="16" fill="white" stroke="rgb(254 205 211 / 0.75)" />
+          <circle cx="360" cy="205" r="16" fill="white" stroke="rgb(254 215 170 / 0.72)" />
+          <circle cx="478" cy="158" r="16" fill="white" stroke="rgb(254 205 211 / 0.75)" />
+        </svg>
+
+        <div className="absolute left-1/2 top-[36%] -translate-x-1/2 rounded-full border border-white/60 bg-white/72 px-3 py-1 text-[11px] font-medium text-slate-500 shadow-sm backdrop-blur">
+          첫 연결
+        </div>
+        <div className="absolute left-1/2 top-[54%] -translate-x-1/2 rounded-full border border-white/60 bg-white/72 px-3 py-1 text-[11px] font-medium text-slate-500 shadow-sm backdrop-blur">
+          관계 진전
+        </div>
+
+        <div className="absolute inset-x-4 bottom-4 rounded-[26px] border border-white/60 bg-white/72 p-4 shadow-[0_8px_30px_rgb(244,114,182,0.08)] backdrop-blur-md">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+            Studio Mood
+          </p>
+          <strong className="mt-2 block text-sm font-semibold text-slate-800">
+            사랑이 피어나는 스튜디오처럼, 보는 순간 마음이 먼저 따뜻해져야 합니다
+          </strong>
+          <p className="mt-1 text-xs leading-5 text-slate-500 sm:text-sm">
+            설렘과 행복의 기운 속에서, 좋은 인연의 시작을 더 다정하게 준비합니다.
+          </p>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -31,106 +289,143 @@ function InventoryCard({
   title,
   subtitle,
   imageUrl,
-  tone,
 }: {
   title: string;
   subtitle: string;
   imageUrl: string | null;
-  tone: "rose" | "gold";
 }) {
   return (
-    <article
-      className={`homeInventoryCard flex h-full flex-col overflow-hidden rounded-[28px] border p-4 shadow-[0_16px_36px_rgba(143,95,89,0.1)] ${
-        tone === "rose"
-          ? "border-[#f0d8dd] bg-gradient-to-br from-white via-[#fff7f8] to-[#fff1ec]"
-          : "border-[#ecdcc8] bg-gradient-to-br from-white via-[#fff9f1] to-[#fff4eb]"
-      }`}
-    >
-      <div className="rounded-[22px] bg-white/85 p-3">
+    <article className="mx-auto flex h-full w-full max-w-[35rem] flex-col overflow-hidden rounded-[30px] border border-white/50 bg-white/60 p-4 shadow-[0_8px_30px_rgb(244,114,182,0.1)] backdrop-blur-md sm:p-5">
+      <div className="overflow-hidden rounded-[24px] border border-white/60 bg-rose-50/35">
         <PersonPreview
           imageUrl={imageUrl}
           size="sm"
           fit="cover"
           position="top"
-          className="homeInventoryPreview rounded-[20px] bg-[#fffaf7]"
+          className="h-64 bg-rose-50/35"
         />
       </div>
-      <div className="px-1 pb-1 pt-4">
-        <h3 className="text-xl font-semibold tracking-[-0.04em] text-[#24161c]">{title}</h3>
-        <p className="mt-2 text-sm leading-6 text-[#6d5961]">{subtitle}</p>
+      <div className="px-1 pb-1 pt-5">
+        <h3 className="text-xl font-semibold tracking-[-0.03em] text-slate-800">{title}</h3>
+        <p className="mt-2 text-sm leading-6 text-slate-500">{subtitle}</p>
       </div>
     </article>
   );
 }
 
-export default function HomePage() {
-  const previewCandidates = homePreviewCandidates;
-  const leftCandidate = previewCandidates[0];
-  const rightCandidate = previewCandidates[1] ?? previewCandidates[0];
+function SakuraRain() {
+  const petals = useMemo(() => createSakuraPetals(56), []);
 
   return (
-    <main className="landingPage relative min-h-screen overflow-x-hidden bg-[linear-gradient(180deg,#fff8f2_0%,#fff3ec_42%,#fffaf6_100%)] text-[#24161c]">
-      <LazySplashIntro />
-      <div className="landingWrap mx-auto flex w-full max-w-[1280px] flex-col gap-6 px-4 pb-10 pt-4 sm:px-6 lg:px-8">
-        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 -z-10 overflow-hidden">
-          <span className="pageGlow glowLeft" />
-          <span className="pageGlow glowRight" />
-          <span className="blossomPetal petal1" />
-          <span className="blossomPetal petal2" />
-          <span className="blossomPetal petal3" />
-          <span className="blossomPetal petal4" />
-          <span className="blossomPetal petal5" />
-          <span className="floatingHeart heartOne">♥</span>
-          <span className="floatingHeart heartTwo">♥</span>
-          <span className="floatingHeart heartThree">♥</span>
-          <span className="floatingHeart heartFour">♥</span>
-          <div className="absolute left-[8%] top-16 h-24 w-24 rounded-full bg-pink-200/30 blur-3xl" />
-          <div className="absolute right-[12%] top-24 h-28 w-28 rounded-full bg-amber-200/35 blur-3xl" />
-          <div className="absolute left-[18%] top-48 text-3xl text-pink-300/60">❀</div>
-          <div className="absolute right-[18%] top-64 text-2xl text-pink-300/50">❀</div>
-          <div className="absolute left-[12%] top-[34rem] text-xl text-rose-300/40">❀</div>
-          <div className="absolute right-[10%] top-[26rem] text-xl text-rose-300/40">❀</div>
-          <div className="absolute left-[9%] top-[52rem] text-2xl text-pink-300/40">❀</div>
-        </div>
-        <header className="flex flex-col gap-4 rounded-[30px] border border-[#ead8cf] bg-white/85 p-4 shadow-[0_14px_40px_rgba(143,95,89,0.08)] backdrop-blur-sm sm:p-5 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex min-w-0 items-center gap-4">
-            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-[18px] border border-[#e9d7cf] bg-gradient-to-br from-[#fffaf7] to-[#fff1e8] text-2xl font-semibold text-[#d1a06b]">
-              C
-            </div>
-            <div className="min-w-0">
-              <strong className="block text-[clamp(1.1rem,4vw,1.9rem)] font-semibold tracking-[-0.04em] text-[#24161c]">
-                Project Cupid
-              </strong>
-              <span className="block text-sm leading-6 text-[#7a636b] sm:text-base">
-                Private Matchmaking Workspace
-              </span>
-            </div>
-          </div>
+    <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+      {petals.map((petal, index) => (
+        <span
+          key={`${petal.left}-${index}`}
+          className="sakura-petal-track"
+          style={
+            {
+              left: petal.left,
+              animationDelay: petal.fallDelay,
+              animationDuration: petal.fallDuration,
+              opacity: petal.opacity,
+              ["--petal-sway-distance" as string]: petal.swayDistance,
+            } as CSSProperties
+          }
+        >
+          <span
+            className="sakura-petal-drift"
+            style={
+              {
+                animationDelay: petal.swayDelay,
+                animationDuration: petal.swayDuration,
+              } as CSSProperties
+            }
+          >
+            <span
+              className="sakura-petal"
+              style={
+                {
+                  width: petal.width,
+                  height: `${Math.round(Number.parseInt(petal.width, 10) * 0.78)}px`,
+                  backgroundImage: `url("${PETAL_SVG}")`,
+                  transform: `scale(${petal.scale}) rotate(${petal.rotate})`,
+                } as CSSProperties
+              }
+            />
+          </span>
+        </span>
+      ))}
+    </div>
+  );
+}
 
-          <LazyHomeAccountShell />
-        </header>
+export default function HomePage() {
+  const [auth, setAuth] = useState<AuthState>(defaultAuthState);
 
-        <section className="grid gap-5 lg:grid-cols-[minmax(0,1.08fr)_minmax(320px,0.92fr)] lg:items-stretch">
-          <article className="overflow-hidden rounded-[34px] border border-[#ead8cf] bg-[linear-gradient(135deg,rgba(255,255,255,0.92),rgba(255,244,239,0.96))] p-6 shadow-[0_24px_70px_rgba(143,95,89,0.12)] sm:p-7 lg:p-8">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#b46d59]">
-              Private Matchmaking Studio
+  useEffect(() => {
+    const storedLogin = window.localStorage.getItem(LOGIN_STORAGE_KEY);
+    const storedRole = window.localStorage.getItem(ROLE_STORAGE_KEY);
+    const storedName = window.localStorage.getItem(NAME_STORAGE_KEY);
+
+    if (!storedLogin) {
+      saveAuthState(defaultAuthState);
+      setAuth(defaultAuthState);
+      return;
+    }
+
+    setAuth({
+      isLoggedIn: storedLogin === "true",
+      userName: storedName || defaultAuthState.userName,
+      userRole: storedRole === "super_admin" ? "super_admin" : "",
+    });
+  }, []);
+
+  const handleLogin = () => {
+    const nextState = defaultAuthState;
+    saveAuthState(nextState);
+    setAuth(nextState);
+  };
+
+  const handleLogout = () => {
+    window.localStorage.removeItem("isLoggedIn");
+    window.localStorage.removeItem("userRole");
+    window.localStorage.removeItem(NAME_STORAGE_KEY);
+    setAuth({
+      isLoggedIn: false,
+      userName: defaultAuthState.userName,
+      userRole: "",
+    });
+    window.location.reload();
+  };
+
+  return (
+    <main className="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50/30 to-orange-50/50 text-slate-800">
+      <SakuraRain />
+      <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_top,rgba(255,242,245,0.84),rgba(255,247,243,0.68),rgba(255,255,255,0.38))]" />
+
+      <Header auth={auth} onLogin={handleLogin} onLogout={handleLogout} />
+
+      <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 pb-14 pt-24 sm:px-6 lg:px-8">
+        <section className="grid gap-6 xl:grid-cols-[minmax(0,1.06fr)_minmax(360px,0.94fr)]">
+          <article className="landing-reveal rounded-[36px] border border-white/50 bg-white/60 p-6 shadow-[0_8px_30px_rgb(244,114,182,0.1)] backdrop-blur-lg sm:p-8">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+              Private Love Studio
             </p>
-            <h1 className="mt-4 max-w-[12ch] text-[clamp(2.4rem,11vw,5.3rem)] font-semibold leading-[0.94] tracking-[-0.08em] text-[#24161c]">
+            <h1 className="mt-4 max-w-[10ch] text-[clamp(2.8rem,10vw,5.1rem)] font-semibold leading-[0.92] tracking-[-0.07em] text-slate-800">
               좋은 인연을
               <br />
               잇습니다
             </h1>
-            <p className="mt-5 max-w-[58ch] text-[15px] leading-7 text-[#6d5961] sm:text-base">
-              승인된 사람만 들어와 사진, 이력, 만남의 흐름을 함께 보며 소개를 설계하는
-              프라이빗 매칭 스튜디오입니다. 모바일에서도 바로 읽히도록 홈 화면부터
-              가볍고 단단하게 다시 정리합니다.
+            <p className="mt-5 max-w-[58ch] text-sm leading-7 text-slate-500 sm:text-base">
+              승인된 사람만 들어와 사진, 이력, 만남의 흐름을 함께 보며 사랑의 시작을 설계하는
+              프라이빗 공간입니다. 더 따뜻하고 더 설레는 무드 속에서, 한 사람의 행복한 만남을 준비합니다.
             </p>
 
             <div className="mt-6 flex flex-wrap gap-2">
-              {["비공개 매칭 보드", "사진 · 이력 · 온도 기록", "admin · super_admin 운영"].map((item) => (
+              {["비공개 매칭 보드", "사진 · 이력 · 온도 기록", "VVIP 운영 권한"].map((item) => (
                 <span
                   key={item}
-                  className="inline-flex min-h-9 items-center rounded-full border border-[#ead8cf] bg-white/80 px-4 text-xs font-semibold text-[#6d5961] sm:text-sm"
+                  className="inline-flex items-center rounded-full border border-white/60 bg-white/65 px-4 py-2 text-xs font-medium text-slate-500 shadow-sm backdrop-blur"
                 >
                   {item}
                 </span>
@@ -139,60 +434,61 @@ export default function HomePage() {
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <Link
-                className="inline-flex min-h-12 items-center justify-center rounded-full border border-[#d8b28a] bg-gradient-to-r from-[#f2c98d] to-[#c78662] px-6 text-sm font-semibold text-[#2b1b11] shadow-[0_10px_24px_rgba(198,132,99,0.18)] transition hover:-translate-y-0.5"
                 href="/dashboard"
+                className="soft-pulse inline-flex h-12 items-center justify-center rounded-full bg-rose-500 px-6 text-sm font-semibold text-white shadow-[0_8px_30px_rgb(244,114,182,0.22)] transition hover:-translate-y-0.5 hover:bg-rose-600"
               >
-                대시보드로 이동
+                대시보드 이동
               </Link>
               <Link
-                className="inline-flex min-h-12 items-center justify-center rounded-full border border-[#ead8cf] bg-white/90 px-6 text-sm font-semibold text-[#2d1e24] transition hover:-translate-y-0.5"
-                href="/dashboard?filter=active"
+                href="/login"
+                className="inline-flex h-12 items-center justify-center rounded-full border border-white/60 bg-white/65 px-6 text-sm font-medium text-slate-600 transition hover:bg-white/80"
               >
                 소개 흐름 보기
               </Link>
             </div>
 
             <div className="mt-8 grid gap-3 sm:grid-cols-3">
-              <QuickStat label="Access Model" value="3단계 권한" description="viewer, admin, super_admin으로 분리" />
-              <QuickStat label="Candidate Photos" value={`${previewCandidates.length}건`} description="대표 사진과 상세 갤러리를 함께 관리" />
-              <QuickStat label="Trusted Flow" value="승인 기반 운영" description="누가 어디까지 볼지 화면 단위로 제어" />
+              <StatCard
+                label="Access Model"
+                value="3단계 권한"
+                description="viewer, admin, super_admin으로 분리"
+              />
+              <StatCard
+                label="Candidate Photos"
+                value={`${homePreviewCandidates.length}건`}
+                description="대표 사진과 상세 갤러리를 함께 관리"
+              />
+              <StatCard
+                label="Trusted Flow"
+                value="승인 기반 운영"
+                description="행복한 연결을 다정하고 단단하게 설계"
+              />
             </div>
           </article>
 
-          <aside className="relative overflow-hidden rounded-[34px] border border-[#ead8cf] bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(255,246,240,0.98))] p-3 shadow-[0_24px_70px_rgba(143,95,89,0.12)] sm:p-4">
-            <div className="mb-3 flex items-center justify-between px-2 pt-2 sm:px-3">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#b46d59]">
-                Cupid Preview
-              </p>
-              <span className="inline-flex min-h-9 items-center rounded-full border border-[#ead8cf] bg-white/85 px-3 text-xs font-semibold text-[#725861]">
-                love in motion
-              </span>
-            </div>
-            <LandingScene leftCandidate={leftCandidate} rightCandidate={rightCandidate} />
-          </aside>
+          <div className="landing-reveal landing-delay-2">
+            <ConnectionPreview />
+          </div>
         </section>
 
-        <section className="rounded-[34px] border border-[#ead8cf] bg-white/85 p-5 shadow-[0_18px_44px_rgba(143,95,89,0.08)] backdrop-blur-sm sm:p-6">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#b46d59]">
-                Preview Inventory
-              </p>
-              <h2 className="mt-3 text-[clamp(1.8rem,8vw,3rem)] font-semibold tracking-[-0.06em] text-[#24161c]">
-                승인된 사람만 보는 실제 매물 보드
-              </h2>
-              <p className="mt-3 max-w-[60ch] text-[15px] leading-7 text-[#6d5961] sm:text-base">
-                viewer는 여기까지, admin 이상은 상세와 사진 갤러리로 이어집니다.
-              </p>
-            </div>
+        <section className="landing-reveal landing-delay-3 rounded-[36px] border border-white/50 bg-white/60 p-6 shadow-[0_8px_30px_rgb(244,114,182,0.1)] backdrop-blur-lg sm:p-7">
+          <div className="max-w-3xl">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+              Preview Inventory
+            </p>
+            <h2 className="mt-3 text-[clamp(1.8rem,5vw,3rem)] font-semibold tracking-[-0.05em] text-slate-800">
+              승인된 사람만 보는 실제 매물 보드
+            </h2>
+            <p className="mt-3 text-sm leading-7 text-slate-500 sm:text-base">
+              viewer는 여기까지, admin 이상은 상세와 사진 갤러리로 이어집니다.
+            </p>
           </div>
 
-          {previewCandidates.length ? (
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
-              {previewCandidates.map((candidate, index) => (
+          {homePreviewCandidates.length ? (
+            <div className="mt-6 grid gap-5 lg:grid-cols-2">
+              {homePreviewCandidates.map((candidate) => (
                 <InventoryCard
                   key={candidate.id}
-                  tone={index % 2 === 0 ? "rose" : "gold"}
                   imageUrl={candidate.image_url}
                   title={`${candidate.full_name} · ${candidate.region}`}
                   subtitle={`${candidate.birth_year}년생 · ${candidate.gender} · ${candidate.occupation}`}
@@ -200,7 +496,7 @@ export default function HomePage() {
               ))}
             </div>
           ) : (
-            <div className="mt-6 rounded-[28px] border border-[#f0ddd2] bg-[#fff8f3] px-5 py-6 text-center text-[#8a6b74]">
+            <div className="mt-6 rounded-[30px] border border-white/60 bg-white/65 px-5 py-8 text-center text-sm text-slate-500 shadow-sm">
               현재 표시할 기본 후보가 없습니다.
             </div>
           )}

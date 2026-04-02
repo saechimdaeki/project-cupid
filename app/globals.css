@@ -16,8 +16,8 @@
   --green: #6dd3ad;
   --amber: #f0b96e;
   --shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
-  --headline: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", "Noto Serif KR", "Apple SD Gothic Neo", serif;
-  --body: "Pretendard Variable", "SUIT Variable", "SF Pro Text", "Apple SD Gothic Neo", sans-serif;
+  --headline: var(--font-body), "Pretendard Variable", "SUIT Variable", "SF Pro Display", "Apple SD Gothic Neo", sans-serif;
+  --body: var(--font-body), "Pretendard Variable", "SUIT Variable", "SF Pro Text", "Apple SD Gothic Neo", sans-serif;
 }
 
 * {
@@ -38,6 +38,168 @@ body {
     radial-gradient(circle at 82% 16%, rgba(249, 214, 170, 0.28), transparent 20%),
     linear-gradient(180deg, #fdf7f3 0%, #f8efea 42%, #f6efec 100%);
   overflow-x: hidden;
+}
+
+.landing-reveal {
+  opacity: 0;
+  transform: translateY(22px);
+  animation: landing-reveal 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.landing-delay-2 {
+  animation-delay: 0.18s;
+}
+
+.landing-delay-3 {
+  animation-delay: 0.34s;
+}
+
+.sakura-petal-track {
+  position: absolute;
+  top: -14%;
+  animation-name: sakura-fall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform, opacity;
+}
+
+.sakura-petal-drift {
+  display: block;
+  animation-name: sakura-sway;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+  will-change: transform;
+}
+
+.sakura-petal {
+  display: block;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  filter: drop-shadow(0 8px 14px rgba(251, 113, 133, 0.12));
+}
+
+.cherry-petal {
+  position: absolute;
+  top: -12%;
+  border-radius: 999px 999px 999px 0;
+  background: linear-gradient(135deg, rgba(253, 205, 224, 0.85), rgba(251, 146, 167, 0.36));
+  filter: blur(0.2px);
+  transform: rotate(var(--petal-rotate, -18deg));
+  animation: cherry-fall linear infinite;
+  will-change: transform;
+}
+
+.cherry-petal::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: rgba(255, 255, 255, 0.26);
+  transform: translate(-2px, -1px) scale(0.65);
+}
+
+@keyframes landing-reveal {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes sakura-fall {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -12vh, 0);
+  }
+
+  10% {
+    opacity: inherit;
+  }
+
+  78% {
+    opacity: inherit;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(0, 112vh, 0);
+  }
+}
+
+@keyframes sakura-sway {
+  0% {
+    transform: translate3d(calc(var(--petal-sway-distance, 18px) * -1), 0, 0);
+  }
+
+  50% {
+    transform: translate3d(calc(var(--petal-sway-distance, 18px) * 0.28), 0, 0);
+  }
+
+  100% {
+    transform: translate3d(var(--petal-sway-distance, 18px), 0, 0);
+  }
+}
+
+@keyframes cherry-fall {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -10vh, 0) rotate(var(--petal-rotate, -18deg))
+      scale(var(--petal-scale, 1));
+  }
+
+  8% {
+    opacity: var(--petal-opacity, 0.6);
+  }
+
+  18% {
+    transform: translate3d(var(--petal-sway, 16px), 18vh, 0) rotate(18deg)
+      scale(var(--petal-scale, 1));
+  }
+
+  36% {
+    transform: translate3d(calc(var(--petal-sway, 16px) * -0.7), 34vh, 0) rotate(64deg)
+      scale(var(--petal-scale, 1));
+  }
+
+  58% {
+    transform: translate3d(calc(var(--petal-sway, 16px) * 1.15), 58vh, 0) rotate(108deg)
+      scale(var(--petal-scale, 1));
+  }
+
+  78% {
+    transform: translate3d(calc(var(--petal-sway, 16px) * -0.9), 82vh, 0) rotate(154deg)
+      scale(var(--petal-scale, 1));
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(calc(var(--petal-sway, 16px) * 0.5), 116vh, 0) rotate(198deg)
+      scale(var(--petal-scale, 1));
+  }
+}
+
+.soft-pulse {
+  animation: soft-pulse 2.8s ease-in-out infinite;
+}
+
+@keyframes soft-pulse {
+  0%,
+  100% {
+    box-shadow: 0 10px 30px rgba(244, 63, 94, 0.22);
+  }
+
+  50% {
+    box-shadow: 0 14px 36px rgba(244, 63, 94, 0.34);
+  }
+}
+
+h1,
+h2,
+h3,
+h4,
+.headlineFont {
+  font-family: var(--headline);
 }
 
 img,

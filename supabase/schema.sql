@@ -82,6 +82,7 @@ create table if not exists public.cupid_candidates (
   id uuid primary key default gen_random_uuid(),
   full_name text not null,
   birth_year int not null check (birth_year between 1960 and 2010),
+  height_text text not null default '모름',
   gender text not null,
   region text not null,
   occupation text not null,
@@ -103,6 +104,9 @@ create table if not exists public.cupid_candidates (
 
 alter table public.cupid_candidates
   add column if not exists work_summary text not null default '';
+
+alter table public.cupid_candidates
+  add column if not exists height_text text not null default '모름';
 
 alter table public.cupid_candidates
   add column if not exists paired_candidate_id uuid references public.cupid_candidates(id);

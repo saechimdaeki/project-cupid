@@ -1,18 +1,12 @@
-import { Suspense, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { BackNavButton } from "@/components/back-nav-button";
+import { GlobalNav } from "@/components/global-nav";
 import { PersonPreview } from "@/components/person-preview";
-import { StatusBadge } from "@/components/status-badge";
-import { WorkspaceDecorations } from "@/components/workspace-decorations";
-import {
-  createMatchRecord,
-  deleteMatchRecord,
-  updateCandidateStatus,
-} from "@/lib/admin-actions";
+import { deleteMatchRecord, updateCandidateStatus } from "@/lib/admin-actions";
 import { getCandidateById, getCandidatePhotos, getMatchRecords } from "@/lib/data";
 import { canEditCandidates, requireMembershipRole } from "@/lib/permissions";
+import { getStatusBadgeClass, getStatusLabel } from "@/lib/status-ui";
 import type { MatchOutcome, MatchRecord } from "@/lib/types";
 
 type CandidateDetailPageProps = {
@@ -20,99 +14,56 @@ type CandidateDetailPageProps = {
   searchParams: Promise<{ message?: string }>;
 };
 
-const MATCH_COLUMNS: Array<{
-  outcome: MatchOutcome;
+const STATUS_OPTIONS = ["active", "matched", "couple", "archived"] as const;
+
+const MATCH_GROUPS: Array<{
+  key: "ongoing" | "couple" | "closed";
   label: string;
-  description: string;
+  outcomes: MatchOutcome[];
 }> = [
   {
-    outcome: "intro_sent",
-    label: "소개 전달",
-    description: "소개 의사와 첫 반응을 확인하는 단계",
+    key: "ongoing",
+    label: "진행 중",
+    outcomes: ["intro_sent", "first_meeting", "dating"],
   },
   {
-    outcome: "first_meeting",
-    label: "첫 만남",
-    description: "실제 만남과 첫 인상 확인",
+    key: "couple",
+    label: "커플완성",
+    outcomes: ["couple"],
   },
   {
-    outcome: "dating",
-    label: "탐색 중",
-    description: "후속 만남이 이어지는 단계",
-  },
-  {
-    outcome: "couple",
-    label: "커플",
-    description: "관계가 안정적으로 이어진 상태",
-  },
-  {
-    outcome: "closed",
+    key: "closed",
     label: "종료",
-    description: "소개를 마무리하고 회고를 남김",
+    outcomes: ["closed"],
   },
 ];
 
-const MATCH_OUTCOME_LABEL: Record<MatchOutcome, string> = {
-  intro_sent: "소개 전달",
-  first_meeting: "첫 만남",
-  dating: "탐색 중",
-  couple: "커플",
-  closed: "종료",
-};
-
-const STATUS_OPTIONS = [
-  "active",
-  "matched",
-  "couple",
-  "graduated",
-  "archived",
-] as const;
-
-const primaryButtonClass =
-  "inline-flex min-h-12 items-center justify-center rounded-full border border-[#d8b28a] bg-gradient-to-r from-[#f2c98d] to-[#c78662] px-5 text-sm font-semibold text-[#2b1b11] shadow-[0_10px_24px_rgba(198,132,99,0.18)] transition hover:-translate-y-0.5";
-const ghostButtonClass =
-  "inline-flex min-h-12 items-center justify-center rounded-full border border-[#ead8cf] bg-white/90 px-5 text-sm font-semibold text-[#2d1e24] transition hover:-translate-y-0.5";
-const panelClass =
-  "rounded-[30px] border border-[#ead8cf] bg-white/88 p-5 shadow-[0_20px_50px_rgba(143,95,89,0.08)] backdrop-blur-sm sm:p-6";
-
-function buildInfoCards(candidate: Awaited<ReturnType<typeof getCandidateById>>) {
-  if (!candidate) {
-    return [];
+function getOutcomeLabel(outcome: MatchOutcome) {
+  switch (outcome) {
+    case "intro_sent":
+      return "소개 시작";
+    case "first_meeting":
+      return "첫 만남";
+    case "dating":
+      return "후속 진행";
+    case "couple":
+      return "커플완성";
+    case "closed":
+      return "종료";
   }
-
-  return [
-    { label: "출생", value: `${candidate.birth_year}년생` },
-    candidate.gender ? { label: "성별", value: candidate.gender } : null,
-    candidate.occupation ? { label: "직업", value: candidate.occupation } : null,
-  ].filter(Boolean) as Array<{ label: string; value: string }>;
 }
 
-function buildSignalChips(candidate: Awaited<ReturnType<typeof getCandidateById>>) {
-  if (!candidate) {
-    return [];
+function getOutcomeBadgeClass(outcome: MatchOutcome) {
+  switch (outcome) {
+    case "intro_sent":
+    case "first_meeting":
+    case "dating":
+      return "border-blue-100 bg-blue-50 text-blue-600";
+    case "couple":
+      return "border-emerald-100 bg-emerald-50 text-emerald-600";
+    case "closed":
+      return "border-slate-200 bg-slate-100 text-slate-600";
   }
-
-  return [
-    candidate.region ? candidate.region : null,
-    candidate.religion ? candidate.religion : null,
-    candidate.mbti ? candidate.mbti : null,
-    candidate.work_summary ? candidate.work_summary : null,
-  ].filter(Boolean) as string[];
-}
-
-function buildTagMeta(tag: string, index: number) {
-  const tones = [
-    "border-[#f0d8dd] bg-[#fff7f8] text-[#8f5f59]",
-    "border-[#dfe8d8] bg-[#f7fbf3] text-[#5c7355]",
-    "border-[#ecdcc8] bg-[#fff8ef] text-[#7b6049]",
-  ];
-  const labels = ["성향", "조건", "포인트"] as const;
-
-  return {
-    tone: tones[index % tones.length],
-    label: labels[index % labels.length],
-    value: tag,
-  };
 }
 
 function isRenderableImageUrl(value: string | null | undefined) {
@@ -124,243 +75,36 @@ function isRenderableImageUrl(value: string | null | undefined) {
   );
 }
 
-function groupMatchRecords(records: MatchRecord[]) {
-  return MATCH_COLUMNS.map((column) => ({
-    ...column,
-    records: records.filter((record) => record.outcome === column.outcome),
+function getTitle(candidate: NonNullable<Awaited<ReturnType<typeof getCandidateById>>>) {
+  const year = String(candidate.birth_year).slice(-2);
+  return `${year} ${candidate.occupation || candidate.full_name}`;
+}
+
+function getMetaChips(candidate: NonNullable<Awaited<ReturnType<typeof getCandidateById>>>) {
+  return [
+    `${candidate.birth_year}년생`,
+    candidate.gender || null,
+    candidate.height_text ? `키 ${candidate.height_text}` : null,
+    candidate.region || null,
+    candidate.religion ? `종교 ${candidate.religion}` : null,
+    candidate.mbti || null,
+  ].filter(Boolean) as string[];
+}
+
+function getDeskMessage(message?: string) {
+  if (message === "updated") return "프로필 수정이 반영되었습니다.";
+  if (message === "match-created") return "새 매칭 기록이 추가되었습니다.";
+  if (message === "match-deleted") return "매칭 기록이 정리되었습니다.";
+  if (message === "status-updated") return "후보 상태가 업데이트되었습니다.";
+  if (message === "match-invalid") return "매칭 기록 입력값을 다시 확인해주세요.";
+  return message ?? null;
+}
+
+function groupRecords(records: MatchRecord[]) {
+  return MATCH_GROUPS.map((group) => ({
+    ...group,
+    records: records.filter((record) => group.outcomes.includes(record.outcome)),
   }));
-}
-
-function FieldLabel({ children }: { children: ReactNode }) {
-  return (
-    <span className="mb-2 block text-sm font-semibold text-[#7b626a]">{children}</span>
-  );
-}
-
-function DeferredPanelFallback({
-  eyebrow = "Loading",
-  title,
-  description,
-}: {
-  eyebrow?: string;
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="rounded-[26px] border border-[#ead8cf] bg-[#fffaf6] p-4">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#b46d59]">
-        {eyebrow}
-      </p>
-      <h4 className="mt-2 text-xl font-semibold tracking-[-0.05em] text-[#24161c]">{title}</h4>
-      <p className="mt-3 text-sm leading-7 text-[#6d5961]">{description}</p>
-    </div>
-  );
-}
-
-async function CounterpartPanel({
-  candidateId,
-  candidateStatus,
-}: {
-  candidateId: string | null;
-  candidateStatus: string;
-}) {
-  if (!candidateId) {
-    return null;
-  }
-
-  const counterpartCandidate = await getCandidateById(candidateId);
-
-  if (!counterpartCandidate) {
-    return null;
-  }
-
-  return (
-    <div className="mt-6 rounded-[26px] border border-[#ead8cf] bg-gradient-to-br from-[#fffaf7] via-white to-[#fff4ee] p-4">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#b46d59]">
-            {candidateStatus === "couple" ? "Current Couple" : "Current Match"}
-          </p>
-          <h4 className="mt-2 text-xl font-semibold tracking-[-0.05em] text-[#24161c]">
-            현재 연결 상대
-          </h4>
-        </div>
-        <StatusBadge tone={candidateStatus === "couple" ? "success" : "warning"}>
-          {candidateStatus === "couple" ? "커플완성" : "매칭진행중"}
-        </StatusBadge>
-      </div>
-
-      <div className="mt-4 flex flex-col gap-4 sm:flex-row">
-        <div className="w-full max-w-[180px] overflow-hidden rounded-[24px] bg-[#fff5ef] p-2">
-          <PersonPreview
-            imageUrl={counterpartCandidate.image_url}
-            gender={counterpartCandidate.gender}
-            size="sm"
-            className="min-h-[180px] rounded-[20px]"
-          />
-        </div>
-        <div className="min-w-0 flex-1">
-          <strong className="block text-2xl font-semibold tracking-[-0.05em] text-[#24161c]">
-            {counterpartCandidate.full_name}
-          </strong>
-          <span className="mt-2 block text-sm leading-7 text-[#6d5961]">
-            {[
-              `${counterpartCandidate.birth_year}년생`,
-              counterpartCandidate.gender,
-              counterpartCandidate.occupation,
-            ]
-              .filter(Boolean)
-              .join(" · ")}
-          </span>
-          <p className="mt-3 text-sm leading-7 text-[#6d5961]">
-            {counterpartCandidate.personality_summary ||
-              "상대 후보 소개 메모가 아직 등록되지 않았습니다."}
-          </p>
-          <div className="mt-4">
-            <Link className={ghostButtonClass} href={`/profiles/${counterpartCandidate.id}`}>
-              상대 상세 보기
-            </Link>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-async function MatchBoardSection({
-  candidateId,
-  canOperate,
-}: {
-  candidateId: string;
-  canOperate: boolean;
-}) {
-  const history = await getMatchRecords(candidateId);
-  const groupedHistory = groupMatchRecords(history);
-
-  return (
-    <section className={`sectionBlock detailPanel ${panelClass}`}>
-      <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#b46d59]">
-        Match Board
-      </p>
-      <h2 className="mt-3 text-[clamp(2rem,7vw,3rem)] font-semibold tracking-[-0.07em] text-[#24161c]">
-        칸반으로 보는 매칭 흐름
-      </h2>
-      <p className="mt-3 max-w-3xl text-[15px] leading-7 text-[#6d5961] sm:text-base">
-        소개 전달부터 커플까지, 현재 이 후보의 연결 상황을 단계별로 읽을 수 있습니다.
-      </p>
-
-      <div className="mt-6 grid gap-4 xl:grid-cols-5">
-        {groupedHistory.map((column) => (
-          <article
-            key={column.outcome}
-            className="rounded-[26px] border border-[#ead8cf] bg-gradient-to-b from-white to-[#fff8f3] p-4"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h3 className="text-lg font-semibold tracking-[-0.04em] text-[#24161c]">
-                  {column.label}
-                </h3>
-                <p className="mt-2 text-sm leading-6 text-[#6d5961]">
-                  {column.description}
-                </p>
-              </div>
-              <StatusBadge
-                tone={
-                  column.outcome === "couple"
-                    ? "success"
-                    : column.outcome === "first_meeting" || column.outcome === "dating"
-                      ? "warning"
-                      : "default"
-                }
-              >
-                {column.records.length}건
-              </StatusBadge>
-            </div>
-
-            <div className="mt-4 grid gap-3">
-              {column.records.length ? (
-                column.records.map((record) => (
-                  <article
-                    key={record.id}
-                    className="rounded-[22px] border border-[#efdccf] bg-white/92 p-4 shadow-[0_10px_22px_rgba(143,95,89,0.06)]"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <h4 className="text-base font-semibold text-[#24161c]">
-                          {record.counterpart_label}
-                        </h4>
-                        <p className="mt-1 text-sm text-[#8b6a63]">
-                          {MATCH_OUTCOME_LABEL[record.outcome]}
-                        </p>
-                      </div>
-                      {canOperate ? (
-                        <form action={deleteMatchRecord}>
-                          <input type="hidden" name="candidateId" value={candidateId} />
-                          <input type="hidden" name="recordId" value={record.id} />
-                          <button
-                            className="inline-flex min-h-9 items-center rounded-full border border-[#ead8cf] bg-white px-3 text-xs font-semibold text-[#5e4850]"
-                            type="submit"
-                          >
-                            삭제
-                          </button>
-                        </form>
-                      ) : null}
-                    </div>
-                    <p className="mt-3 text-sm leading-7 text-[#6d5961]">{record.summary}</p>
-                    <div className="mt-4 flex flex-wrap gap-3 text-xs font-medium text-[#8b6a63]">
-                      <span>{record.matchmaker_name}</span>
-                      <span>{record.happened_on}</span>
-                    </div>
-                  </article>
-                ))
-              ) : (
-                <div className="rounded-[22px] border border-dashed border-[#e6d5ca] bg-[#fffaf6] px-4 py-8 text-center text-sm leading-7 text-[#8b6a63]">
-                  아직 이 단계의 기록이 없습니다.
-                </div>
-              )}
-            </div>
-          </article>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-async function PhotoGalleryArticle({ candidateId }: { candidateId: string }) {
-  const photos = await getCandidatePhotos(candidateId);
-
-  return (
-    <article className={`detailPanel ${panelClass}`}>
-      <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#b46d59]">
-        Photo Gallery
-      </p>
-      <h3 className="mt-3 text-2xl font-semibold tracking-[-0.05em] text-[#24161c]">
-        등록된 사진
-      </h3>
-      <div className="mt-6 grid gap-3 sm:grid-cols-2">
-        {photos.length ? (
-          photos.map((photo) => (
-            <div
-              key={photo.id}
-              className="relative aspect-[4/5] overflow-hidden rounded-[24px] border border-[#ead8cf] bg-[#fff5ef] shadow-[0_12px_28px_rgba(143,95,89,0.08)]"
-            >
-              <Image
-                src={photo.image_url}
-                alt=""
-                fill
-                sizes="(min-width: 1280px) 24vw, (min-width: 640px) 40vw, 88vw"
-                className="object-cover"
-              />
-            </div>
-          ))
-        ) : (
-          <div className="rounded-[22px] border border-dashed border-[#e6d5ca] bg-[#fffaf6] px-4 py-10 text-center text-sm leading-7 text-[#8b6a63]">
-            등록된 사진이 없습니다.
-          </div>
-        )}
-      </div>
-    </article>
-  );
 }
 
 export default async function CandidateDetailPage({
@@ -369,399 +113,334 @@ export default async function CandidateDetailPage({
 }: CandidateDetailPageProps) {
   const { id } = await params;
   const { message } = await searchParams;
-  const [candidate, membership] = await Promise.all([
-    getCandidateById(id),
+  const [membership, candidate] = await Promise.all([
     requireMembershipRole(["admin", "super_admin"]),
+    getCandidateById(id),
   ]);
 
   if (!candidate) {
     notFound();
   }
-  const heroImageUrl = isRenderableImageUrl(candidate.image_url)
-    ? candidate.image_url
-    : null;
+
+  const [photos, records, counterpartCandidate] = await Promise.all([
+    getCandidatePhotos(candidate.id),
+    getMatchRecords(candidate.id),
+    candidate.paired_candidate_id ? getCandidateById(candidate.paired_candidate_id) : Promise.resolve(null),
+  ]);
+
   const canOperate = canEditCandidates(membership.role);
-  const infoCards = buildInfoCards(candidate);
-  const signalChips = buildSignalChips(candidate);
-  const matchDeskMessage =
-    message === "updated"
-      ? "프로필 수정이 반영되었습니다."
-      : message === "match-created"
-        ? "새 매칭 기록이 추가되었습니다."
-        : message === "match-deleted"
-          ? "매칭 기록이 정리되었습니다."
-          : message === "status-updated"
-            ? "후보 상태가 업데이트되었습니다."
-            : message === "match-invalid"
-              ? "매칭 기록 입력값을 다시 확인해주세요."
-              : message;
+  const heroImageUrl = isRenderableImageUrl(candidate.image_url) ? candidate.image_url : null;
+  const metaChips = getMetaChips(candidate);
+  const groupedRecords = groupRecords(records);
+  const deskMessage = getDeskMessage(message);
 
   return (
-    <main className="workspacePage min-h-screen overflow-x-hidden bg-[linear-gradient(180deg,#fff8f2_0%,#fff3ec_42%,#fffaf6_100%)] text-[#24161c]">
-      <div className="landingWrap relative mx-auto flex w-full max-w-[1280px] flex-col gap-6 px-4 pb-12 pt-4 sm:px-6 lg:px-8">
-        <WorkspaceDecorations />
-        <header className="flex flex-col gap-4 rounded-[30px] border border-[#ead8cf] bg-white/85 p-5 shadow-[0_14px_40px_rgba(143,95,89,0.08)] backdrop-blur-sm lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-3xl">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#b46d59]">
-              Candidate Detail
-            </p>
-            <h1 className="mt-3 text-[clamp(2.4rem,10vw,4.9rem)] font-semibold leading-[0.94] tracking-[-0.08em] text-[#24161c]">
-              매물 상세
-            </h1>
-            <p className="mt-4 text-[15px] leading-7 text-[#6d5961] sm:text-base">
-              프로필 열람을 넘어 수정, 상태 판단, 매칭 기록 관리까지 한 화면에서 이어지는 운영 데스크입니다.
-            </p>
-          </div>
+    <>
+      <GlobalNav membership={membership} active="profile" />
 
-          <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap lg:w-auto lg:justify-end">
-            {canOperate ? (
-              <>
-                <Link className={primaryButtonClass} href={`/profiles/${candidate.id}/edit`}>
-                  프로필 수정
-                </Link>
-                <a className={ghostButtonClass} href="#match-desk">
-                  매칭 기록 추가
-                </a>
-              </>
-            ) : null}
-            <BackNavButton />
-            <Link className={ghostButtonClass} href="/dashboard">
-              대시보드
-            </Link>
-            <Link className={ghostButtonClass} href="/">
-              홈으로
-            </Link>
-          </div>
-        </header>
+      <main className="min-h-screen bg-slate-50 px-4 py-24 text-slate-800 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-7xl flex-col gap-6">
+          <section className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_24rem]">
+            <article className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+              <div className="grid gap-0 lg:grid-cols-[minmax(320px,0.9fr)_minmax(0,1.1fr)]">
+                <div className="relative min-h-[320px] bg-slate-100">
+                  <PersonPreview
+                    imageUrl={heroImageUrl}
+                    gender={candidate.gender}
+                    className="min-h-[320px] bg-slate-100 lg:min-h-[560px]"
+                    fetchPriority="high"
+                    loading="eager"
+                    size="lg"
+                    fit="cover"
+                    position="center"
+                  />
+                </div>
 
-        <section className="grid gap-5 xl:grid-cols-[minmax(0,1.3fr)_380px]">
-          <article className="detailPanel overflow-hidden rounded-[34px] border border-[#ead8cf] bg-[linear-gradient(145deg,rgba(255,255,255,0.92),rgba(255,244,239,0.96))] p-4 shadow-[0_24px_70px_rgba(143,95,89,0.12)] sm:p-5">
-            <div className="grid gap-5 lg:grid-cols-[minmax(0,1.08fr)_minmax(260px,0.92fr)] lg:items-stretch">
-              <div className="portraitPanel relative overflow-hidden rounded-[28px] bg-[#fff7f2] p-3">
-                <PersonPreview
-                  imageUrl={heroImageUrl}
-                  gender={candidate.gender}
-                  className="portraitPreview min-h-[320px] rounded-[24px] sm:min-h-[420px] lg:min-h-[520px]"
-                  fetchPriority="high"
-                  loading="eager"
-                  size="lg"
-                />
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 rounded-b-[24px] bg-gradient-to-t from-[rgba(33,19,26,0.78)] via-[rgba(33,19,26,0.24)] to-transparent p-5 text-white sm:p-6">
-                  {signalChips.length ? (
-                    <div className="mb-4 flex flex-wrap gap-2">
-                      {signalChips.map((chip) => (
-                        <span
-                          key={chip}
-                          className="inline-flex min-h-9 items-center rounded-full border border-white/20 bg-white/16 px-4 text-xs font-semibold backdrop-blur-sm sm:text-sm"
-                        >
-                          {chip}
-                        </span>
-                      ))}
+                <div className="flex flex-col p-6 sm:p-8">
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                        Candidate Profile
+                      </p>
+                      <h1 className="mt-2 text-3xl font-semibold tracking-[-0.05em] text-slate-800 sm:text-4xl">
+                        {getTitle(candidate)}
+                      </h1>
+                      <p className="mt-3 text-sm leading-7 text-slate-500 sm:text-base">
+                        {candidate.personality_summary || "소개 메모가 아직 등록되지 않았습니다."}
+                      </p>
                     </div>
-                  ) : null}
-                  <h2 className="text-[clamp(2rem,9vw,4rem)] font-semibold leading-none tracking-[-0.08em]">
-                    {candidate.full_name}
-                  </h2>
-                  <p className="mt-3 max-w-2xl text-sm leading-7 text-white/88 sm:text-base">
-                    {candidate.personality_summary || "소개 메모가 아직 등록되지 않았습니다."}
-                  </p>
+                    <span
+                      className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${getStatusBadgeClass(candidate.status)}`}
+                    >
+                      {getStatusLabel(candidate.status)}
+                    </span>
+                  </div>
+
                   <div className="mt-5 flex flex-wrap gap-2">
-                    {infoCards.length ? (
-                      infoCards.map((item) => (
-                        <article
-                          key={item.label}
-                          className="rounded-full border border-white/18 bg-white/14 px-4 py-3 backdrop-blur-sm"
-                        >
-                          <span className="block text-[10px] font-semibold uppercase tracking-[0.24em] text-white/70">
-                            {item.label}
-                          </span>
-                          <strong className="mt-1 block text-sm font-semibold text-white">
-                            {item.value}
-                          </strong>
+                    {metaChips.map((chip) => (
+                      <span
+                        key={chip}
+                        className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600"
+                      >
+                        {chip}
+                      </span>
+                    ))}
+                    {candidate.highlight_tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="inline-flex items-center rounded-full border border-rose-100 bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-600"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                    <article className="rounded-2xl bg-slate-50 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+                        직장 / 직무
+                      </p>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">
+                        {candidate.work_summary || "미입력"}
+                      </p>
+                    </article>
+                    <article className="rounded-2xl bg-slate-50 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+                        학력 / 이상형
+                      </p>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">
+                        {[candidate.education || "학력 미입력", candidate.ideal_type || "이상형 미입력"].join(" · ")}
+                      </p>
+                    </article>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <aside className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                    Operator Desk
+                  </p>
+                  <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-slate-800">
+                    운영 데스크
+                  </h2>
+                </div>
+                <span
+                  className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${getStatusBadgeClass(candidate.status)}`}
+                >
+                  {getStatusLabel(candidate.status)}
+                </span>
+              </div>
+
+              <div className="mt-5 grid gap-3">
+                {canOperate ? (
+                  <Link
+                    href={`/profiles/${candidate.id}/edit`}
+                    className="inline-flex h-11 items-center justify-center rounded-full bg-rose-500 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-600"
+                  >
+                    프로필 수정
+                  </Link>
+                ) : null}
+
+                <form action={updateCandidateStatus} className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
+                  <input type="hidden" name="candidateId" value={candidate.id} />
+                  <select
+                    name="status"
+                    defaultValue={candidate.status}
+                    className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-700 outline-none"
+                  >
+                    {STATUS_OPTIONS.map((status) => (
+                      <option key={status} value={status}>
+                        {getStatusLabel(status)}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="submit"
+                    className="inline-flex h-11 items-center justify-center rounded-full border border-slate-200 px-4 text-sm font-medium text-slate-600"
+                  >
+                    상태 변경
+                  </button>
+                </form>
+              </div>
+
+              {counterpartCandidate ? (
+                <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                    Current Pair
+                  </p>
+                  <p className="mt-2 text-sm font-medium text-slate-700">
+                    {counterpartCandidate.full_name} · {getTitle(counterpartCandidate)}
+                  </p>
+                  <Link
+                    href={`/profiles/${counterpartCandidate.id}`}
+                    className="mt-3 inline-flex text-sm font-medium text-indigo-600"
+                  >
+                    상대 상세 보기
+                  </Link>
+                </div>
+              ) : null}
+
+              <div className="mt-6 rounded-2xl bg-slate-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+                  Private Memo
+                </p>
+                <p className="mt-2 min-h-28 text-sm leading-7 text-slate-600">
+                  {candidate.notes_private || "비공개 메모가 아직 없습니다."}
+                </p>
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Link
+                  href="/dashboard"
+                  className="inline-flex h-10 items-center rounded-full border border-slate-200 px-4 text-sm font-medium text-slate-600"
+                >
+                  대시보드
+                </Link>
+                <Link
+                  href="/candidates/new"
+                  className="inline-flex h-10 items-center rounded-full border border-slate-200 px-4 text-sm font-medium text-slate-600"
+                >
+                  매물 등록
+                </Link>
+              </div>
+            </aside>
+          </section>
+
+          {deskMessage ? (
+            <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
+              {deskMessage}
+            </div>
+          ) : null}
+
+          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                  Match Flow
+                </p>
+                <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-slate-800">
+                  칸반 흐름
+                </h2>
+              </div>
+            </div>
+
+            <div className="mt-5 grid gap-4 lg:grid-cols-3">
+              {groupedRecords.map((group) => (
+                <article key={group.key} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="text-sm font-semibold text-slate-800">{group.label}</h3>
+                    <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-600">
+                      {group.records.length}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 grid gap-3">
+                    {group.records.length ? (
+                      group.records.map((record) => (
+                        <article key={record.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <h4 className="text-sm font-semibold text-slate-800">
+                                {record.counterpart_label}
+                              </h4>
+                              <p className="mt-1 text-xs text-slate-400">{record.happened_on}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-medium ${getOutcomeBadgeClass(record.outcome)}`}
+                              >
+                                {getOutcomeLabel(record.outcome)}
+                              </span>
+                              {canOperate ? (
+                                <form action={deleteMatchRecord}>
+                                  <input type="hidden" name="candidateId" value={candidate.id} />
+                                  <input type="hidden" name="recordId" value={record.id} />
+                                  <button
+                                    type="submit"
+                                    className="text-[11px] font-medium text-slate-400 hover:text-slate-700"
+                                  >
+                                    삭제
+                                  </button>
+                                </form>
+                              ) : null}
+                            </div>
+                          </div>
+                          <p className="mt-3 text-sm leading-6 text-slate-600">{record.summary}</p>
                         </article>
                       ))
                     ) : (
-                      <article className="rounded-full border border-white/18 bg-white/14 px-4 py-3 backdrop-blur-sm">
-                        <span className="block text-[10px] font-semibold uppercase tracking-[0.24em] text-white/70">
-                          기본 정보
-                        </span>
-                        <strong className="mt-1 block text-sm font-semibold text-white">
-                          아직 추가되지 않았습니다
-                        </strong>
-                      </article>
+                      <div className="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-8 text-sm text-slate-500">
+                        아직 기록이 없습니다.
+                      </div>
                     )}
                   </div>
-                </div>
-              </div>
-
-              <div className={`detailPanel ${panelClass} h-full`}>
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#b46d59]">
-                      Operator Desk
-                    </p>
-                    <h3 className="mt-2 text-2xl font-semibold tracking-[-0.05em] text-[#24161c]">
-                      현재 운영 상태
-                    </h3>
-                    <p className="mt-2 text-sm leading-7 text-[#6d5961]">
-                      소개 판단에 필요한 메모와 다음 액션을 한곳에 모았습니다.
-                    </p>
-                  </div>
-                  <StatusBadge
-                    tone={
-                      candidate.status === "couple" || candidate.status === "graduated"
-                        ? "success"
-                        : candidate.status === "matched"
-                          ? "warning"
-                          : "default"
-                    }
-                  >
-                    {candidate.status}
-                  </StatusBadge>
-                </div>
-
-                {canOperate ? (
-                  <div className="mt-5 flex flex-col gap-3">
-                    <div className="flex flex-col gap-2 sm:flex-row">
-                      <Link className={primaryButtonClass} href={`/profiles/${candidate.id}/edit`}>
-                        프로필 수정
-                      </Link>
-                      <a className={ghostButtonClass} href="#match-desk">
-                        매칭 기록 추가
-                      </a>
-                    </div>
-                    <form action={updateCandidateStatus} className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
-                      <input type="hidden" name="candidateId" value={candidate.id} />
-                      <select
-                        name="status"
-                        defaultValue={candidate.status}
-                        className="min-h-12 rounded-[18px] border border-[#ead8cf] bg-white px-4 text-sm font-medium text-[#2d1e24] outline-none ring-0"
-                      >
-                        {STATUS_OPTIONS.map((status) => (
-                          <option key={status} value={status}>
-                            {status}
-                          </option>
-                        ))}
-                      </select>
-                      <button className={ghostButtonClass} type="submit">
-                        상태 변경
-                      </button>
-                    </form>
-                  </div>
-                ) : null}
-
-                <Suspense
-                  fallback={
-                    candidate.paired_candidate_id ? (
-                      <div className="mt-6">
-                        <DeferredPanelFallback
-                          title="현재 연결 상대"
-                          description="상대 후보 정보를 불러오는 중입니다."
-                        />
-                      </div>
-                    ) : null
-                  }
-                >
-                  <CounterpartPanel
-                    candidateId={candidate.paired_candidate_id}
-                    candidateStatus={candidate.status}
-                  />
-                </Suspense>
-
-                <div className="mt-6 grid gap-5">
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#b46d59]">
-                      Ideal Type
-                    </p>
-                    <p className="mt-2 text-sm leading-7 text-[#6d5961]">
-                      {candidate.ideal_type || "아직 입력되지 않았습니다."}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#b46d59]">
-                      Private Notes
-                    </p>
-                    <p className="mt-2 text-sm leading-7 text-[#6d5961]">
-                      {candidate.notes_private || "비공개 메모가 아직 없습니다."}
-                    </p>
-                  </div>
-                  {candidate.highlight_tags.length ? (
-                    <div className="flex flex-wrap gap-2">
-                      {candidate.highlight_tags.map((tag, index) => {
-                        const meta = buildTagMeta(tag, index);
-
-                        return (
-                          <span
-                            key={tag}
-                            className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold ${meta.tone}`}
-                          >
-                            <em className="not-italic opacity-70">{meta.label}</em>
-                            <strong>{meta.value}</strong>
-                          </span>
-                        );
-                      })}
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-            </div>
-          </article>
-        </section>
-
-        {matchDeskMessage ? (
-          <div className="rounded-[24px] border border-[#ead8cf] bg-white/88 px-5 py-4 text-sm font-medium text-[#6d5961] shadow-[0_10px_24px_rgba(143,95,89,0.08)]">
-            {matchDeskMessage}
-          </div>
-        ) : null}
-
-        {canOperate ? (
-          <section id="match-desk" className={`sectionBlock detailPanel ${panelClass}`}>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#b46d59]">
-              Match Desk
-            </p>
-            <h2 className="mt-3 text-[clamp(2rem,7vw,3rem)] font-semibold tracking-[-0.07em] text-[#24161c]">
-              매칭 기록 추가
-            </h2>
-            <p className="mt-3 max-w-3xl text-[15px] leading-7 text-[#6d5961] sm:text-base">
-              소개가 어떻게 흘렀는지 기록을 남기고, 필요하면 후보 상태도 함께 바꿉니다.
-            </p>
-
-            <form action={createMatchRecord} className="mt-6 grid gap-5">
-              <input type="hidden" name="candidateId" value={candidate.id} />
-              <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
-                <label>
-                  <FieldLabel>상대 이름 / 라벨</FieldLabel>
-                  <input
-                    name="counterpartLabel"
-                    placeholder="1991년생 판교 개발자"
-                    required
-                    className="min-h-12 w-full rounded-[18px] border border-[#ead8cf] bg-white px-4 text-sm font-medium text-[#2d1e24] outline-none ring-0"
-                  />
-                </label>
-                <label>
-                  <FieldLabel>진행 단계</FieldLabel>
-                  <select
-                    name="outcome"
-                    defaultValue="intro_sent"
-                    className="min-h-12 w-full rounded-[18px] border border-[#ead8cf] bg-white px-4 text-sm font-medium text-[#2d1e24] outline-none ring-0"
-                  >
-                    {MATCH_COLUMNS.map((column) => (
-                      <option key={column.outcome} value={column.outcome}>
-                        {column.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  <FieldLabel>날짜</FieldLabel>
-                  <input
-                    name="happenedOn"
-                    type="date"
-                    defaultValue={new Date().toISOString().slice(0, 10)}
-                    required
-                    className="min-h-12 w-full rounded-[18px] border border-[#ead8cf] bg-white px-4 text-sm font-medium text-[#2d1e24] outline-none ring-0"
-                  />
-                </label>
-                <label>
-                  <FieldLabel>상태도 함께 변경</FieldLabel>
-                  <select
-                    name="nextStatus"
-                    defaultValue="keep"
-                    className="min-h-12 w-full rounded-[18px] border border-[#ead8cf] bg-white px-4 text-sm font-medium text-[#2d1e24] outline-none ring-0"
-                  >
-                    <option value="keep">현재 상태 유지</option>
-                    {STATUS_OPTIONS.map((status) => (
-                      <option key={status} value={status}>
-                        {status}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-              <label>
-                <FieldLabel>요약 메모</FieldLabel>
-                <textarea
-                  name="summary"
-                  rows={4}
-                  placeholder="첫 반응, 대화 흐름, 다음 액션 등을 짧게 남겨주세요."
-                  required
-                  className="min-h-[132px] w-full rounded-[22px] border border-[#ead8cf] bg-white px-4 py-4 text-sm leading-7 text-[#2d1e24] outline-none ring-0"
-                />
-              </label>
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <button className={primaryButtonClass} type="submit">
-                  매칭 기록 저장
-                </button>
-              </div>
-            </form>
-          </section>
-        ) : null}
-
-        <Suspense
-          fallback={
-            <section className={`sectionBlock detailPanel ${panelClass}`}>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#b46d59]">
-                Match Board
-              </p>
-              <h2 className="mt-3 text-[clamp(2rem,7vw,3rem)] font-semibold tracking-[-0.07em] text-[#24161c]">
-                칸반으로 보는 매칭 흐름
-              </h2>
-              <p className="mt-3 max-w-3xl text-[15px] leading-7 text-[#6d5961] sm:text-base">
-                매칭 기록을 불러오는 중입니다.
-              </p>
-            </section>
-          }
-        >
-          <MatchBoardSection candidateId={candidate.id} canOperate={canOperate} />
-        </Suspense>
-
-        <section className="grid gap-5 xl:grid-cols-2">
-          <article className={`detailPanel ${panelClass}`}>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#b46d59]">
-              Profile Read
-            </p>
-            <h3 className="mt-3 text-2xl font-semibold tracking-[-0.05em] text-[#24161c]">
-              기본 조건과 인상
-            </h3>
-            <div className="mt-6 grid gap-3">
-              {[
-                { label: "직장 / 직무", value: candidate.work_summary || "미입력" },
-                { label: "학력", value: candidate.education || "미입력" },
-                { label: "MBTI", value: candidate.mbti ?? "미기재" },
-                { label: "요약 인상", value: candidate.personality_summary || "미입력" },
-              ].map((item) => (
-                <article
-                  key={item.label}
-                  className="rounded-[22px] border border-[#efdccf] bg-[#fffaf6] p-4"
-                >
-                  <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-[#b46d59]">
-                    {item.label}
-                  </h4>
-                  <p className="mt-2 text-sm leading-7 text-[#6d5961]">{item.value}</p>
                 </article>
               ))}
             </div>
-          </article>
+          </section>
 
-          <Suspense
-            fallback={
-              <article className={`detailPanel ${panelClass}`}>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#b46d59]">
-                  Photo Gallery
-                </p>
-                <h3 className="mt-3 text-2xl font-semibold tracking-[-0.05em] text-[#24161c]">
-                  등록된 사진
-                </h3>
-                <p className="mt-4 text-sm leading-7 text-[#6d5961]">
-                  사진 갤러리를 불러오는 중입니다.
-                </p>
-              </article>
-            }
-          >
-            <PhotoGalleryArticle candidateId={candidate.id} />
-          </Suspense>
-        </section>
-      </div>
-    </main>
+          <section className="grid gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+            <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                Profile Read
+              </p>
+              <h3 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-slate-800">
+                소개 판단 메모
+              </h3>
+              <div className="mt-5 grid gap-3">
+                {[
+                  { label: "직장 / 직무", value: candidate.work_summary || "미입력" },
+                  { label: "학력", value: candidate.education || "미입력" },
+                  { label: "MBTI", value: candidate.mbti || "미입력" },
+                  { label: "이상형", value: candidate.ideal_type || "미입력" },
+                ].map((item) => (
+                  <article key={item.label} className="rounded-2xl bg-slate-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+                      {item.label}
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">{item.value}</p>
+                  </article>
+                ))}
+              </div>
+            </article>
+
+            <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                Photo Gallery
+              </p>
+              <h3 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-slate-800">
+                등록된 사진
+              </h3>
+
+              <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                {photos.length ? (
+                  photos.map((photo) => (
+                    <div
+                      key={photo.id}
+                      className="relative aspect-[4/5] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100"
+                    >
+                      <Image
+                        src={photo.image_url}
+                        alt=""
+                        fill
+                        sizes="(min-width: 1280px) 24vw, (min-width: 640px) 40vw, 90vw"
+                        className="object-cover"
+                      />
+                    </div>
+                  ))
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-10 text-sm text-slate-500">
+                    등록된 사진이 없습니다.
+                  </div>
+                )}
+              </div>
+            </article>
+          </section>
+        </div>
+      </main>
+    </>
   );
 }

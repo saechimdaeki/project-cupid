@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { FormSubmitButton } from "@/components/form-submit-button";
 import { GenderToggleField } from "@/components/gender-toggle-field";
+import { GlobalNav } from "@/components/global-nav";
 import { PhotoUploadField } from "@/components/photo-upload-field";
 import { createCandidate } from "@/lib/admin-actions";
 import { requireMembershipRole } from "@/lib/permissions";
@@ -31,13 +32,15 @@ function FieldLabel({
 }
 
 export default async function NewCandidatePage({ searchParams }: NewCandidatePageProps) {
-  await requireMembershipRole(["admin", "super_admin"]);
+  const membership = await requireMembershipRole(["admin", "super_admin"]);
   const { message } = await searchParams;
   const submissionKey = crypto.randomUUID();
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#fff8f2_0%,#fff3ec_42%,#fffaf6_100%)] text-[#24161c]">
-      <div className="mx-auto flex w-full max-w-[1320px] flex-col gap-6 px-4 pb-10 pt-4 sm:px-6 lg:px-8">
+    <>
+      <GlobalNav membership={membership} active="candidates" />
+      <main className="min-h-screen bg-[linear-gradient(180deg,#fff8f2_0%,#fff3ec_42%,#fffaf6_100%)] text-[#24161c]">
+      <div className="mx-auto flex w-full max-w-[1320px] flex-col gap-6 px-4 pb-10 pt-24 sm:px-6 lg:px-8">
         <section className="flex flex-col gap-4 rounded-[34px] border border-[#ead8cf] bg-[linear-gradient(135deg,rgba(255,255,255,0.92),rgba(255,244,239,0.96))] p-6 shadow-[0_24px_70px_rgba(143,95,89,0.12)] sm:flex-row sm:items-end sm:justify-between sm:p-8">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#b46d59]">Candidate Studio</p>
@@ -79,6 +82,10 @@ export default async function NewCandidatePage({ searchParams }: NewCandidatePag
                 <label className="grid gap-2">
                   <FieldLabel required>출생연도</FieldLabel>
                   <input name="birthYear" type="number" placeholder="[필수] 예: 1994" required className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]" />
+                </label>
+                <label className="grid gap-2">
+                  <FieldLabel>키</FieldLabel>
+                  <input name="heightText" placeholder="[선택] 예: 168cm / 모름" defaultValue="모름" className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]" />
                 </label>
                 <GenderToggleField name="gender" required />
                 <label className="grid gap-2">
@@ -146,6 +153,7 @@ export default async function NewCandidatePage({ searchParams }: NewCandidatePag
           </section>
         </form>
       </div>
-    </main>
+      </main>
+    </>
   );
 }
