@@ -3844,3 +3844,266 @@ button {
     justify-items: stretch;
   }
 }
+
+@media (max-width: 640px) {
+  .pageFrame {
+    padding-bottom: 28px;
+  }
+
+  .landingWrap {
+    padding: 12px 12px 0;
+  }
+
+  .topbar,
+  .workspacePage .topbar,
+  .sectionBlock,
+  .metricCard,
+  .detailPanel,
+  .authPanel,
+  .statusPanel,
+  .adminPanel,
+  .queueItem,
+  .candidateCard,
+  .dashboardLane,
+  .pairComposerCard {
+    border-radius: 22px;
+  }
+
+  .topbar,
+  .workspacePage .topbar {
+    padding: 14px;
+    gap: 14px;
+  }
+
+  .brandLockup {
+    align-items: center;
+    gap: 12px;
+  }
+
+  .brandMark {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+  }
+
+  .brandText strong {
+    font-size: 1.05rem;
+  }
+
+  .brandText span {
+    font-size: 0.88rem;
+  }
+
+  .topbarCluster,
+  .headerActions,
+  .topbarButtons,
+  .heroActions,
+  .pairComposerActions,
+  .detailActionStack {
+    width: 100%;
+  }
+
+  .topbarCluster,
+  .topbarButtons,
+  .heroActions,
+  .pageHeader,
+  .sectionHeader,
+  .dashboardLaneHeader,
+  .pairedCandidateHeader,
+  .cardTop,
+  .historyMeta {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .topbarButtons > *,
+  .heroActions > *,
+  .pairComposerActions > *,
+  .detailActionStack > *,
+  .accountPanelForm,
+  .accountPanelForm > *,
+  .inlineActionForm > *,
+  .pairedCandidateActions > * {
+    width: 100%;
+  }
+
+  .primaryButton,
+  .ghostButton,
+  .secondaryButton {
+    width: 100%;
+    min-height: 48px;
+  }
+
+  .pageHeader,
+  .sectionHeader {
+    margin-bottom: 16px;
+    gap: 12px;
+  }
+
+  .pageTitle,
+  .workspacePage .pageHeader .pageTitle,
+  .workspacePage .dashboardHero .pageTitle,
+  .workspacePage .sectionBlock .pageTitle,
+  .detailTitle {
+    font-size: clamp(1.9rem, 9vw, 2.5rem);
+    line-height: 1.05;
+    letter-spacing: -0.05em;
+  }
+
+  .heroTitle {
+    font-size: clamp(2.3rem, 12vw, 3.2rem);
+    line-height: 0.98;
+  }
+
+  .heroSubtitle,
+  .pageMeta,
+  .dashboardLaneHeader p:last-child,
+  .pairedCandidateCopy p {
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  .heroCard,
+  .sideCard,
+  .authPanel,
+  .authShowcase,
+  .detailPanel,
+  .queueItem,
+  .pairComposerCard {
+    padding: 18px;
+  }
+
+  .dashboardHero,
+  .sectionBlock,
+  .metricStrip,
+  .dashboardBoardSection,
+  .dashboardLayout {
+    gap: 14px;
+  }
+
+  .filterToolbar,
+  .detailColumns,
+  .detailHero,
+  .detailInfoCardGrid,
+  .existingPhotoGrid,
+  .candidateGrid,
+  .metricStrip,
+  .dashboardBoard,
+  .dashboardBoard.auxiliary,
+  .dashboardLoadingGrid,
+  .dashboardLoadingBoard {
+    grid-template-columns: 1fr;
+  }
+
+  .filterToolbar {
+    padding: 14px;
+  }
+
+  .filterField.search {
+    min-width: 0;
+  }
+
+  .dashboardLane {
+    padding: 16px;
+  }
+
+  .dashboardLaneHeader h3 {
+    font-size: 1.7rem;
+  }
+
+  .dashboardLaneBody {
+    gap: 12px;
+  }
+
+  .dashboardBoardCardWrap .candidateCard,
+  .boardCandidateCard {
+    min-height: 0;
+  }
+
+  .portraitPanel {
+    min-height: auto;
+  }
+
+  .portraitPreview.personPreview.lg,
+  .portraitPreview {
+    position: relative;
+    min-height: 380px;
+    border-radius: 22px;
+  }
+
+  .portraitLabel {
+    position: relative;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    margin-top: 14px;
+    padding: 0;
+  }
+
+  .signalChipRow {
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .signalChip {
+    min-height: 32px;
+    padding: 0 12px;
+    font-size: 0.8rem;
+  }
+
+  .detailInfoCardGrid .infoPill {
+    padding: 14px;
+  }
+
+  .inlineActionForm {
+    grid-template-columns: 1fr;
+  }
+
+  .existingPhotoPreview {
+    min-height: 180px;
+  }
+
+  .uploadPreviewCard,
+  .pairedCandidateBody {
+    grid-template-columns: 1fr;
+  }
+
+  .pairedCandidatePreview .personPreview.sm {
+    height: 220px;
+  }
+
+  .accountPanel {
+    padding: 16px;
+  }
+
+  .accountPanelCopy,
+  .pairedCandidateCopy,
+  .uploadPreviewMeta {
+    gap: 6px;
+  }
+
+  .accountPanel strong {
+    font-size: 1.6rem;
+  }
+
+  .auxBoardSection summary {
+    padding: 10px 12px;
+  }
+
+  .auxBoardSection summary span {
+    font-size: 0.84rem;
+  }
+
+  .dashboardHeartline {
+    min-height: 90px;
+  }
+
+  .loadingLineTitle {
+    width: 100%;
+    height: 48px;
+  }
+
+  .loadingLineBody {
+    width: 88%;
+  }
+}
