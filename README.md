@@ -64,9 +64,9 @@ NEXT_PUBLIC_SUPABASE_URL=...
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=...
 ```
 
-Supabase 스키마와 정책은 아래 파일을 기준으로 맞춥니다.
+Supabase 스키마와 정책은 저장소 루트 기준 아래 파일을 기준으로 맞춥니다.
 
-- [/Users/junseongkim/Desktop/project-cupid/supabase/schema.sql](/Users/junseongkim/Desktop/project-cupid/supabase/schema.sql)
+- `supabase/schema.sql`
 
 ## 메모
 
