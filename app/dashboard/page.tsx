@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { AccountPanel } from "@/components/account-panel";
 import { CandidateCard } from "@/components/candidate-card";
@@ -85,18 +86,46 @@ function FilterSelect({
   );
 }
 
-export default async function DashboardPage({ searchParams }: DashboardPageProps) {
-  const [
-    { filter, religion, gender, q, message },
-    membership,
-    fetchedCandidates,
-    timelineData,
-  ] = await Promise.all([
-    searchParams,
-    requireApprovedMembership(),
+function DashboardSectionsFallback() {
+  return (
+    <div className="grid gap-5">
+      <section className="rounded-[34px] border border-[#ead8cf] bg-white/88 p-5 shadow-[0_18px_44px_rgba(143,95,89,0.08)] sm:p-6">
+        <div className="dashboardLoadingGrid">
+          <div className="loadingCard" />
+          <div className="loadingCard" />
+          <div className="loadingCard" />
+          <div className="loadingCard" />
+        </div>
+      </section>
+      <section className="rounded-[34px] border border-[#ead8cf] bg-white/88 p-5 shadow-[0_18px_44px_rgba(143,95,89,0.08)] sm:p-6">
+        <div className="dashboardLoadingBoard">
+          <div className="loadingBoardLane" />
+          <div className="loadingBoardLane" />
+          <div className="loadingBoardLane" />
+        </div>
+      </section>
+    </div>
+  );
+}
+
+async function DashboardMainSections({
+  filter,
+  religion,
+  gender,
+  q,
+  role,
+}: {
+  filter: string;
+  religion: string;
+  gender: string;
+  q: string;
+  role: "viewer" | "admin" | "super_admin";
+}) {
+  const [fetchedCandidates, timelineData] = await Promise.all([
     getDashboardCandidates(),
     getDashboardTimelineData(),
   ]);
+
   const isPreviewMode = fetchedCandidates.length === 0;
   const allCandidates = isPreviewMode ? homePreviewCandidates : fetchedCandidates;
   const recentMatches = isPreviewMode ? dashboardPreviewMatchRecords : timelineData.records;
@@ -107,7 +136,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     recentMatches,
     new Map(allCandidates.map((candidate) => [candidate.id, candidate])),
   );
-  const query = (q ?? "").trim().toLowerCase();
+  const query = q.trim().toLowerCase();
+  const boardRole = isPreviewMode ? "viewer" : role;
 
   const religionOptions = Array.from(
     new Set(allCandidates.map((candidate) => candidate.religion).filter(Boolean)),
@@ -145,6 +175,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     }
     return true;
   });
+
   const boardCandidates: DashboardBoardCandidate[] = allCandidates.map((candidate) => ({
     id: candidate.id,
     full_name: candidate.full_name,
@@ -159,7 +190,151 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const visibleBoardCandidates = boardCandidates.filter((candidate) =>
     visibleCandidateIds.has(candidate.id),
   );
-  const boardRole = isPreviewMode ? "viewer" : membership.role;
+
+  return (
+    <>
+      <section className="rounded-[34px] border border-[#ead8cf] bg-white/88 p-5 shadow-[0_18px_44px_rgba(143,95,89,0.08)] sm:p-6">
+        <div className="flex flex-col gap-3">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#b46d59]">Filter Desk</p>
+            <h2 className="mt-3 text-[clamp(1.8rem,8vw,3rem)] font-semibold tracking-[-0.06em] text-[#24161c]">필터로 후보를 바로 좁혀봅니다</h2>
+            <p className="mt-3 text-[15px] leading-7 text-[#6d5961] sm:text-base">
+              이름, 직업, 지역 검색과 상태/성별/종교 조건을 함께 써서 지금 필요한 매물을 빠르게 찾을 수 있습니다.
+            </p>
+          </div>
+          <form className="grid gap-3 rounded-[28px] border border-[#ead8cf] bg-[#fffaf7] p-4 lg:grid-cols-[minmax(260px,1.7fr)_repeat(3,minmax(150px,0.8fr))_auto] lg:items-end" method="get">
+            <label className="grid gap-2">
+              <span className="text-sm font-semibold text-[#725761]">검색</span>
+              <input
+                name="q"
+                defaultValue={q}
+                placeholder="이름, 직업, 지역, 태그 검색"
+                className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]"
+              />
+            </label>
+            <FilterSelect name="filter" label="상태" defaultValue={filter} options={["active", "matched", "couple", "graduated", "archived"]} />
+            <FilterSelect name="gender" label="성별" defaultValue={gender} options={genderOptions} />
+            <FilterSelect name="religion" label="종교" defaultValue={religion} options={religionOptions} />
+            <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
+              <button className="inline-flex min-h-12 items-center justify-center rounded-full border border-[#d8b28a] bg-gradient-to-r from-[#f2c98d] to-[#c78662] px-5 text-sm font-semibold text-[#2b1b11] shadow-[0_10px_24px_rgba(198,132,99,0.18)] transition hover:-translate-y-0.5" type="submit">
+                필터 적용
+              </button>
+              {filter || religion || gender || q ? (
+                <Link className="inline-flex min-h-12 items-center justify-center rounded-full border border-[#ead8cf] bg-white/90 px-5 text-sm font-semibold text-[#2d1e24] transition hover:-translate-y-0.5" href="/dashboard">
+                  초기화
+                </Link>
+              ) : null}
+            </div>
+          </form>
+          {filter || religion || gender || q ? (
+            <div className="flex flex-wrap gap-2">
+              {q ? <span className="rounded-full border border-[#ead8cf] bg-white/90 px-3 py-2 text-xs font-semibold text-[#725861]">검색: {q}</span> : null}
+              {filter ? <span className="rounded-full border border-[#ead8cf] bg-white/90 px-3 py-2 text-xs font-semibold text-[#725861]">상태: {filter}</span> : null}
+              {gender ? <span className="rounded-full border border-[#ead8cf] bg-white/90 px-3 py-2 text-xs font-semibold text-[#725861]">성별: {gender}</span> : null}
+              {religion ? <span className="rounded-full border border-[#ead8cf] bg-white/90 px-3 py-2 text-xs font-semibold text-[#725861]">종교: {religion}</span> : null}
+              <span className="rounded-full border border-[#d8b28a] bg-[#fff4ea] px-3 py-2 text-xs font-semibold text-[#9a6548]">{visibleCandidates.length}명 표시 중</span>
+            </div>
+          ) : null}
+        </div>
+      </section>
+
+      <section className="metricStrip dashboardDeferredSection grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <MetricCard label="Active Board" value={allCandidates.filter((item) => item.status === "active").length} description="지금 바로 연결 가능한 매물" />
+        <MetricCard label="In Progress" value={allCandidates.filter((item) => item.status === "matched").length} description="소개 이후 후속 만남 진행 중" />
+        <MetricCard label="Couple" value={allCandidates.filter((item) => item.status === "couple").length} description="커플 성사 상태" />
+        <MetricCard label="Timeline" value={timelineCount} description="누적 매칭 이력" />
+      </section>
+
+      <section className="dashboardDeferredSection rounded-[34px] border border-[#ead8cf] bg-white/88 p-5 shadow-[0_18px_44px_rgba(143,95,89,0.08)] sm:p-6">
+        <div className="sectionHeader mb-5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#b46d59]">Flow Board</p>
+          <h2 className="mt-3 text-[clamp(1.8rem,8vw,3rem)] font-semibold tracking-[-0.06em] text-[#24161c]">지금 관계 흐름이 어떻게 움직이는지 바로 봅니다</h2>
+          <p className="mt-3 text-[15px] leading-7 text-[#6d5961] sm:text-base">
+            필터 결과가 그대로 운영 칸반에 반영되어, 지금 손대야 할 후보와 이미 감정선이 붙은 후보를 한눈에 나눠볼 수 있습니다.
+          </p>
+          {isPreviewMode ? (
+            <div className="mt-4 rounded-2xl border border-[#f0ddd2] bg-[#fff8f3] px-4 py-3 text-sm font-medium text-[#8a6b74]">
+              아직 실제 매물이 없어 홈 프리뷰 후보를 대시보드에 표시하고 있습니다.
+            </div>
+          ) : null}
+        </div>
+        <DashboardFlowBoard
+          candidates={visibleBoardCandidates}
+          allCandidates={boardCandidates}
+          role={boardRole}
+        />
+      </section>
+
+      <section className="dashboardDeferredSection grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)]">
+        <div className="sectionBlock rounded-[34px] border border-[#ead8cf] bg-white/88 p-5 shadow-[0_18px_44px_rgba(143,95,89,0.08)] sm:p-6">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#b46d59]">Curated Inventory</p>
+          <h2 className="mt-3 text-[clamp(1.8rem,8vw,3rem)] font-semibold tracking-[-0.06em] text-[#24161c]">전체 후보를 카드로 다시 훑어봅니다</h2>
+          <p className="mt-3 text-[15px] leading-7 text-[#6d5961] sm:text-base">
+            칸반으로 흐름을 본 뒤에는, 카드 리스트에서 세부 인상과 태그를 비교하면서 최종 판단을 정리합니다.
+          </p>
+
+          {visibleCandidates.length ? (
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
+              {visibleCandidates.map((candidate) => (
+                <CandidateCard key={candidate.id} candidate={candidate} role={boardRole} />
+              ))}
+            </div>
+          ) : (
+            <div className="mt-6 rounded-[28px] border border-[#f0ddd2] bg-[#fff8f3] px-5 py-6 text-center text-[#8a6b74]">
+              <strong className="block text-lg text-[#311d24]">아직 등록된 매물이 없습니다.</strong>
+              <span className="mt-2 block text-sm">첫 매물을 등록하면 여기서 바로 리스트와 상태를 관리할 수 있습니다.</span>
+              {canEditCandidates(role) ? (
+                <div className="mt-4">
+                  <Link className="inline-flex min-h-12 items-center justify-center rounded-full border border-[#d8b28a] bg-gradient-to-r from-[#f2c98d] to-[#c78662] px-5 text-sm font-semibold text-[#2b1b11]" href="/candidates/new">
+                    첫 매물 등록하기
+                  </Link>
+                </div>
+              ) : null}
+            </div>
+          )}
+        </div>
+
+        <aside className="sectionBlock rounded-[34px] border border-[#ead8cf] bg-white/88 p-5 shadow-[0_18px_44px_rgba(143,95,89,0.08)] sm:p-6">
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#b46d59]">Recent Outcomes</p>
+              <h2 className="mt-3 text-[clamp(1.4rem,7vw,2.1rem)] font-semibold tracking-[-0.05em] text-[#24161c]">최근 매칭 타임라인</h2>
+            </div>
+            <Link
+              href="/timeline"
+              className="inline-flex min-h-10 items-center rounded-full border border-[#ead8cf] bg-white/90 px-4 text-sm font-semibold text-[#2d1e24] transition hover:-translate-y-0.5"
+            >
+              전체보기
+            </Link>
+          </div>
+          <div className="mt-5 grid gap-3">
+            {timelineEvents.slice(0, 6).length ? (
+              timelineEvents.slice(0, 6).map((record) => (
+                <article key={record.id} className="rounded-[24px] border border-[#ead8cf] bg-[#fffaf7] p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <strong className="text-sm font-semibold text-[#24161c]">{record.title}</strong>
+                    <span className="text-xs font-semibold text-[#9a6548]">{record.happened_on}</span>
+                  </div>
+                  <p className="mt-2 text-sm leading-6 text-[#6d5961]">{record.summary}</p>
+                </article>
+              ))
+            ) : (
+              <div className="rounded-[24px] border border-[#f0ddd2] bg-[#fff8f3] px-4 py-5 text-sm font-medium text-[#8a6b74]">
+                최근 매칭 기록이 아직 없습니다.
+              </div>
+            )}
+          </div>
+        </aside>
+      </section>
+    </>
+  );
+}
+
+export default async function DashboardPage({ searchParams }: DashboardPageProps) {
+  const [{ message, filter, religion, gender, q }, membership] = await Promise.all([
+    searchParams,
+    requireApprovedMembership(),
+  ]);
 
   const heroBadges =
     membership.role === "viewer"
@@ -297,7 +472,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                   className="mt-3 block text-xl font-semibold tracking-[-0.05em] text-[#24161c]"
                   style={heroHeadlineStyle}
                 >
-                  {allCandidates.filter((item) => item.status === "matched").length}건 이어지는 중
+                  매칭 진행을 차분히 추적
                 </strong>
                 <p className="mt-2 text-sm leading-6 text-[#6d5961]" style={heroBodyStyle}>
                   한번 시작된 연결은 자연스럽게 다음 만남으로 이어지게 살핍니다.
@@ -314,7 +489,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                   className="mt-3 block text-xl font-semibold tracking-[-0.05em] text-[#24161c]"
                   style={heroHeadlineStyle}
                 >
-                  {allCandidates.filter((item) => item.status === "couple").length}쌍 성사
+                  커플 성사 흐름까지 정리
                 </strong>
                 <p className="mt-2 text-sm leading-6 text-[#6d5961]" style={heroBodyStyle}>
                   성사된 인연은 다음 소개의 감각이 되도록 조용히 남겨둡니다.
@@ -340,139 +515,15 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           ) : null}
         </section>
 
-        <section className="rounded-[34px] border border-[#ead8cf] bg-white/88 p-5 shadow-[0_18px_44px_rgba(143,95,89,0.08)] sm:p-6">
-          <div className="flex flex-col gap-3">
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#b46d59]">Filter Desk</p>
-              <h2 className="mt-3 text-[clamp(1.8rem,8vw,3rem)] font-semibold tracking-[-0.06em] text-[#24161c]">필터로 후보를 바로 좁혀봅니다</h2>
-              <p className="mt-3 text-[15px] leading-7 text-[#6d5961] sm:text-base">
-                이름, 직업, 지역 검색과 상태/성별/종교 조건을 함께 써서 지금 필요한 매물을 빠르게 찾을 수 있습니다.
-              </p>
-            </div>
-            <form className="grid gap-3 rounded-[28px] border border-[#ead8cf] bg-[#fffaf7] p-4 lg:grid-cols-[minmax(260px,1.7fr)_repeat(3,minmax(150px,0.8fr))_auto] lg:items-end" method="get">
-              <label className="grid gap-2">
-                <span className="text-sm font-semibold text-[#725761]">검색</span>
-                <input
-                  name="q"
-                  defaultValue={q ?? ""}
-                  placeholder="이름, 직업, 지역, 태그 검색"
-                  className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]"
-                />
-              </label>
-              <FilterSelect name="filter" label="상태" defaultValue={filter ?? ""} options={["active", "matched", "couple", "graduated", "archived"]} />
-              <FilterSelect name="gender" label="성별" defaultValue={gender ?? ""} options={genderOptions} />
-              <FilterSelect name="religion" label="종교" defaultValue={religion ?? ""} options={religionOptions} />
-              <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
-                <button className="inline-flex min-h-12 items-center justify-center rounded-full border border-[#d8b28a] bg-gradient-to-r from-[#f2c98d] to-[#c78662] px-5 text-sm font-semibold text-[#2b1b11] shadow-[0_10px_24px_rgba(198,132,99,0.18)] transition hover:-translate-y-0.5" type="submit">
-                  필터 적용
-                </button>
-                {filter || religion || gender || q ? (
-                  <Link className="inline-flex min-h-12 items-center justify-center rounded-full border border-[#ead8cf] bg-white/90 px-5 text-sm font-semibold text-[#2d1e24] transition hover:-translate-y-0.5" href="/dashboard">
-                    초기화
-                  </Link>
-                ) : null}
-              </div>
-            </form>
-            {filter || religion || gender || q ? (
-              <div className="flex flex-wrap gap-2">
-                {q ? <span className="rounded-full border border-[#ead8cf] bg-white/90 px-3 py-2 text-xs font-semibold text-[#725861]">검색: {q}</span> : null}
-                {filter ? <span className="rounded-full border border-[#ead8cf] bg-white/90 px-3 py-2 text-xs font-semibold text-[#725861]">상태: {filter}</span> : null}
-                {gender ? <span className="rounded-full border border-[#ead8cf] bg-white/90 px-3 py-2 text-xs font-semibold text-[#725861]">성별: {gender}</span> : null}
-                {religion ? <span className="rounded-full border border-[#ead8cf] bg-white/90 px-3 py-2 text-xs font-semibold text-[#725861]">종교: {religion}</span> : null}
-                <span className="rounded-full border border-[#d8b28a] bg-[#fff4ea] px-3 py-2 text-xs font-semibold text-[#9a6548]">{visibleCandidates.length}명 표시 중</span>
-              </div>
-            ) : null}
-          </div>
-        </section>
-
-        <section className="metricStrip dashboardDeferredSection grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <MetricCard label="Active Board" value={allCandidates.filter((item) => item.status === "active").length} description="지금 바로 연결 가능한 매물" />
-          <MetricCard label="In Progress" value={allCandidates.filter((item) => item.status === "matched").length} description="소개 이후 후속 만남 진행 중" />
-          <MetricCard label="Couple" value={allCandidates.filter((item) => item.status === "couple").length} description="커플 성사 상태" />
-          <MetricCard label="Timeline" value={timelineCount} description="누적 매칭 이력" />
-        </section>
-
-        <section className="dashboardDeferredSection rounded-[34px] border border-[#ead8cf] bg-white/88 p-5 shadow-[0_18px_44px_rgba(143,95,89,0.08)] sm:p-6">
-          <div className="sectionHeader mb-5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#b46d59]">Flow Board</p>
-            <h2 className="mt-3 text-[clamp(1.8rem,8vw,3rem)] font-semibold tracking-[-0.06em] text-[#24161c]">지금 관계 흐름이 어떻게 움직이는지 바로 봅니다</h2>
-            <p className="mt-3 text-[15px] leading-7 text-[#6d5961] sm:text-base">
-              필터 결과가 그대로 운영 칸반에 반영되어, 지금 손대야 할 후보와 이미 감정선이 붙은 후보를 한눈에 나눠볼 수 있습니다.
-            </p>
-            {isPreviewMode ? (
-              <div className="mt-4 rounded-2xl border border-[#f0ddd2] bg-[#fff8f3] px-4 py-3 text-sm font-medium text-[#8a6b74]">
-                아직 실제 매물이 없어 홈 프리뷰 후보를 대시보드에 표시하고 있습니다.
-              </div>
-            ) : null}
-          </div>
-          <DashboardFlowBoard
-            candidates={visibleBoardCandidates}
-            allCandidates={boardCandidates}
-            role={boardRole}
+        <Suspense fallback={<DashboardSectionsFallback />}>
+          <DashboardMainSections
+            filter={filter ?? ""}
+            religion={religion ?? ""}
+            gender={gender ?? ""}
+            q={q ?? ""}
+            role={membership.role}
           />
-        </section>
-
-        <section className="dashboardDeferredSection grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)]">
-          <div className="sectionBlock rounded-[34px] border border-[#ead8cf] bg-white/88 p-5 shadow-[0_18px_44px_rgba(143,95,89,0.08)] sm:p-6">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#b46d59]">Curated Inventory</p>
-            <h2 className="mt-3 text-[clamp(1.8rem,8vw,3rem)] font-semibold tracking-[-0.06em] text-[#24161c]">전체 후보를 카드로 다시 훑어봅니다</h2>
-            <p className="mt-3 text-[15px] leading-7 text-[#6d5961] sm:text-base">
-              칸반으로 흐름을 본 뒤에는, 카드 리스트에서 세부 인상과 태그를 비교하면서 최종 판단을 정리합니다.
-            </p>
-
-            {visibleCandidates.length ? (
-              <div className="mt-6 grid gap-4 md:grid-cols-2">
-                {visibleCandidates.map((candidate) => (
-                  <CandidateCard key={candidate.id} candidate={candidate} role={boardRole} />
-                ))}
-              </div>
-            ) : (
-              <div className="mt-6 rounded-[28px] border border-[#f0ddd2] bg-[#fff8f3] px-5 py-6 text-center text-[#8a6b74]">
-                <strong className="block text-lg text-[#311d24]">아직 등록된 매물이 없습니다.</strong>
-                <span className="mt-2 block text-sm">첫 매물을 등록하면 여기서 바로 리스트와 상태를 관리할 수 있습니다.</span>
-                {canEditCandidates(membership.role) ? (
-                  <div className="mt-4">
-                    <Link className="inline-flex min-h-12 items-center justify-center rounded-full border border-[#d8b28a] bg-gradient-to-r from-[#f2c98d] to-[#c78662] px-5 text-sm font-semibold text-[#2b1b11]" href="/candidates/new">
-                      첫 매물 등록하기
-                    </Link>
-                  </div>
-                ) : null}
-              </div>
-            )}
-          </div>
-
-          <aside className="sectionBlock rounded-[34px] border border-[#ead8cf] bg-white/88 p-5 shadow-[0_18px_44px_rgba(143,95,89,0.08)] sm:p-6">
-            <div className="flex items-end justify-between gap-4">
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#b46d59]">Recent Outcomes</p>
-                <h2 className="mt-3 text-[clamp(1.4rem,7vw,2.1rem)] font-semibold tracking-[-0.05em] text-[#24161c]">최근 매칭 타임라인</h2>
-              </div>
-              <Link
-                href="/timeline"
-                className="inline-flex min-h-10 items-center rounded-full border border-[#ead8cf] bg-white/90 px-4 text-sm font-semibold text-[#2d1e24] transition hover:-translate-y-0.5"
-              >
-                전체보기
-              </Link>
-            </div>
-            <div className="mt-5 grid gap-3">
-              {timelineEvents.slice(0, 6).length ? (
-                timelineEvents.slice(0, 6).map((record) => (
-                  <article key={record.id} className="rounded-[24px] border border-[#ead8cf] bg-[#fffaf7] p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <strong className="text-sm font-semibold text-[#24161c]">{record.title}</strong>
-                      <span className="text-xs font-semibold text-[#9a6548]">{record.happened_on}</span>
-                    </div>
-                    <p className="mt-2 text-sm leading-6 text-[#6d5961]">{record.summary}</p>
-                  </article>
-                ))
-              ) : (
-                <div className="rounded-[24px] border border-[#f0ddd2] bg-[#fff8f3] px-4 py-5 text-sm font-medium text-[#8a6b74]">
-                  최근 매칭 기록이 아직 없습니다.
-                </div>
-              )}
-            </div>
-          </aside>
-        </section>
+        </Suspense>
       </div>
     </main>
   );

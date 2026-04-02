@@ -1,4 +1,5 @@
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BackNavButton } from "@/components/back-nav-button";
@@ -136,16 +137,240 @@ function FieldLabel({ children }: { children: ReactNode }) {
   );
 }
 
+function DeferredPanelFallback({
+  eyebrow = "Loading",
+  title,
+  description,
+}: {
+  eyebrow?: string;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="rounded-[26px] border border-[#ead8cf] bg-[#fffaf6] p-4">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#b46d59]">
+        {eyebrow}
+      </p>
+      <h4 className="mt-2 text-xl font-semibold tracking-[-0.05em] text-[#24161c]">{title}</h4>
+      <p className="mt-3 text-sm leading-7 text-[#6d5961]">{description}</p>
+    </div>
+  );
+}
+
+async function CounterpartPanel({
+  candidateId,
+  candidateStatus,
+}: {
+  candidateId: string | null;
+  candidateStatus: string;
+}) {
+  if (!candidateId) {
+    return null;
+  }
+
+  const counterpartCandidate = await getCandidateById(candidateId);
+
+  if (!counterpartCandidate) {
+    return null;
+  }
+
+  return (
+    <div className="mt-6 rounded-[26px] border border-[#ead8cf] bg-gradient-to-br from-[#fffaf7] via-white to-[#fff4ee] p-4">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#b46d59]">
+            {candidateStatus === "couple" ? "Current Couple" : "Current Match"}
+          </p>
+          <h4 className="mt-2 text-xl font-semibold tracking-[-0.05em] text-[#24161c]">
+            현재 연결 상대
+          </h4>
+        </div>
+        <StatusBadge tone={candidateStatus === "couple" ? "success" : "warning"}>
+          {candidateStatus === "couple" ? "커플완성" : "매칭진행중"}
+        </StatusBadge>
+      </div>
+
+      <div className="mt-4 flex flex-col gap-4 sm:flex-row">
+        <div className="w-full max-w-[180px] overflow-hidden rounded-[24px] bg-[#fff5ef] p-2">
+          <PersonPreview
+            imageUrl={counterpartCandidate.image_url}
+            gender={counterpartCandidate.gender}
+            size="sm"
+            className="min-h-[180px] rounded-[20px]"
+          />
+        </div>
+        <div className="min-w-0 flex-1">
+          <strong className="block text-2xl font-semibold tracking-[-0.05em] text-[#24161c]">
+            {counterpartCandidate.full_name}
+          </strong>
+          <span className="mt-2 block text-sm leading-7 text-[#6d5961]">
+            {[
+              `${counterpartCandidate.birth_year}년생`,
+              counterpartCandidate.gender,
+              counterpartCandidate.occupation,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+          </span>
+          <p className="mt-3 text-sm leading-7 text-[#6d5961]">
+            {counterpartCandidate.personality_summary ||
+              "상대 후보 소개 메모가 아직 등록되지 않았습니다."}
+          </p>
+          <div className="mt-4">
+            <Link className={ghostButtonClass} href={`/profiles/${counterpartCandidate.id}`}>
+              상대 상세 보기
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+async function MatchBoardSection({
+  candidateId,
+  canOperate,
+}: {
+  candidateId: string;
+  canOperate: boolean;
+}) {
+  const history = await getMatchRecords(candidateId);
+  const groupedHistory = groupMatchRecords(history);
+
+  return (
+    <section className={`sectionBlock detailPanel ${panelClass}`}>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#b46d59]">
+        Match Board
+      </p>
+      <h2 className="mt-3 text-[clamp(2rem,7vw,3rem)] font-semibold tracking-[-0.07em] text-[#24161c]">
+        칸반으로 보는 매칭 흐름
+      </h2>
+      <p className="mt-3 max-w-3xl text-[15px] leading-7 text-[#6d5961] sm:text-base">
+        소개 전달부터 커플까지, 현재 이 후보의 연결 상황을 단계별로 읽을 수 있습니다.
+      </p>
+
+      <div className="mt-6 grid gap-4 xl:grid-cols-5">
+        {groupedHistory.map((column) => (
+          <article
+            key={column.outcome}
+            className="rounded-[26px] border border-[#ead8cf] bg-gradient-to-b from-white to-[#fff8f3] p-4"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-lg font-semibold tracking-[-0.04em] text-[#24161c]">
+                  {column.label}
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-[#6d5961]">
+                  {column.description}
+                </p>
+              </div>
+              <StatusBadge
+                tone={
+                  column.outcome === "couple"
+                    ? "success"
+                    : column.outcome === "first_meeting" || column.outcome === "dating"
+                      ? "warning"
+                      : "default"
+                }
+              >
+                {column.records.length}건
+              </StatusBadge>
+            </div>
+
+            <div className="mt-4 grid gap-3">
+              {column.records.length ? (
+                column.records.map((record) => (
+                  <article
+                    key={record.id}
+                    className="rounded-[22px] border border-[#efdccf] bg-white/92 p-4 shadow-[0_10px_22px_rgba(143,95,89,0.06)]"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h4 className="text-base font-semibold text-[#24161c]">
+                          {record.counterpart_label}
+                        </h4>
+                        <p className="mt-1 text-sm text-[#8b6a63]">
+                          {MATCH_OUTCOME_LABEL[record.outcome]}
+                        </p>
+                      </div>
+                      {canOperate ? (
+                        <form action={deleteMatchRecord}>
+                          <input type="hidden" name="candidateId" value={candidateId} />
+                          <input type="hidden" name="recordId" value={record.id} />
+                          <button
+                            className="inline-flex min-h-9 items-center rounded-full border border-[#ead8cf] bg-white px-3 text-xs font-semibold text-[#5e4850]"
+                            type="submit"
+                          >
+                            삭제
+                          </button>
+                        </form>
+                      ) : null}
+                    </div>
+                    <p className="mt-3 text-sm leading-7 text-[#6d5961]">{record.summary}</p>
+                    <div className="mt-4 flex flex-wrap gap-3 text-xs font-medium text-[#8b6a63]">
+                      <span>{record.matchmaker_name}</span>
+                      <span>{record.happened_on}</span>
+                    </div>
+                  </article>
+                ))
+              ) : (
+                <div className="rounded-[22px] border border-dashed border-[#e6d5ca] bg-[#fffaf6] px-4 py-8 text-center text-sm leading-7 text-[#8b6a63]">
+                  아직 이 단계의 기록이 없습니다.
+                </div>
+              )}
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+async function PhotoGalleryArticle({ candidateId }: { candidateId: string }) {
+  const photos = await getCandidatePhotos(candidateId);
+
+  return (
+    <article className={`detailPanel ${panelClass}`}>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#b46d59]">
+        Photo Gallery
+      </p>
+      <h3 className="mt-3 text-2xl font-semibold tracking-[-0.05em] text-[#24161c]">
+        등록된 사진
+      </h3>
+      <div className="mt-6 grid gap-3 sm:grid-cols-2">
+        {photos.length ? (
+          photos.map((photo) => (
+            <div
+              key={photo.id}
+              className="relative aspect-[4/5] overflow-hidden rounded-[24px] border border-[#ead8cf] bg-[#fff5ef] shadow-[0_12px_28px_rgba(143,95,89,0.08)]"
+            >
+              <Image
+                src={photo.image_url}
+                alt=""
+                fill
+                sizes="(min-width: 1280px) 24vw, (min-width: 640px) 40vw, 88vw"
+                className="object-cover"
+              />
+            </div>
+          ))
+        ) : (
+          <div className="rounded-[22px] border border-dashed border-[#e6d5ca] bg-[#fffaf6] px-4 py-10 text-center text-sm leading-7 text-[#8b6a63]">
+            등록된 사진이 없습니다.
+          </div>
+        )}
+      </div>
+    </article>
+  );
+}
+
 export default async function CandidateDetailPage({
   params,
   searchParams,
 }: CandidateDetailPageProps) {
   const { id } = await params;
   const { message } = await searchParams;
-  const [candidate, history, photos, membership] = await Promise.all([
+  const [candidate, membership] = await Promise.all([
     getCandidateById(id),
-    getMatchRecords(id),
-    getCandidatePhotos(id),
     requireMembershipRole(["admin", "super_admin"]),
   ]);
 
@@ -154,14 +379,10 @@ export default async function CandidateDetailPage({
   }
   const heroImageUrl = isRenderableImageUrl(candidate.image_url)
     ? candidate.image_url
-    : photos[0]?.image_url ?? null;
-  const counterpartCandidate = candidate.paired_candidate_id
-    ? await getCandidateById(candidate.paired_candidate_id)
     : null;
   const canOperate = canEditCandidates(membership.role);
   const infoCards = buildInfoCards(candidate);
   const signalChips = buildSignalChips(candidate);
-  const groupedHistory = groupMatchRecords(history);
   const matchDeskMessage =
     message === "updated"
       ? "프로필 수정이 반영되었습니다."
@@ -329,60 +550,23 @@ export default async function CandidateDetailPage({
                   </div>
                 ) : null}
 
-                {counterpartCandidate ? (
-                  <div className="mt-6 rounded-[26px] border border-[#ead8cf] bg-gradient-to-br from-[#fffaf7] via-white to-[#fff4ee] p-4">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#b46d59]">
-                          {candidate.status === "couple" ? "Current Couple" : "Current Match"}
-                        </p>
-                        <h4 className="mt-2 text-xl font-semibold tracking-[-0.05em] text-[#24161c]">
-                          현재 연결 상대
-                        </h4>
-                      </div>
-                      <StatusBadge tone={candidate.status === "couple" ? "success" : "warning"}>
-                        {candidate.status === "couple" ? "커플완성" : "매칭진행중"}
-                      </StatusBadge>
-                    </div>
-
-                    <div className="mt-4 flex flex-col gap-4 sm:flex-row">
-                      <div className="w-full max-w-[180px] overflow-hidden rounded-[24px] bg-[#fff5ef] p-2">
-                        <PersonPreview
-                          imageUrl={counterpartCandidate.image_url}
-                          gender={counterpartCandidate.gender}
-                          size="sm"
-                          className="min-h-[180px] rounded-[20px]"
+                <Suspense
+                  fallback={
+                    candidate.paired_candidate_id ? (
+                      <div className="mt-6">
+                        <DeferredPanelFallback
+                          title="현재 연결 상대"
+                          description="상대 후보 정보를 불러오는 중입니다."
                         />
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <strong className="block text-2xl font-semibold tracking-[-0.05em] text-[#24161c]">
-                          {counterpartCandidate.full_name}
-                        </strong>
-                        <span className="mt-2 block text-sm leading-7 text-[#6d5961]">
-                          {[
-                            `${counterpartCandidate.birth_year}년생`,
-                            counterpartCandidate.gender,
-                            counterpartCandidate.occupation,
-                          ]
-                            .filter(Boolean)
-                            .join(" · ")}
-                        </span>
-                        <p className="mt-3 text-sm leading-7 text-[#6d5961]">
-                          {counterpartCandidate.personality_summary ||
-                            "상대 후보 소개 메모가 아직 등록되지 않았습니다."}
-                        </p>
-                        <div className="mt-4">
-                          <Link
-                            className={ghostButtonClass}
-                            href={`/profiles/${counterpartCandidate.id}`}
-                          >
-                            상대 상세 보기
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ) : null}
+                    ) : null
+                  }
+                >
+                  <CounterpartPanel
+                    candidateId={candidate.paired_candidate_id}
+                    candidateStatus={candidate.status}
+                  />
+                </Suspense>
 
                 <div className="mt-6 grid gap-5">
                   <div>
@@ -513,91 +697,23 @@ export default async function CandidateDetailPage({
           </section>
         ) : null}
 
-        <section className={`sectionBlock detailPanel ${panelClass}`}>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#b46d59]">
-            Match Board
-          </p>
-          <h2 className="mt-3 text-[clamp(2rem,7vw,3rem)] font-semibold tracking-[-0.07em] text-[#24161c]">
-            칸반으로 보는 매칭 흐름
-          </h2>
-          <p className="mt-3 max-w-3xl text-[15px] leading-7 text-[#6d5961] sm:text-base">
-            소개 전달부터 커플까지, 현재 이 후보의 연결 상황을 단계별로 읽을 수 있습니다.
-          </p>
-
-          <div className="mt-6 grid gap-4 xl:grid-cols-5">
-            {groupedHistory.map((column) => (
-              <article
-                key={column.outcome}
-                className="rounded-[26px] border border-[#ead8cf] bg-gradient-to-b from-white to-[#fff8f3] p-4"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h3 className="text-lg font-semibold tracking-[-0.04em] text-[#24161c]">
-                      {column.label}
-                    </h3>
-                    <p className="mt-2 text-sm leading-6 text-[#6d5961]">
-                      {column.description}
-                    </p>
-                  </div>
-                  <StatusBadge
-                    tone={
-                      column.outcome === "couple"
-                        ? "success"
-                        : column.outcome === "first_meeting" || column.outcome === "dating"
-                          ? "warning"
-                          : "default"
-                    }
-                  >
-                    {column.records.length}건
-                  </StatusBadge>
-                </div>
-
-                <div className="mt-4 grid gap-3">
-                  {column.records.length ? (
-                    column.records.map((record) => (
-                      <article
-                        key={record.id}
-                        className="rounded-[22px] border border-[#efdccf] bg-white/92 p-4 shadow-[0_10px_22px_rgba(143,95,89,0.06)]"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <h4 className="text-base font-semibold text-[#24161c]">
-                              {record.counterpart_label}
-                            </h4>
-                            <p className="mt-1 text-sm text-[#8b6a63]">
-                              {MATCH_OUTCOME_LABEL[record.outcome]}
-                            </p>
-                          </div>
-                          {canOperate ? (
-                            <form action={deleteMatchRecord}>
-                              <input type="hidden" name="candidateId" value={candidate.id} />
-                              <input type="hidden" name="recordId" value={record.id} />
-                              <button
-                                className="inline-flex min-h-9 items-center rounded-full border border-[#ead8cf] bg-white px-3 text-xs font-semibold text-[#5e4850]"
-                                type="submit"
-                              >
-                                삭제
-                              </button>
-                            </form>
-                          ) : null}
-                        </div>
-                        <p className="mt-3 text-sm leading-7 text-[#6d5961]">{record.summary}</p>
-                        <div className="mt-4 flex flex-wrap gap-3 text-xs font-medium text-[#8b6a63]">
-                          <span>{record.matchmaker_name}</span>
-                          <span>{record.happened_on}</span>
-                        </div>
-                      </article>
-                    ))
-                  ) : (
-                    <div className="rounded-[22px] border border-dashed border-[#e6d5ca] bg-[#fffaf6] px-4 py-8 text-center text-sm leading-7 text-[#8b6a63]">
-                      아직 이 단계의 기록이 없습니다.
-                    </div>
-                  )}
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
+        <Suspense
+          fallback={
+            <section className={`sectionBlock detailPanel ${panelClass}`}>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#b46d59]">
+                Match Board
+              </p>
+              <h2 className="mt-3 text-[clamp(2rem,7vw,3rem)] font-semibold tracking-[-0.07em] text-[#24161c]">
+                칸반으로 보는 매칭 흐름
+              </h2>
+              <p className="mt-3 max-w-3xl text-[15px] leading-7 text-[#6d5961] sm:text-base">
+                매칭 기록을 불러오는 중입니다.
+              </p>
+            </section>
+          }
+        >
+          <MatchBoardSection candidateId={candidate.id} canOperate={canOperate} />
+        </Suspense>
 
         <section className="grid gap-5 xl:grid-cols-2">
           <article className={`detailPanel ${panelClass}`}>
@@ -627,29 +743,23 @@ export default async function CandidateDetailPage({
             </div>
           </article>
 
-          <article className={`detailPanel ${panelClass}`}>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#b46d59]">
-              Photo Gallery
-            </p>
-            <h3 className="mt-3 text-2xl font-semibold tracking-[-0.05em] text-[#24161c]">
-              등록된 사진
-            </h3>
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              {photos.length ? (
-                photos.map((photo) => (
-                  <div
-                    key={photo.id}
-                    className="aspect-[4/5] rounded-[24px] border border-[#ead8cf] bg-[#fff5ef] bg-cover bg-center shadow-[0_12px_28px_rgba(143,95,89,0.08)]"
-                    style={{ backgroundImage: `url(${photo.image_url})` }}
-                  />
-                ))
-              ) : (
-                <div className="rounded-[22px] border border-dashed border-[#e6d5ca] bg-[#fffaf6] px-4 py-10 text-center text-sm leading-7 text-[#8b6a63]">
-                  등록된 사진이 없습니다.
-                </div>
-              )}
-            </div>
-          </article>
+          <Suspense
+            fallback={
+              <article className={`detailPanel ${panelClass}`}>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#b46d59]">
+                  Photo Gallery
+                </p>
+                <h3 className="mt-3 text-2xl font-semibold tracking-[-0.05em] text-[#24161c]">
+                  등록된 사진
+                </h3>
+                <p className="mt-4 text-sm leading-7 text-[#6d5961]">
+                  사진 갤러리를 불러오는 중입니다.
+                </p>
+              </article>
+            }
+          >
+            <PhotoGalleryArticle candidateId={candidate.id} />
+          </Suspense>
         </section>
       </div>
     </main>

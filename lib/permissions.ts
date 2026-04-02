@@ -46,18 +46,18 @@ export const getCurrentMembership = cache(async function getCurrentMembership():
     return mockMemberships[0] ?? null;
   }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
+  const userId =
+    !claimsError && claimsData?.claims?.sub ? String(claimsData.claims.sub) : null;
 
-  if (!user) {
+  if (!userId) {
     return null;
   }
 
   const { data } = await supabase
     .from("cupid_memberships")
     .select("user_id, username, full_name, role, status, approved_by, approved_at, created_at")
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .maybeSingle();
 
   return (data as Membership | null) ?? null;
