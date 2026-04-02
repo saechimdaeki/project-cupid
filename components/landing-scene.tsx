@@ -92,10 +92,6 @@ export function LandingScene({ leftCandidate, rightCandidate }: LandingSceneProp
       </div>
 
       <div className="lovePulse" />
-      <div className="floatingHeart heartOne">♥</div>
-      <div className="floatingHeart heartTwo">♥</div>
-      <div className="loveSpark one" />
-      <div className="loveSpark two" />
 
       <div className="parallaxLayer midLayer personLeftWrap leftCardMotion">
         <div className="personOrb personLeft">

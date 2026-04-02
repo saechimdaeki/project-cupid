@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { AccountPanel } from "@/components/account-panel";
 import { LandingScene } from "@/components/landing-scene";
-import { SplashIntro } from "@/components/splash-intro";
 import { mockCandidates } from "@/lib/mock-data";
 import { canManageRoles, getCurrentMembership } from "@/lib/permissions";
 
@@ -13,18 +12,7 @@ export default async function HomePage() {
 
   return (
     <main className="pageFrame landingPage">
-      <SplashIntro />
       <div className="landingWrap">
-        {Array.from({ length: 10 }).map((_, index) => (
-          <span
-            key={`petal-${index}`}
-            className={`blossomPetal petal${(index % 5) + 1}`}
-          />
-        ))}
-        <div className="pageGlow glowLeft" />
-        <div className="pageGlow glowRight" />
-        <div className="pageTexture textureDots" />
-        <div className="pageTexture textureGrid" />
         <header className="topbar">
           <div className="brandLockup">
             <div className="brandMark">C</div>

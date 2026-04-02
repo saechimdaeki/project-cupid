@@ -507,8 +507,7 @@ button {
   border: 1px solid var(--line);
   background: linear-gradient(180deg, rgba(255, 252, 249, 0.94), rgba(252, 246, 242, 0.98));
   border-radius: 30px;
-  box-shadow: var(--shadow);
-  backdrop-filter: blur(18px);
+  box-shadow: 0 14px 30px rgba(45, 30, 36, 0.08);
 }
 
 .heroCard {
@@ -2899,13 +2898,9 @@ button {
 .workspacePage .topbar {
   padding: 18px 20px;
   border-radius: 30px;
-  background:
-    radial-gradient(circle at top left, rgba(255, 219, 228, 0.18), transparent 18%),
-    radial-gradient(circle at top right, rgba(255, 227, 190, 0.18), transparent 20%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.76), rgba(255, 247, 242, 0.78));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 247, 242, 0.96));
   border: 1px solid rgba(176, 112, 96, 0.12);
-  box-shadow: 0 20px 44px rgba(147, 101, 89, 0.08);
-  backdrop-filter: blur(16px);
+  box-shadow: 0 12px 24px rgba(147, 101, 89, 0.06);
 }
 
 .workspacePage .brandLockup {
@@ -3610,7 +3605,16 @@ button {
   place-items: center;
   padding: 24px;
   background: rgba(34, 21, 27, 0.32);
-  backdrop-filter: blur(10px);
+}
+
+.landingPage .pageGlow,
+.landingPage .pageTexture,
+.landingPage .blossomPetal,
+.landingPage .scenePetal,
+.landingPage .scenePetalEdge,
+.landingPage .floatingHeart,
+.landingPage .loveSpark {
+  display: none;
 }
 
 .pairComposerCard {
