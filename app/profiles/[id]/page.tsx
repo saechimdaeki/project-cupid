@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { GlobalNav } from "@/components/global-nav";
 import { PersonPreview } from "@/components/person-preview";
+import { StudioPageShell } from "@/components/studio-page-shell";
 import { deleteMatchRecord, updateCandidateStatus } from "@/lib/admin-actions";
 import { getCandidateById, getCandidatePhotos, getMatchRecords } from "@/lib/data";
 import { canEditCandidates, requireMembershipRole } from "@/lib/permissions";
@@ -58,11 +59,11 @@ function getOutcomeBadgeClass(outcome: MatchOutcome) {
     case "intro_sent":
     case "first_meeting":
     case "dating":
-      return "border-blue-100 bg-blue-50 text-blue-600";
+      return "border-rose-200/80 bg-rose-50 text-rose-600";
     case "couple":
-      return "border-emerald-100 bg-emerald-50 text-emerald-600";
+      return "border-orange-200/80 bg-orange-50 text-orange-700";
     case "closed":
-      return "border-slate-200 bg-slate-100 text-slate-600";
+      return "border-rose-100 bg-white/80 text-slate-500";
   }
 }
 
@@ -80,15 +81,17 @@ function getTitle(candidate: NonNullable<Awaited<ReturnType<typeof getCandidateB
   return `${year} ${candidate.occupation || candidate.full_name}`;
 }
 
-function getMetaChips(candidate: NonNullable<Awaited<ReturnType<typeof getCandidateById>>>) {
-  return [
-    `${candidate.birth_year}년생`,
-    candidate.gender || null,
-    candidate.height_text ? `키 ${candidate.height_text}` : null,
-    candidate.region || null,
-    candidate.religion ? `종교 ${candidate.religion}` : null,
-    candidate.mbti || null,
-  ].filter(Boolean) as string[];
+function getStudioMetaChips(candidate: NonNullable<Awaited<ReturnType<typeof getCandidateById>>>) {
+  const items: { label: string; tone: "rose" | "peach" }[] = [
+    { label: `${candidate.birth_year}년생`, tone: "rose" },
+  ];
+  if (candidate.gender) items.push({ label: candidate.gender, tone: "peach" });
+  if (candidate.height_text) items.push({ label: `키 ${candidate.height_text}`, tone: "rose" });
+  if (candidate.region) items.push({ label: candidate.region, tone: "peach" });
+  if (candidate.religion) items.push({ label: `종교 ${candidate.religion}`, tone: "rose" });
+  if (candidate.mbti) items.push({ label: candidate.mbti, tone: "peach" });
+  if (candidate.occupation) items.push({ label: candidate.occupation, tone: "rose" });
+  return items;
 }
 
 function getDeskMessage(message?: string) {
@@ -130,7 +133,11 @@ export default async function CandidateDetailPage({
 
   const canOperate = canEditCandidates(membership.role);
   const heroImageUrl = isRenderableImageUrl(candidate.image_url) ? candidate.image_url : null;
-  const metaChips = getMetaChips(candidate);
+  const counterpartHeroUrl =
+    counterpartCandidate && isRenderableImageUrl(counterpartCandidate.image_url)
+      ? counterpartCandidate.image_url
+      : null;
+  const metaChips = getStudioMetaChips(candidate);
   const groupedRecords = groupRecords(records);
   const deskMessage = getDeskMessage(message);
 
@@ -138,74 +145,89 @@ export default async function CandidateDetailPage({
     <>
       <GlobalNav membership={membership} active="profile" />
 
-      <main className="min-h-screen bg-slate-50 py-24 text-slate-800">
-        <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-6 px-6 md:px-12 lg:px-24">
-          <section className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_24rem]">
-            <article className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-              <div className="grid gap-0 lg:grid-cols-[minmax(320px,0.9fr)_minmax(0,1.1fr)]">
-                <div className="relative min-h-[320px] bg-slate-100">
-                  <PersonPreview
-                    imageUrl={heroImageUrl}
-                    gender={candidate.gender}
-                    className="min-h-[320px] bg-slate-100 lg:min-h-[560px]"
-                    fetchPriority="high"
-                    loading="eager"
-                    size="lg"
-                    fit="cover"
-                    position="center"
-                  />
+      <StudioPageShell petalCount={58}>
+        <main className="pb-32 pt-24 text-slate-800 sm:pb-40">
+          <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-8 px-8 lg:px-12">
+          <section className="grid gap-8 xl:grid-cols-[minmax(0,1.2fr)_minmax(22rem,28rem)] xl:items-start">
+            <article className="overflow-hidden rounded-3xl border border-white/60 bg-white/85 shadow-xl shadow-rose-200/25 backdrop-blur-md">
+              <div className="grid gap-0 lg:grid-cols-[minmax(340px,0.95fr)_minmax(0,1.15fr)]">
+                <div className="p-4 sm:p-5 lg:p-6">
+                  <div className="relative overflow-hidden rounded-3xl border border-white/70 bg-gradient-to-b from-rose-50/80 to-white/40 p-2 shadow-[0_28px_70px_rgba(244,114,182,0.28)] backdrop-blur-sm sm:p-3">
+                    <p className="mb-2 px-1 text-center text-xs font-semibold text-rose-600/90 sm:text-left">
+                      {candidate.full_name}
+                      <span className="mt-0.5 block font-normal text-slate-500">대표 사진</span>
+                    </p>
+                    <div className="relative mx-auto w-full max-w-xl overflow-hidden rounded-2xl bg-rose-50/40 lg:max-w-none">
+                      <div className="relative aspect-[3/4] w-full min-h-[280px] max-h-[min(85vh,720px)] overflow-hidden rounded-2xl bg-rose-50/30 sm:min-h-[320px] lg:min-h-[400px]">
+                        <PersonPreview
+                          imageUrl={heroImageUrl}
+                          gender={candidate.gender}
+                          className="!absolute inset-0 h-full w-full min-h-0 rounded-2xl bg-rose-50/40"
+                          fetchPriority="high"
+                          loading="eager"
+                          size="lg"
+                          fit="contain"
+                          position="center"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="flex flex-col p-6 sm:p-8">
+                <div className="flex flex-col p-6 sm:p-8 lg:py-10">
                   <div className="flex flex-wrap items-start justify-between gap-4">
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rose-400/90">
                         Candidate Profile
                       </p>
                       <h1 className="mt-2 text-3xl font-semibold tracking-[-0.05em] text-slate-800 sm:text-4xl">
                         {getTitle(candidate)}
                       </h1>
-                      <p className="mt-3 text-sm leading-7 text-slate-500 sm:text-base">
+                      <p className="mt-3 max-w-prose text-sm leading-7 text-slate-500 sm:text-base">
                         {candidate.personality_summary || "소개 메모가 아직 등록되지 않았습니다."}
                       </p>
                     </div>
                     <span
-                      className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${getStatusBadgeClass(candidate.status)}`}
+                      className={`inline-flex shrink-0 items-center rounded-full border px-3 py-1 text-xs font-semibold ${getStatusBadgeClass(candidate.status)}`}
                     >
                       {getStatusLabel(candidate.status)}
                     </span>
                   </div>
 
-                  <div className="mt-5 flex flex-wrap gap-2">
-                    {metaChips.map((chip) => (
+                  <div className="mt-6 flex flex-wrap gap-2">
+                    {metaChips.map((chip, chipIndex) => (
                       <span
-                        key={chip}
-                        className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600"
+                        key={`${chip.label}-${chipIndex}`}
+                        className={`inline-flex items-center rounded-full px-3.5 py-1.5 text-xs font-semibold ${
+                          chip.tone === "rose"
+                            ? "bg-rose-100 text-rose-600"
+                            : "bg-orange-100 text-orange-700"
+                        }`}
                       >
-                        {chip}
+                        {chip.label}
                       </span>
                     ))}
                     {candidate.highlight_tags.map((tag) => (
                       <span
                         key={tag}
-                        className="inline-flex items-center rounded-full border border-rose-100 bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-600"
+                        className="inline-flex items-center rounded-full border border-rose-200/60 bg-white/80 px-3.5 py-1.5 text-xs font-semibold text-rose-600 backdrop-blur-sm"
                       >
                         {tag}
                       </span>
                     ))}
                   </div>
 
-                  <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                    <article className="rounded-2xl bg-slate-50 p-4">
-                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+                  <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                    <article className="rounded-2xl border border-white/50 bg-white/60 p-5 backdrop-blur-sm">
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-rose-400/90">
                         직장 / 직무
                       </p>
                       <p className="mt-2 text-sm leading-6 text-slate-600">
                         {candidate.work_summary || "미입력"}
                       </p>
                     </article>
-                    <article className="rounded-2xl bg-slate-50 p-4">
-                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+                    <article className="rounded-2xl border border-white/50 bg-white/60 p-5 backdrop-blur-sm">
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-rose-400/90">
                         학력 / 이상형
                       </p>
                       <p className="mt-2 text-sm leading-6 text-slate-600">
@@ -217,10 +239,10 @@ export default async function CandidateDetailPage({
               </div>
             </article>
 
-            <aside className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <aside className="rounded-3xl border border-white/60 bg-white/85 p-6 shadow-xl shadow-rose-200/20 backdrop-blur-md sm:p-7">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rose-400/90">
                     Operator Desk
                   </p>
                   <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-slate-800">
@@ -249,7 +271,7 @@ export default async function CandidateDetailPage({
                   <select
                     name="status"
                     defaultValue={candidate.status}
-                    className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-700 outline-none"
+                    className="h-11 rounded-xl border border-rose-100/80 bg-white/90 px-4 text-sm text-slate-700 shadow-sm outline-none focus:border-rose-200 focus:ring-2 focus:ring-rose-100"
                   >
                     {STATUS_OPTIONS.map((status) => (
                       <option key={status} value={status}>
@@ -259,7 +281,7 @@ export default async function CandidateDetailPage({
                   </select>
                   <button
                     type="submit"
-                    className="inline-flex h-11 items-center justify-center rounded-full border border-slate-200 px-4 text-sm font-medium text-slate-600"
+                    className="inline-flex h-11 items-center justify-center rounded-full border border-rose-200/80 bg-white/90 px-4 text-sm font-medium text-rose-700 shadow-sm transition hover:bg-rose-50"
                   >
                     상태 변경
                   </button>
@@ -267,24 +289,42 @@ export default async function CandidateDetailPage({
               </div>
 
               {counterpartCandidate ? (
-                <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-                    Current Pair
+                <div className="mt-6 rounded-2xl border border-orange-100/70 bg-orange-50/50 p-4 backdrop-blur-sm">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-orange-500/90">
+                    Current Pair · 연결 중
                   </p>
-                  <p className="mt-2 text-sm font-medium text-slate-700">
-                    {counterpartCandidate.full_name} · {getTitle(counterpartCandidate)}
-                  </p>
-                  <Link
-                    href={`/profiles/${counterpartCandidate.id}`}
-                    className="mt-3 inline-flex text-sm font-medium text-indigo-600"
-                  >
-                    상대 상세 보기
-                  </Link>
+                  <div className="mt-4 flex flex-col items-center gap-4 sm:flex-row sm:items-start">
+                    <div className="relative aspect-[3/4] w-full max-w-[200px] shrink-0 overflow-hidden rounded-2xl border border-white/80 bg-white/60 shadow-[0_12px_36px_rgba(251,146,60,0.2)] sm:max-w-[176px]">
+                      <PersonPreview
+                        imageUrl={counterpartHeroUrl}
+                        gender={counterpartCandidate.gender}
+                        className="!absolute inset-0 h-full w-full min-h-0 rounded-2xl bg-orange-50/50"
+                        loading="eager"
+                        size="lg"
+                        fit="contain"
+                        position="center"
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1 text-center sm:text-left">
+                      <p className="text-base font-semibold text-slate-800">
+                        {counterpartCandidate.full_name}
+                      </p>
+                      <p className="mt-1 text-sm font-medium text-slate-600">
+                        {getTitle(counterpartCandidate)}
+                      </p>
+                      <Link
+                        href={`/profiles/${counterpartCandidate.id}`}
+                        className="mt-4 inline-flex text-sm font-semibold text-rose-600 underline-offset-2 hover:text-rose-700 hover:underline"
+                      >
+                        상대 상세 보기
+                      </Link>
+                    </div>
+                  </div>
                 </div>
               ) : null}
 
-              <div className="mt-6 rounded-2xl bg-slate-50 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+              <div className="mt-6 rounded-2xl border border-rose-100/60 bg-rose-50/40 p-4 backdrop-blur-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-rose-400/90">
                   Private Memo
                 </p>
                 <p className="mt-2 min-h-28 text-sm leading-7 text-slate-600">
@@ -295,13 +335,13 @@ export default async function CandidateDetailPage({
               <div className="mt-4 flex flex-wrap gap-2">
                 <Link
                   href="/dashboard"
-                  className="inline-flex h-10 items-center rounded-full border border-slate-200 px-4 text-sm font-medium text-slate-600"
+                  className="inline-flex h-10 items-center rounded-full border border-white/70 bg-white/80 px-4 text-sm font-medium text-slate-600 shadow-sm backdrop-blur-sm transition hover:border-rose-200 hover:text-rose-600"
                 >
                   대시보드
                 </Link>
                 <Link
                   href="/candidates/new"
-                  className="inline-flex h-10 items-center rounded-full border border-slate-200 px-4 text-sm font-medium text-slate-600"
+                  className="inline-flex h-10 items-center rounded-full border border-white/70 bg-white/80 px-4 text-sm font-medium text-slate-600 shadow-sm backdrop-blur-sm transition hover:border-rose-200 hover:text-rose-600"
                 >
                   매물 등록
                 </Link>
@@ -310,15 +350,15 @@ export default async function CandidateDetailPage({
           </section>
 
           {deskMessage ? (
-            <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
+            <div className="rounded-2xl border border-rose-100/80 bg-white/85 px-4 py-3 text-sm text-slate-600 shadow-lg shadow-rose-200/15 backdrop-blur-md">
               {deskMessage}
             </div>
           ) : null}
 
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <section className="rounded-3xl border border-white/60 bg-white/85 p-6 shadow-xl shadow-rose-200/20 backdrop-blur-md sm:p-8">
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rose-400/90">
                   Match Flow
                 </p>
                 <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-slate-800">
@@ -327,12 +367,12 @@ export default async function CandidateDetailPage({
               </div>
             </div>
 
-            <div className="mt-5 grid gap-4 lg:grid-cols-3">
+            <div className="mt-6 grid gap-5 lg:grid-cols-3">
               {groupedRecords.map((group) => (
-                <article key={group.key} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <article key={group.key} className="rounded-2xl border border-white/50 bg-white/60 p-5 backdrop-blur-sm">
                   <div className="flex items-center justify-between gap-3">
                     <h3 className="text-sm font-semibold text-slate-800">{group.label}</h3>
-                    <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-600">
+                    <span className="rounded-full bg-rose-100/80 px-3 py-1 text-xs font-semibold text-rose-600">
                       {group.records.length}
                     </span>
                   </div>
@@ -340,7 +380,7 @@ export default async function CandidateDetailPage({
                   <div className="mt-4 grid gap-3">
                     {group.records.length ? (
                       group.records.map((record) => (
-                        <article key={record.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                        <article key={record.id} className="rounded-xl border border-rose-100/50 bg-white/90 p-4 shadow-sm backdrop-blur-sm">
                           <div className="flex items-start justify-between gap-3">
                             <div>
                               <h4 className="text-sm font-semibold text-slate-800">
@@ -372,7 +412,7 @@ export default async function CandidateDetailPage({
                         </article>
                       ))
                     ) : (
-                      <div className="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-8 text-sm text-slate-500">
+                      <div className="rounded-xl border border-dashed border-rose-200/60 bg-white/70 px-4 py-8 text-sm text-slate-500">
                         아직 기록이 없습니다.
                       </div>
                     )}
@@ -382,9 +422,9 @@ export default async function CandidateDetailPage({
             </div>
           </section>
 
-          <section className="grid gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-            <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+          <section className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+            <article className="rounded-3xl border border-white/60 bg-white/85 p-6 shadow-xl shadow-rose-200/20 backdrop-blur-md sm:p-8">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rose-400/90">
                 Profile Read
               </p>
               <h3 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-slate-800">
@@ -397,8 +437,8 @@ export default async function CandidateDetailPage({
                   { label: "MBTI", value: candidate.mbti || "미입력" },
                   { label: "이상형", value: candidate.ideal_type || "미입력" },
                 ].map((item) => (
-                  <article key={item.label} className="rounded-2xl bg-slate-50 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+                  <article key={item.label} className="rounded-2xl border border-white/50 bg-white/65 p-4 backdrop-blur-sm">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-rose-400/90">
                       {item.label}
                     </p>
                     <p className="mt-2 text-sm leading-6 text-slate-600">{item.value}</p>
@@ -407,20 +447,20 @@ export default async function CandidateDetailPage({
               </div>
             </article>
 
-            <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+            <article className="rounded-3xl border border-white/60 bg-white/85 p-6 shadow-xl shadow-rose-200/20 backdrop-blur-md sm:p-8">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rose-400/90">
                 Photo Gallery
               </p>
               <h3 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-slate-800">
                 등록된 사진
               </h3>
 
-              <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {photos.length ? (
                   photos.map((photo) => (
                     <div
                       key={photo.id}
-                      className="relative aspect-[4/5] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100"
+                      className="relative aspect-[4/5] overflow-hidden rounded-2xl border border-rose-100/60 bg-rose-50/30 shadow-[0_12px_36px_rgba(244,114,182,0.15)]"
                     >
                       <Image
                         src={photo.image_url}
@@ -432,7 +472,7 @@ export default async function CandidateDetailPage({
                     </div>
                   ))
                 ) : (
-                  <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-10 text-sm text-slate-500">
+                  <div className="rounded-2xl border border-dashed border-rose-200/60 bg-white/70 px-4 py-10 text-sm text-slate-500 backdrop-blur-sm">
                     등록된 사진이 없습니다.
                   </div>
                 )}
@@ -440,7 +480,8 @@ export default async function CandidateDetailPage({
             </article>
           </section>
         </div>
-      </main>
+        </main>
+      </StudioPageShell>
     </>
   );
 }

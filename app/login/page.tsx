@@ -28,7 +28,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   return (
     <main className="min-h-screen bg-slate-50 py-10 text-slate-800">
-      <div className="mx-auto flex min-h-[calc(100vh-5rem)] w-full max-w-[1600px] flex-col justify-center px-6 md:px-12 lg:px-24">
+      <div className="mx-auto flex min-h-[calc(100vh-5rem)] w-full max-w-[1440px] flex-col justify-center px-8 lg:px-12">
         <div className="mb-6 flex items-center justify-between">
           <Link href="/" className="text-sm font-medium text-slate-500 transition hover:text-slate-800">
             Project Cupid

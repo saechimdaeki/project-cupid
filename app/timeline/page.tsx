@@ -12,7 +12,7 @@ export default async function TimelinePage() {
 
   return (
     <main className="workspacePage min-h-screen bg-[linear-gradient(180deg,#fff8f2_0%,#fff3ec_42%,#fffaf6_100%)] text-[#24161c]">
-      <div className="landingWrap relative mx-auto flex w-full max-w-[1600px] flex-col gap-6 px-6 pb-10 pt-4 md:px-12 lg:px-24">
+      <div className="landingWrap relative mx-auto flex w-full max-w-[1440px] flex-col gap-6 px-8 pb-10 pt-4 lg:px-12">
         <WorkspaceDecorations />
 
         <header className="flex flex-col gap-4 rounded-[30px] border border-[#ead8cf] bg-white/85 p-4 shadow-[0_14px_40px_rgba(143,95,89,0.08)] backdrop-blur-sm lg:flex-row lg:items-start lg:justify-between">

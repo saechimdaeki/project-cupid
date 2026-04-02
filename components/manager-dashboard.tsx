@@ -28,18 +28,18 @@ function ViewSegmentControl({
   onChange: (next: ViewMode) => void;
 }) {
   return (
-    <div className="relative flex w-full max-w-md rounded-full bg-white/70 p-1 shadow-[inset_0_2px_14px_rgba(244,114,182,0.16)] backdrop-blur-sm">
+    <div className="relative flex w-full max-w-xl rounded-full border border-white/60 bg-white/75 p-1.5 shadow-[0_12px_40px_rgba(244,114,182,0.15),inset_0_2px_16px_rgba(244,114,182,0.12)] backdrop-blur-md">
       <span
-        className={`pointer-events-none absolute bottom-1 top-1 w-[calc(50%-4px)] rounded-full bg-rose-500 shadow-[0_6px_22px_rgb(244,114,182,0.38)] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-          view === "flow" ? "left-1" : "left-[calc(50%+2px)]"
+        className={`pointer-events-none absolute bottom-1.5 top-1.5 w-[calc(50%-6px)] rounded-full bg-gradient-to-r from-rose-500 to-pink-500 shadow-[0_8px_28px_rgba(244,114,182,0.45)] transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+          view === "flow" ? "left-1.5" : "left-[calc(50%+3px)]"
         }`}
         aria-hidden
       />
       <button
         type="button"
         onClick={() => onChange("flow")}
-        className={`relative z-10 flex-1 rounded-full px-4 py-2.5 text-sm font-semibold tracking-[-0.02em] transition-colors duration-300 ease-out sm:px-5 ${
-          view === "flow" ? "text-white" : "text-rose-400 hover:text-rose-500"
+        className={`relative z-10 flex-1 rounded-full px-4 py-3 text-sm font-semibold tracking-[-0.02em] transition-colors duration-500 ease-out sm:px-6 ${
+          view === "flow" ? "text-white" : "text-rose-400 hover:text-rose-600"
         }`}
       >
         플로우 보드
@@ -47,8 +47,8 @@ function ViewSegmentControl({
       <button
         type="button"
         onClick={() => onChange("inventory")}
-        className={`relative z-10 flex-1 rounded-full px-4 py-2.5 text-sm font-semibold tracking-[-0.02em] transition-colors duration-300 ease-out sm:px-5 ${
-          view === "inventory" ? "text-white" : "text-rose-400 hover:text-rose-500"
+        className={`relative z-10 flex-1 rounded-full px-4 py-3 text-sm font-semibold tracking-[-0.02em] transition-colors duration-500 ease-out sm:px-6 ${
+          view === "inventory" ? "text-white" : "text-rose-400 hover:text-rose-600"
         }`}
       >
         전체 매물
@@ -91,7 +91,7 @@ function FilterSelect({
 }) {
   return (
     <label className="grid gap-1.5">
-      <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+      <span className="text-xs font-semibold uppercase tracking-[0.16em] text-rose-400/90">
         {label}
       </span>
       <select
@@ -275,16 +275,16 @@ export function ManagerDashboard({
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-rose-50 via-pink-50/30 to-orange-50/50 text-slate-800">
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-rose-50 to-orange-50/50 text-slate-800">
       <SakuraRain petalCount={62} />
-      <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(ellipse_at_20%_0%,rgba(255,228,230,0.55),transparent_45%),radial-gradient(ellipse_at_80%_30%,rgba(255,237,213,0.4),transparent_40%),radial-gradient(circle_at_50%_100%,rgba(255,241,242,0.5),transparent_55%)]" />
+      <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(ellipse_at_22%_0%,rgba(255,228,230,0.6),transparent_46%),radial-gradient(ellipse_at_82%_28%,rgba(255,237,213,0.48),transparent_42%),radial-gradient(circle_at_50%_100%,rgba(255,241,242,0.52),transparent_55%)]" />
 
-      <main className="relative z-10 mx-auto flex w-full max-w-[1600px] flex-col gap-8 px-6 pb-20 pt-24 md:px-12 lg:px-24">
-        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <main className="relative z-10 mx-auto flex w-full max-w-[1440px] flex-col gap-8 px-8 pb-20 pt-24 lg:px-12">
+        <section className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
           {stats.map((stat) => (
             <article
               key={stat.label}
-              className="rounded-[26px] border border-white/60 bg-white/70 p-5 shadow-[0_10px_40px_rgb(244,114,182,0.1)] backdrop-blur-md transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_48px_rgb(244,114,182,0.14)]"
+              className="rounded-3xl border border-white/60 bg-white/80 p-6 shadow-xl shadow-rose-200/15 backdrop-blur-md transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_50px_rgb(244,114,182,0.18)]"
             >
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-rose-400/90">{stat.label}</p>
               <strong className="mt-3 block text-[clamp(1.75rem,4vw,2.35rem)] font-semibold tracking-[-0.04em] text-slate-800">
@@ -294,20 +294,22 @@ export function ManagerDashboard({
           ))}
         </section>
 
-        <section className="rounded-[28px] border border-white/60 bg-white/65 p-5 shadow-[0_12px_44px_rgb(244,114,182,0.1)] backdrop-blur-md sm:p-6">
-          <div className="flex flex-col items-stretch gap-5 lg:flex-row lg:items-center lg:justify-between">
-            <div>
+        <section className="rounded-3xl border border-white/60 bg-white/80 p-5 shadow-xl shadow-rose-200/20 backdrop-blur-md sm:p-7">
+          <div className="flex flex-col items-stretch gap-6 lg:flex-row lg:items-center lg:justify-between lg:gap-10">
+            <div className="min-w-0 shrink-0">
               <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-rose-400/90">Workspace View</p>
               <h2 className="mt-1 text-lg font-semibold tracking-[-0.03em] text-slate-800 sm:text-xl">
                 오늘의 인연 흐름을 한눈에
               </h2>
             </div>
-            <ViewSegmentControl view={view} onChange={setView} />
+            <div className="w-full min-w-0 lg:max-w-xl lg:flex-1 lg:justify-end xl:max-w-2xl">
+              <ViewSegmentControl view={view} onChange={setView} />
+            </div>
           </div>
         </section>
 
-        <section className="rounded-[28px] border border-white/60 bg-white/65 p-5 shadow-[0_12px_44px_rgb(244,114,182,0.1)] backdrop-blur-md sm:p-6">
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1.65fr)_repeat(3,minmax(0,0.85fr))_auto]">
+        <section className="rounded-3xl border border-white/60 bg-white/80 p-5 shadow-xl shadow-rose-200/20 backdrop-blur-md sm:p-7">
+          <div className="grid gap-5 lg:grid-cols-[minmax(0,1.7fr)_repeat(3,minmax(0,0.9fr))_auto]">
             <label className="grid gap-1.5">
               <span className="text-xs font-semibold uppercase tracking-[0.16em] text-rose-400/90">
                 이름 검색
@@ -402,7 +404,7 @@ export function ManagerDashboard({
             />
           </section>
         ) : (
-          <section className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)]">
+          <section className="grid gap-10 xl:grid-cols-[minmax(0,1fr)_minmax(20rem,28rem)]">
             <div className="grid gap-6">
               {filteredCandidates.length ? (
                 filteredCandidates.map((candidate) => (

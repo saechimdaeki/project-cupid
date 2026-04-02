@@ -62,7 +62,7 @@ export function PendingInviteView({
       <PendingStatusGuard />
 
       <header className="fixed inset-x-0 top-0 z-40 border-b border-white/50 bg-white/30 backdrop-blur-lg">
-        <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between gap-4 px-6 py-3 md:px-12 lg:px-24">
+        <div className="mx-auto flex w-full max-w-[1440px] items-center justify-between gap-4 px-8 py-3 lg:px-12">
           <Link href="/" className="flex min-w-0 items-center gap-3">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-3xl border border-white/60 bg-white/70 text-sm font-semibold text-rose-500 shadow-[0_8px_30px_rgb(244,114,182,0.12)]">
               C
@@ -93,7 +93,7 @@ export function PendingInviteView({
         </div>
       </header>
 
-      <div className="relative z-10 mx-auto flex w-full max-w-[1600px] flex-col items-center px-6 pb-24 pt-28 md:px-12 lg:px-24">
+      <div className="relative z-10 mx-auto flex w-full max-w-[1440px] flex-col items-center px-8 pb-24 pt-28 lg:px-12">
         <div className="w-full max-w-xl rounded-3xl border border-white/70 bg-white/80 p-8 shadow-xl backdrop-blur-md sm:p-10">
           <p className="text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-rose-400/90">
             Private invitation

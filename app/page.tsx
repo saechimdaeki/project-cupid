@@ -36,7 +36,7 @@ function Header({
 }) {
   return (
     <header className="fixed inset-x-0 top-0 z-40 border-b border-white/50 bg-white/30 backdrop-blur-lg">
-      <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between gap-4 px-6 py-3 md:px-12 lg:px-24">
+      <div className="mx-auto flex w-full max-w-[1440px] items-center justify-between gap-4 px-8 py-3 lg:px-12">
         <div className="flex min-w-0 items-center gap-4">
           <Link href="/" className="flex min-w-0 items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-3xl border border-white/60 bg-white/70 text-sm font-semibold text-rose-500 shadow-[0_8px_30px_rgb(244,114,182,0.12)]">
@@ -390,7 +390,7 @@ export default function HomePage() {
 
       <Header auth={auth} onLogin={handleLogin} onLogout={handleLogout} />
 
-      <div className="relative z-10 mx-auto flex w-full max-w-[1600px] flex-col gap-10 px-6 pb-16 pt-24 md:px-12 lg:px-24">
+      <div className="relative z-10 mx-auto flex w-full max-w-[1440px] flex-col gap-10 px-8 pb-16 pt-24 lg:px-12">
         <section className="grid gap-16 xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)] xl:items-start xl:justify-between">
           <article className="landing-reveal rounded-[36px] border border-white/50 bg-white/60 p-6 shadow-[0_8px_30px_rgb(244,114,182,0.1)] backdrop-blur-lg sm:p-8">
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">

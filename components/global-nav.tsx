@@ -8,6 +8,14 @@ type GlobalNavProps = {
   active?: "dashboard" | "candidates" | "profile" | "admin";
 };
 
+function HomeIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className={className}>
+      <path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9.5Z" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function CenterNavLink({
   href,
   label,
@@ -35,14 +43,22 @@ export function GlobalNav({ membership, active = "dashboard" }: GlobalNavProps) 
   const isSuper = canAccessAdminPanel(membership.role);
 
   return (
-    <header className="fixed inset-x-0 top-0 z-40 border-b border-white/50 bg-white/40 backdrop-blur-lg">
-      <div className="relative mx-auto flex w-full max-w-[1600px] items-center justify-between gap-4 px-6 py-3.5 md:px-12 lg:px-24">
-        <div className="flex min-w-0 shrink-0 items-center gap-4">
+    <header className="fixed inset-x-0 top-0 z-40 border-b border-white/50 bg-white/45 backdrop-blur-lg">
+      <div className="relative mx-auto flex w-full max-w-[1440px] items-center justify-between gap-3 px-8 py-3.5 lg:px-12">
+        <div className="flex min-w-0 shrink-0 items-center gap-3 sm:gap-4">
           <Link
             href="/"
-            className="font-serif text-2xl font-bold tracking-tight text-rose-500 transition hover:text-rose-600"
+            className="font-serif text-lg font-bold tracking-[0.18em] text-rose-500 transition hover:text-rose-600 sm:text-xl"
           >
-            Project Cupid
+            PROJECT CUPID
+          </Link>
+          <Link
+            href="/"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/70 bg-white/55 px-3 py-2 text-xs font-semibold text-rose-600 shadow-sm backdrop-blur-sm transition hover:border-rose-200 hover:bg-white/85 sm:text-sm"
+            aria-label="홈으로 이동"
+          >
+            <HomeIcon />
+            <span className="hidden sm:inline">홈</span>
           </Link>
         </div>
 
