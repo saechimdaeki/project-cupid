@@ -1,3 +1,5 @@
+import { cache } from "react";
+import { redirect } from "next/navigation";
 import { mockMemberships } from "@/lib/mock-data";
 import { createClient } from "@/lib/supabase/server";
 import type { AppRole, Membership } from "@/lib/types";
@@ -37,7 +39,7 @@ export function canManageRoles(role: AppRole) {
   return role === "super_admin";
 }
 
-export async function getCurrentMembership(): Promise<Membership | null> {
+export const getCurrentMembership = cache(async function getCurrentMembership(): Promise<Membership | null> {
   const supabase = await createClient();
 
   if (!supabase) {
@@ -59,4 +61,28 @@ export async function getCurrentMembership(): Promise<Membership | null> {
     .maybeSingle();
 
   return (data as Membership | null) ?? null;
+});
+
+export async function requireApprovedMembership() {
+  const membership = await getCurrentMembership();
+
+  if (!membership) {
+    redirect("/login");
+  }
+
+  if (membership.status !== "approved") {
+    redirect("/pending");
+  }
+
+  return membership;
+}
+
+export async function requireMembershipRole(roles: AppRole[]) {
+  const membership = await requireApprovedMembership();
+
+  if (!roles.includes(membership.role)) {
+    redirect("/dashboard");
+  }
+
+  return membership;
 }

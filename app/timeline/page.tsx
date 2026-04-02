@@ -1,18 +1,14 @@
 import Link from "next/link";
 import { AccountPanel } from "@/components/account-panel";
 import { WorkspaceDecorations } from "@/components/workspace-decorations";
-import { getCurrentMembershipWithFallback, getTimelineEvents } from "@/lib/data";
-import { roleLabel } from "@/lib/permissions";
+import { getTimelineEvents } from "@/lib/data";
+import { requireApprovedMembership, roleLabel } from "@/lib/permissions";
 
 export default async function TimelinePage() {
   const [membership, timelineEvents] = await Promise.all([
-    getCurrentMembershipWithFallback(),
+    requireApprovedMembership(),
     getTimelineEvents(),
   ]);
-
-  if (!membership) {
-    return null;
-  }
 
   return (
     <main className="workspacePage min-h-screen bg-[linear-gradient(180deg,#fff8f2_0%,#fff3ec_42%,#fffaf6_100%)] text-[#24161c]">

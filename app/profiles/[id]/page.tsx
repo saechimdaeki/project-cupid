@@ -11,7 +11,7 @@ import {
   updateCandidateStatus,
 } from "@/lib/admin-actions";
 import { getCandidateById, getCandidatePhotos, getMatchRecords } from "@/lib/data";
-import { canEditCandidates, getCurrentMembership } from "@/lib/permissions";
+import { canEditCandidates, requireMembershipRole } from "@/lib/permissions";
 import type { MatchOutcome, MatchRecord } from "@/lib/types";
 
 type CandidateDetailPageProps = {
@@ -151,7 +151,7 @@ export default async function CandidateDetailPage({
   const [history, photos, membership] = await Promise.all([
     getMatchRecords(candidate.id),
     getCandidatePhotos(candidate.id),
-    getCurrentMembership(),
+    requireMembershipRole(["admin", "super_admin"]),
   ]);
   const heroImageUrl = isRenderableImageUrl(candidate.image_url)
     ? candidate.image_url
@@ -159,7 +159,7 @@ export default async function CandidateDetailPage({
   const counterpartCandidate = candidate.paired_candidate_id
     ? await getCandidateById(candidate.paired_candidate_id)
     : null;
-  const canOperate = membership?.role ? canEditCandidates(membership.role) : false;
+  const canOperate = canEditCandidates(membership.role);
   const infoCards = buildInfoCards(candidate);
   const signalChips = buildSignalChips(candidate);
   const groupedHistory = groupMatchRecords(history);
@@ -222,6 +222,8 @@ export default async function CandidateDetailPage({
                   imageUrl={heroImageUrl}
                   gender={candidate.gender}
                   className="portraitPreview min-h-[320px] rounded-[24px] sm:min-h-[420px] lg:min-h-[520px]"
+                  fetchPriority="high"
+                  loading="eager"
                   size="lg"
                 />
                 <div className="pointer-events-none absolute inset-x-0 bottom-0 rounded-b-[24px] bg-gradient-to-t from-[rgba(33,19,26,0.78)] via-[rgba(33,19,26,0.24)] to-transparent p-5 text-white sm:p-6">

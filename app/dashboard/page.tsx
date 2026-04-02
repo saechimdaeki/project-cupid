@@ -2,16 +2,15 @@ import Link from "next/link";
 import { AccountPanel } from "@/components/account-panel";
 import { CandidateCard } from "@/components/candidate-card";
 import { DashboardFlowBoard } from "@/components/dashboard-flow-board";
-import { DesktopSceneShell } from "@/components/desktop-scene-shell";
+import { LandingScene } from "@/components/landing-scene";
 import { WorkspaceDecorations } from "@/components/workspace-decorations";
 import {
   buildTimelineEvents,
   getDashboardCandidates,
   getDashboardMatchRecords,
-  getCurrentMembershipWithFallback,
 } from "@/lib/data";
 import { mockCandidates } from "@/lib/mock-data";
-import { canEditCandidates, roleLabel } from "@/lib/permissions";
+import { canEditCandidates, requireApprovedMembership, roleLabel } from "@/lib/permissions";
 
 type DashboardPageProps = {
   searchParams: Promise<{
@@ -85,7 +84,7 @@ function FilterSelect({
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const { filter, religion, gender, q, message } = await searchParams;
-  const membership = await getCurrentMembershipWithFallback();
+  const membership = await requireApprovedMembership();
   const [allCandidates, recentMatches] = await Promise.all([
     getDashboardCandidates(),
     getDashboardMatchRecords(),
@@ -95,10 +94,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     new Map(allCandidates.map((candidate) => [candidate.id, candidate])),
   );
   const query = (q ?? "").trim().toLowerCase();
-
-  if (!membership) {
-    return null;
-  }
 
   const religionOptions = Array.from(
     new Set(allCandidates.map((candidate) => candidate.religion).filter(Boolean)),
@@ -300,7 +295,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           </div>
 
           <div className="relative hidden overflow-hidden rounded-[30px] border border-[#ead8cf] bg-white/66 p-3 shadow-[0_18px_44px_rgba(143,95,89,0.08)] xl:block">
-            <DesktopSceneShell leftCandidate={mockCandidates[0]} rightCandidate={mockCandidates[1] ?? mockCandidates[0]} />
+            <LandingScene
+              leftCandidate={mockCandidates[0]}
+              rightCandidate={mockCandidates[1] ?? mockCandidates[0]}
+            />
           </div>
           {message === "viewer-role" ? (
             <div className="mt-5 rounded-2xl border border-[#f0ddd2] bg-[#fff8f3] px-4 py-3 text-sm font-medium text-[#8a6b74]">

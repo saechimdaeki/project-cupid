@@ -6,7 +6,7 @@ import { WorkspaceDecorations } from "@/components/workspace-decorations";
 import { rejectMembership, updateMembershipRole } from "@/lib/admin-actions";
 import { getMembershipDirectory, getPendingMemberships } from "@/lib/data";
 import { mockCandidates } from "@/lib/mock-data";
-import { getCurrentMembership } from "@/lib/permissions";
+import { requireMembershipRole } from "@/lib/permissions";
 
 type AdminPageProps = {
   searchParams: Promise<{ message?: string }>;
@@ -16,7 +16,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const [pendingUsers, allMembers, currentMembership] = await Promise.all([
     getPendingMemberships(),
     getMembershipDirectory(),
-    getCurrentMembership(),
+    requireMembershipRole(["super_admin"]),
   ]);
   const { message } = await searchParams;
   const managedMembers = allMembers.filter((member) => member.status === "approved");

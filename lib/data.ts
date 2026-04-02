@@ -10,6 +10,26 @@ import type {
 
 const CANDIDATE_PHOTOS_BUCKET = "sogaeting";
 const SIGNED_URL_TTL_SECONDS = 60 * 60;
+const IMAGE_TRANSFORMS = {
+  card: {
+    height: 720,
+    quality: 68,
+    resize: "cover" as const,
+    width: 560,
+  },
+  detail: {
+    height: 1600,
+    quality: 76,
+    resize: "cover" as const,
+    width: 1200,
+  },
+  gallery: {
+    height: 960,
+    quality: 72,
+    resize: "cover" as const,
+    width: 720,
+  },
+};
 
 function normalizeGender(value: string | null | undefined) {
   if (value === "남" || value === "남성") {
@@ -35,6 +55,7 @@ function isDirectImageUrl(value: string | null | undefined) {
 async function resolveCandidateImage(
   supabase: Awaited<ReturnType<typeof createClient>>,
   value: string | null,
+  variant: keyof typeof IMAGE_TRANSFORMS = "card",
 ) {
   if (!value) {
     return null;
@@ -46,13 +67,35 @@ async function resolveCandidateImage(
 
   const { data, error } = await supabase.storage
     .from(CANDIDATE_PHOTOS_BUCKET)
-    .createSignedUrl(value, SIGNED_URL_TTL_SECONDS);
+    .createSignedUrl(value, SIGNED_URL_TTL_SECONDS, {
+      transform: IMAGE_TRANSFORMS[variant],
+    });
 
   if (error || !data?.signedUrl) {
     return null;
   }
 
   return data.signedUrl;
+}
+
+async function resolveSignedImageMap(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  values: Array<string | null | undefined>,
+  variant: keyof typeof IMAGE_TRANSFORMS = "card",
+) {
+  const paths = Array.from(
+    new Set(values.filter((value): value is string => Boolean(value) && !isDirectImageUrl(value))),
+  );
+
+  if (!paths.length || !supabase) {
+    return new Map<string, string | null>();
+  }
+
+  const signedEntries = await Promise.all(
+    paths.map(async (path) => [path, await resolveCandidateImage(supabase, path, variant)] as const),
+  );
+
+  return new Map(signedEntries);
 }
 
 function mapCandidate(row: any): Candidate {
@@ -172,15 +215,21 @@ export async function getCandidates(options?: GetCandidatesOptions) {
     return data.map((row) => mapCandidate(row));
   }
 
-  return Promise.all(
-    data.map(async (row) => {
-      const candidate = mapCandidate(row);
-      return {
-        ...candidate,
-        image_url: await resolveCandidateImage(supabase, candidate.image_url),
-      };
-    }),
+  const candidates = data.map((row) => mapCandidate(row));
+  const signedImageMap = await resolveSignedImageMap(
+    supabase,
+    candidates.map((candidate) => candidate.image_url),
+    "card",
   );
+
+  return candidates.map((candidate) => ({
+    ...candidate,
+    image_url: candidate.image_url
+      ? isDirectImageUrl(candidate.image_url)
+        ? candidate.image_url
+        : signedImageMap.get(candidate.image_url) ?? null
+      : null,
+  }));
 }
 
 export async function getDashboardCandidates() {
@@ -225,7 +274,7 @@ export async function getCandidateById(id: string) {
 
   return {
     ...candidate,
-    image_url: await resolveCandidateImage(supabase, candidate.image_url),
+    image_url: await resolveCandidateImage(supabase, candidate.image_url, "detail"),
   };
 }
 
@@ -380,15 +429,19 @@ export async function getCandidatePhotos(candidateId: string) {
       : [];
   }
 
-  return Promise.all(
-    data.map(async (row) => {
-      const photo = mapPhoto(row);
-      return {
-        ...photo,
-        image_url: (await resolveCandidateImage(supabase, photo.image_url)) ?? photo.image_url,
-      };
-    }),
+  const photos = data.map((row) => mapPhoto(row));
+  const signedImageMap = await resolveSignedImageMap(
+    supabase,
+    photos.map((photo) => photo.image_url),
+    "gallery",
   );
+
+  return photos.map((photo) => ({
+    ...photo,
+    image_url: isDirectImageUrl(photo.image_url)
+      ? photo.image_url
+      : signedImageMap.get(photo.image_url) ?? photo.image_url,
+  }));
 }
 
 export async function getPendingMemberships() {
@@ -428,28 +481,4 @@ export async function getMembershipDirectory() {
   }
 
   return data.map(mapMembership);
-}
-
-export async function getCurrentMembershipWithFallback() {
-  const supabase = await createClient();
-
-  if (!supabase) {
-    return mockMemberships[0] ?? null;
-  }
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return null;
-  }
-
-  const { data } = await supabase
-    .from("cupid_memberships")
-    .select("user_id, username, full_name, role, status, approved_by, approved_at, created_at")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  return data ? mapMembership(data) : mockMemberships[0] ?? null;
 }

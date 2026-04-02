@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import Image from "next/image";
 
 type PersonPreviewProps = {
   imageUrl?: string | null;
@@ -7,6 +7,8 @@ type PersonPreviewProps = {
   size?: "sm" | "lg";
   fit?: "cover" | "contain";
   position?: "center" | "top";
+  loading?: "eager" | "lazy";
+  fetchPriority?: "auto" | "high" | "low";
 };
 
 function getFallbackClass(gender?: string | null) {
@@ -28,23 +30,31 @@ export function PersonPreview({
   size = "lg",
   fit = "cover",
   position = "center",
+  loading = "lazy",
+  fetchPriority = "auto",
 }: PersonPreviewProps) {
   const fallbackClass = getFallbackClass(gender);
-  const style = imageUrl
-    ? ({
-        backgroundImage: `url("${imageUrl}")`,
-        backgroundSize: fit,
-        backgroundPosition: position === "top" ? "center top" : "center",
-      } as CSSProperties)
-    : undefined;
+  const sizes =
+    size === "lg"
+      ? "(min-width: 1280px) 32vw, (min-width: 1024px) 45vw, 100vw"
+      : "(min-width: 1280px) 18vw, (min-width: 768px) 24vw, 46vw";
 
   return (
     <div
-      className={`personPreview ${size} ${imageUrl ? "hasImage" : `fallback ${fallbackClass}`} ${className}`.trim()}
-      style={style}
+      className={`personPreview relative overflow-hidden ${size} ${imageUrl ? "hasImage" : `fallback ${fallbackClass}`} ${className}`.trim()}
       aria-hidden="true"
     >
-      {imageUrl ? null : (
+      {imageUrl ? (
+        <Image
+          src={imageUrl}
+          alt=""
+          fill
+          sizes={sizes}
+          className={`${fit === "contain" ? "object-contain" : "object-cover"} ${position === "top" ? "object-top" : "object-center"}`}
+          fetchPriority={fetchPriority}
+          loading={loading}
+        />
+      ) : (
         <>
           <div className="personPreviewGlow" />
           <div className="personPreviewSilhouette">

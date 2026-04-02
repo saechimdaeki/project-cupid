@@ -3,6 +3,7 @@ import { FormSubmitButton } from "@/components/form-submit-button";
 import { GenderToggleField } from "@/components/gender-toggle-field";
 import { PhotoUploadField } from "@/components/photo-upload-field";
 import { createCandidate } from "@/lib/admin-actions";
+import { requireMembershipRole } from "@/lib/permissions";
 
 type NewCandidatePageProps = {
   searchParams: Promise<{ message?: string }>;
@@ -13,6 +14,7 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 }
 
 export default async function NewCandidatePage({ searchParams }: NewCandidatePageProps) {
+  await requireMembershipRole(["admin", "super_admin"]);
   const { message } = await searchParams;
   const submissionKey = crypto.randomUUID();
 

@@ -1,10 +1,12 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { FormSubmitButton } from "@/components/form-submit-button";
 import { GenderToggleField } from "@/components/gender-toggle-field";
 import { PhotoUploadField } from "@/components/photo-upload-field";
 import { getCandidateById, getCandidatePhotos } from "@/lib/data";
 import { updateCandidate } from "@/lib/admin-actions";
+import { requireMembershipRole } from "@/lib/permissions";
 
 type EditCandidatePageProps = {
   params: Promise<{ id: string }>;
@@ -16,6 +18,7 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 }
 
 export default async function EditCandidatePage({ params, searchParams }: EditCandidatePageProps) {
+  await requireMembershipRole(["admin", "super_admin"]);
   const { id } = await params;
   const { message } = await searchParams;
   const candidate = await getCandidateById(id);
@@ -146,7 +149,15 @@ export default async function EditCandidatePage({ params, searchParams }: EditCa
               <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {photos.map((photo) => (
                   <article key={photo.id} className="grid gap-3 rounded-[24px] border border-[#ead8cf] bg-[#fffaf7] p-4">
-                    <div className="min-h-[220px] rounded-[20px] bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${photo.image_url})` }} />
+                    <div className="relative min-h-[220px] overflow-hidden rounded-[20px] bg-[#fff3ec]">
+                      <Image
+                        src={photo.image_url}
+                        alt=""
+                        fill
+                        sizes="(min-width: 1280px) 20vw, (min-width: 768px) 33vw, 100vw"
+                        className="object-cover"
+                      />
+                    </div>
                     <div className="grid gap-3 text-sm font-medium text-[#5f4951]">
                       <label className="flex items-center gap-3">
                         <input type="radio" name="primaryPhoto" value={`existing:${photo.id}`} defaultChecked={photo.is_primary} />

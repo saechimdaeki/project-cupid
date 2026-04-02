@@ -98,8 +98,10 @@ export function LandingScene({ leftCandidate, rightCandidate }: LandingSceneProp
           <PersonPreview
             imageUrl={leftCandidate.image_url}
             gender={leftCandidate.gender}
+            loading="eager"
             size="sm"
             fit="cover"
+            fetchPriority="high"
             position="top"
             className="bg-[#fffaf7]"
           />
@@ -128,6 +130,7 @@ export function LandingScene({ leftCandidate, rightCandidate }: LandingSceneProp
           <PersonPreview
             imageUrl={rightCandidate.image_url}
             gender={rightCandidate.gender}
+            loading="eager"
             size="sm"
             fit="cover"
             position="top"

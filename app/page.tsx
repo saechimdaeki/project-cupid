@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { HomeAccountShell } from "@/components/home-account-shell";
 import { LandingScene } from "@/components/landing-scene";
+import { LazyHomeAccountShell } from "@/components/lazy-home-account-shell";
+import { LazySplashIntro } from "@/components/lazy-splash-intro";
 import { PersonPreview } from "@/components/person-preview";
-import { SplashIntro } from "@/components/splash-intro";
 import { mockCandidates } from "@/lib/mock-data";
 
 function QuickStat({
@@ -70,7 +70,7 @@ export default function HomePage() {
 
   return (
     <main className="landingPage relative min-h-screen overflow-x-hidden bg-[linear-gradient(180deg,#fff8f2_0%,#fff3ec_42%,#fffaf6_100%)] text-[#24161c]">
-      <SplashIntro />
+      <LazySplashIntro />
       <div className="landingWrap mx-auto flex w-full max-w-[1280px] flex-col gap-6 px-4 pb-10 pt-4 sm:px-6 lg:px-8">
         <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 -z-10 overflow-hidden">
           <span className="pageGlow glowLeft" />
@@ -107,7 +107,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          <HomeAccountShell />
+          <LazyHomeAccountShell />
         </header>
 
         <section className="grid gap-5 lg:grid-cols-[minmax(0,1.08fr)_minmax(320px,0.92fr)] lg:items-stretch">
