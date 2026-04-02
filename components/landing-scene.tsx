@@ -99,7 +99,7 @@ export function LandingScene({ leftCandidate, rightCandidate }: LandingSceneProp
             imageUrl={leftCandidate.image_url}
             gender={leftCandidate.gender}
             size="sm"
-            fit="contain"
+            fit="cover"
             position="top"
             className="bg-[#fffaf7]"
           />
@@ -129,7 +129,7 @@ export function LandingScene({ leftCandidate, rightCandidate }: LandingSceneProp
             imageUrl={rightCandidate.image_url}
             gender={rightCandidate.gender}
             size="sm"
-            fit="contain"
+            fit="cover"
             position="top"
             className="bg-[#fffaf7]"
           />

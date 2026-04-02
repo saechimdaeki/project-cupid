@@ -47,7 +47,13 @@ function InventoryCard({
       }`}
     >
       <div className="rounded-[22px] bg-white/85 p-3">
-        <PersonPreview imageUrl={imageUrl} size="sm" fit="contain" position="top" className="min-h-[220px] bg-[#fffaf7]" />
+        <PersonPreview
+          imageUrl={imageUrl}
+          size="sm"
+          fit="cover"
+          position="top"
+          className="min-h-[220px] rounded-[20px] bg-[#fffaf7]"
+        />
       </div>
       <div className="px-1 pb-1 pt-4">
         <h3 className="text-xl font-semibold tracking-[-0.04em] text-[#24161c]">{title}</h3>

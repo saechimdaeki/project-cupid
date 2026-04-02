@@ -2439,7 +2439,7 @@ button {
 
 .heroTitle {
   max-width: 680px;
-  font-size: clamp(2.9rem, 4.6vw, 4.9rem);
+  font-size: clamp(2.6rem, 4vw, 4.2rem);
   line-height: 1.01;
   letter-spacing: -0.07em;
 }
@@ -3239,8 +3239,8 @@ button {
 
 .workspacePage .pageHeader .pageTitle,
 .workspacePage .dashboardHero .pageTitle {
-  font-size: clamp(3rem, 5vw, 5.1rem);
-  line-height: 0.94;
+  font-size: clamp(2.6rem, 4.4vw, 4.35rem);
+  line-height: 0.98;
 }
 
 .workspacePage .pageMeta,
