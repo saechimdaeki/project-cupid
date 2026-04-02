@@ -15,7 +15,7 @@ export default async function HomePage() {
     <main className="pageFrame landingPage">
       <SplashIntro />
       <div className="landingWrap">
-        {Array.from({ length: 18 }).map((_, index) => (
+        {Array.from({ length: 10 }).map((_, index) => (
           <span
             key={`petal-${index}`}
             className={`blossomPetal petal${(index % 5) + 1}`}

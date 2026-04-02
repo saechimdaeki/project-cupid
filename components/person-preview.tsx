@@ -28,7 +28,7 @@ export function PersonPreview({
   const fallbackClass = getFallbackClass(gender);
   const style = imageUrl
     ? ({
-        backgroundImage: `url(${imageUrl})`,
+        backgroundImage: `url("${imageUrl}")`,
       } as CSSProperties)
     : undefined;
 

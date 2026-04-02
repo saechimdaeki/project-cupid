@@ -1,7 +1,3 @@
-"use client";
-
-import type { CSSProperties } from "react";
-import { useRef } from "react";
 import { PersonPreview } from "@/components/person-preview";
 import { RomanceIllustration } from "@/components/romance-illustration";
 import { SceneBackdrop } from "@/components/scene-backdrop";
@@ -13,62 +9,16 @@ type LandingSceneProps = {
 };
 
 export function LandingScene({ leftCandidate, rightCandidate }: LandingSceneProps) {
-  const canvasRef = useRef<HTMLDivElement | null>(null);
-  const frameRef = useRef<number | null>(null);
-
-  const canvasStyle = {
-    ["--mx" as string]: "0",
-    ["--my" as string]: "0",
-  } satisfies CSSProperties;
-
-  const updateMotion = (x: number, y: number) => {
-    const node = canvasRef.current;
-
-    if (!node) {
-      return;
-    }
-
-    node.style.setProperty("--mx", x.toFixed(2));
-    node.style.setProperty("--my", y.toFixed(2));
-  };
-
   return (
-    <div
-      ref={canvasRef}
-      className="loveCanvas parallaxReady"
-      style={canvasStyle}
-      onMouseMove={(event) => {
-        const rect = event.currentTarget.getBoundingClientRect();
-        const x = ((event.clientX - rect.left) / rect.width - 0.5) * 16;
-        const y = ((event.clientY - rect.top) / rect.height - 0.5) * 14;
-
-        if (frameRef.current !== null) {
-          cancelAnimationFrame(frameRef.current);
-        }
-
-        frameRef.current = requestAnimationFrame(() => {
-          updateMotion(x, y);
-        });
-      }}
-      onMouseLeave={() => {
-        if (frameRef.current !== null) {
-          cancelAnimationFrame(frameRef.current);
-        }
-
-        frameRef.current = requestAnimationFrame(() => {
-          updateMotion(0, 0);
-        });
-      }}
-    >
-      {Array.from({ length: 8 }).map((_, index) => (
+    <div className="loveCanvas">
+      {Array.from({ length: 5 }).map((_, index) => (
         <span
           key={`scene-petal-${index}`}
-          className={`scenePetal scenePetal${(index % 4) + 1} ${index % 3 === 0 ? "scenePetalBlur" : ""}`}
+          className={`scenePetal scenePetal${(index % 4) + 1} ${index === 0 ? "scenePetalBlur" : ""}`}
         />
       ))}
       <span className="scenePetalEdge edgeOne" />
       <span className="scenePetalEdge edgeTwo" />
-      <span className="scenePetalEdge edgeThree" />
       <div className="parallaxLayer farLayer">
         <SceneBackdrop />
         <div className="loveCanvasGlow glowOne" />
@@ -88,22 +38,73 @@ export function LandingScene({ leftCandidate, rightCandidate }: LandingSceneProp
         <div className="miniToken tokenFlower">
           <RomanceIllustration variant="letter" />
         </div>
+        <div className="cupidToken" aria-hidden="true">
+          <svg viewBox="0 0 180 120">
+            <path
+              d="M26 62c18-26 44-39 78-39 18 0 35 3 50 9"
+              fill="none"
+              stroke="rgba(214, 167, 111, 0.72)"
+              strokeWidth="3.5"
+              strokeLinecap="round"
+            />
+            <path
+              d="M56 33c-3 18-3 36 0 54"
+              fill="none"
+              stroke="rgba(231, 151, 161, 0.58)"
+              strokeWidth="3"
+              strokeLinecap="round"
+            />
+            <path
+              d="M58 34c9 4 18 11 24 20"
+              fill="none"
+              stroke="rgba(214, 167, 111, 0.62)"
+              strokeWidth="2.8"
+              strokeLinecap="round"
+            />
+            <path
+              d="M56 84c9-4 18-11 24-20"
+              fill="none"
+              stroke="rgba(214, 167, 111, 0.62)"
+              strokeWidth="2.8"
+              strokeLinecap="round"
+            />
+            <path
+              d="M86 58h58"
+              fill="none"
+              stroke="rgba(214, 167, 111, 0.82)"
+              strokeWidth="3.2"
+              strokeLinecap="round"
+            />
+            <path
+              d="M140 48l18 10-18 10"
+              fill="none"
+              stroke="rgba(214, 167, 111, 0.82)"
+              strokeWidth="3.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M104 58c0-6 4-10 9-10 3 0 5 1 5 4 0-3 2-4 5-4 5 0 9 4 9 10 0 8-6 13-14 18-8-5-14-10-14-18Z"
+              fill="rgba(232, 145, 161, 0.88)"
+            />
+          </svg>
+        </div>
       </div>
 
       <div className="lovePulse" />
       <div className="floatingHeart heartOne">♥</div>
       <div className="floatingHeart heartTwo">♥</div>
-      <div className="floatingHeart heartThree">♥</div>
-      <div className="floatingHeart heartFour">♥</div>
       <div className="loveSpark one" />
       <div className="loveSpark two" />
-      <div className="loveSpark three" />
 
       <div className="parallaxLayer midLayer personLeftWrap leftCardMotion">
         <div className="personOrb personLeft">
           <PersonPreview imageUrl={leftCandidate.image_url} gender={leftCandidate.gender} size="sm" />
           <div className="personMeta">
-            <strong>94년생 서울 기획자</strong>
+            <strong>
+              {String(leftCandidate.birth_year).slice(2)}년생 {leftCandidate.region}{" "}
+              {leftCandidate.occupation}
+            </strong>
             <span>{leftCandidate.full_name} · {leftCandidate.work_summary}</span>
           </div>
         </div>
@@ -123,7 +124,10 @@ export function LandingScene({ leftCandidate, rightCandidate }: LandingSceneProp
         <div className="personOrb personRight">
           <PersonPreview imageUrl={rightCandidate.image_url} gender={rightCandidate.gender} size="sm" />
           <div className="personMeta">
-            <strong>91년생 판교 개발자</strong>
+            <strong>
+              {String(rightCandidate.birth_year).slice(2)}년생 {rightCandidate.region}{" "}
+              {rightCandidate.occupation}
+            </strong>
             <span>{rightCandidate.full_name} · {rightCandidate.work_summary}</span>
           </div>
         </div>
