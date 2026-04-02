@@ -98,7 +98,8 @@ export async function signInWithPassword(formData: FormData) {
     redirectWithMessage("/login", "id 또는 비밀번호를 다시 확인해주세요.");
   }
 
-  redirect("/dashboard");
+  /* 로그인 직후에도 메인 홈 감성(벚꽃·환영 헤더)을 유지 — 대시보드는 사용자가 직접 이동 */
+  redirect("/");
 }
 
 export async function signOut() {

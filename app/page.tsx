@@ -1,81 +1,29 @@
 "use client";
 
 import Link from "next/link";
-import type { CSSProperties } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { PersonPreview } from "@/components/person-preview";
+import { SakuraRain } from "@/components/sakura-rain";
 import { homePreviewCandidates } from "@/lib/preview-scene";
+import { createClient } from "@/lib/supabase/client";
+import type { AppRole } from "@/lib/types";
 
 const LOGIN_STORAGE_KEY = "isLoggedIn";
 const ROLE_STORAGE_KEY = "userRole";
 const NAME_STORAGE_KEY = "userName";
 
-const PETAL_SVG = `data:image/svg+xml;utf8,${encodeURIComponent(`
-<svg width="36" height="28" viewBox="0 0 36 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M17.853 2.392c2.86-3.19 9.626-2.57 12.199 1.519 1.943 3.09 1.22 7.76-1.5 10.363-2.802 2.68-6.712 5.68-10.626 11.334C13.16 20.195 9.123 17.28 6.177 14.675c-2.86-2.528-3.874-7.342-1.756-10.625C7.194-.231 13.96-.712 17.853 2.392Z" fill="#F9A8D4"/>
-  <path d="M18.166 5.31c2.297-2.317 6.44-1.965 8.319.705" stroke="white" stroke-opacity=".6" stroke-width="1.4" stroke-linecap="round"/>
-</svg>
-`)}`;
-
-type SakuraPetal = {
-  fallDelay: string;
-  fallDuration: string;
-  left: string;
-  opacity: number;
-  rotate: string;
-  scale: string;
-  swayDelay: string;
-  swayDuration: string;
-  swayDistance: string;
-  width: string;
-};
-
-function createSakuraPetals(count: number) {
-  return Array.from({ length: count }, (_, index) => {
-    const width = 12 + ((index * 5) % 14);
-    const left = `${((index * 7.3) + ((index * 11) % 19)) % 100}%`;
-    const fallDuration = 15 + ((index * 3) % 16);
-    const fallDelay = -((index * 1.4) % 24);
-    const swayDuration = 4 + ((index * 5) % 5);
-    const swayDelay = -((index * 0.8) % 6);
-    const swayDistance = 14 + ((index * 4) % 24);
-    const opacity = 0.22 + ((index * 2) % 6) * 0.08;
-    const scale = 0.58 + ((index * 3) % 7) * 0.08;
-    const rotate = -30 + ((index * 13) % 60);
-
-    return {
-      width: `${width}px`,
-      left,
-      fallDelay: `${fallDelay}s`,
-      fallDuration: `${fallDuration}s`,
-      swayDuration: `${swayDuration}s`,
-      swayDelay: `${swayDelay}s`,
-      swayDistance: `${swayDistance}px`,
-      opacity,
-      scale: `${scale}`,
-      rotate: `${rotate}deg`,
-    } satisfies SakuraPetal;
-  });
-}
-
 type AuthState = {
   isLoggedIn: boolean;
   userName: string;
-  userRole: "super_admin" | "";
+  userRole: AppRole | "";
 };
 
-const defaultAuthState: AuthState = {
-  isLoggedIn: true,
-  userName: "김준성",
-  userRole: "super_admin",
+const LOGGED_OUT_AUTH: AuthState = {
+  isLoggedIn: false,
+  userName: "",
+  userRole: "",
 };
-
-function saveAuthState(nextState: AuthState) {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(LOGIN_STORAGE_KEY, String(nextState.isLoggedIn));
-  window.localStorage.setItem(ROLE_STORAGE_KEY, nextState.userRole);
-  window.localStorage.setItem(NAME_STORAGE_KEY, nextState.userName);
-}
 
 function Header({
   auth,
@@ -88,7 +36,7 @@ function Header({
 }) {
   return (
     <header className="fixed inset-x-0 top-0 z-40 border-b border-white/50 bg-white/30 backdrop-blur-lg">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+      <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between gap-4 px-6 py-3 md:px-12 lg:px-24">
         <div className="flex min-w-0 items-center gap-4">
           <Link href="/" className="flex min-w-0 items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-3xl border border-white/60 bg-white/70 text-sm font-semibold text-rose-500 shadow-[0_8px_30px_rgb(244,114,182,0.12)]">
@@ -105,15 +53,21 @@ function Header({
           </Link>
 
           {auth.isLoggedIn && auth.userRole === "super_admin" ? (
-            <nav className="hidden items-center gap-6 lg:flex">
-              <Link href="/dashboard" className="text-sm font-medium text-slate-500 transition hover:text-rose-500">
+            <nav
+              className="hidden items-center gap-1 rounded-full border border-white/60 bg-white/50 px-2 py-1 shadow-[inset_0_1px_8px_rgba(244,114,182,0.08)] backdrop-blur-sm lg:flex"
+              aria-label="최고 관리자 메뉴"
+            >
+              <Link
+                href="/dashboard"
+                className="rounded-full px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-white/70 hover:text-rose-600"
+              >
                 대시보드
               </Link>
-              <Link href="/dashboard?view=inventory" className="text-sm font-medium text-slate-500 transition hover:text-rose-500">
-                매물 관리
-              </Link>
-              <Link href="/admin" className="text-sm font-medium text-slate-500 transition hover:text-rose-500">
-                승인 관리
+              <Link
+                href="/admin"
+                className="rounded-full px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-white/70 hover:text-rose-600"
+              >
+                승인·권한 관리
               </Link>
             </nav>
           ) : null}
@@ -122,7 +76,7 @@ function Header({
         {auth.isLoggedIn ? (
           <div className="flex items-center gap-2 rounded-full border border-white/50 bg-white/60 px-2 py-1.5 shadow-[0_8px_30px_rgb(244,114,182,0.1)] backdrop-blur-md">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-rose-100 to-orange-100 text-sm font-semibold text-slate-700">
-              김
+              {auth.userName.trim() ? auth.userName.trim().slice(0, 1) : "?"}
             </div>
             <p className="hidden text-sm font-medium text-slate-600 md:block">
               환영합니다, <span className="text-slate-800">{auth.userName}님</span> ❤️
@@ -295,14 +249,14 @@ function InventoryCard({
   imageUrl: string | null;
 }) {
   return (
-    <article className="mx-auto flex h-full w-full max-w-[35rem] flex-col overflow-hidden rounded-[30px] border border-white/50 bg-white/60 p-4 shadow-[0_8px_30px_rgb(244,114,182,0.1)] backdrop-blur-md sm:p-5">
-      <div className="overflow-hidden rounded-[24px] border border-white/60 bg-rose-50/35">
+    <article className="flex h-full w-full flex-col overflow-hidden rounded-[32px] border border-white/50 bg-white/60 p-5 shadow-[0_8px_30px_rgb(244,114,182,0.1)] backdrop-blur-md sm:p-6">
+      <div className="overflow-hidden rounded-[26px] border border-white/60 bg-rose-50/35">
         <PersonPreview
           imageUrl={imageUrl}
           size="sm"
           fit="cover"
           position="top"
-          className="h-64 bg-rose-50/35"
+          className="h-72 min-h-[16rem] bg-rose-50/35 sm:h-80"
         />
       </div>
       <div className="px-1 pb-1 pt-5">
@@ -313,100 +267,131 @@ function InventoryCard({
   );
 }
 
-function SakuraRain() {
-  const petals = useMemo(() => createSakuraPetals(56), []);
-
-  return (
-    <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-      {petals.map((petal, index) => (
-        <span
-          key={`${petal.left}-${index}`}
-          className="sakura-petal-track"
-          style={
-            {
-              left: petal.left,
-              animationDelay: petal.fallDelay,
-              animationDuration: petal.fallDuration,
-              opacity: petal.opacity,
-              ["--petal-sway-distance" as string]: petal.swayDistance,
-            } as CSSProperties
-          }
-        >
-          <span
-            className="sakura-petal-drift"
-            style={
-              {
-                animationDelay: petal.swayDelay,
-                animationDuration: petal.swayDuration,
-              } as CSSProperties
-            }
-          >
-            <span
-              className="sakura-petal"
-              style={
-                {
-                  width: petal.width,
-                  height: `${Math.round(Number.parseInt(petal.width, 10) * 0.78)}px`,
-                  backgroundImage: `url("${PETAL_SVG}")`,
-                  transform: `scale(${petal.scale}) rotate(${petal.rotate})`,
-                } as CSSProperties
-              }
-            />
-          </span>
-        </span>
-      ))}
-    </div>
-  );
+function parseStoredRole(value: string | null): AppRole | "" {
+  if (value === "super_admin" || value === "admin" || value === "viewer") return value;
+  return "";
 }
 
 export default function HomePage() {
-  const [auth, setAuth] = useState<AuthState>(defaultAuthState);
+  const router = useRouter();
+  const [auth, setAuth] = useState<AuthState>(LOGGED_OUT_AUTH);
 
   useEffect(() => {
-    const storedLogin = window.localStorage.getItem(LOGIN_STORAGE_KEY);
-    const storedRole = window.localStorage.getItem(ROLE_STORAGE_KEY);
-    const storedName = window.localStorage.getItem(NAME_STORAGE_KEY);
+    function applyLocalStorageFallback() {
+      const storedLogin = window.localStorage.getItem(LOGIN_STORAGE_KEY);
+      const storedRole = window.localStorage.getItem(ROLE_STORAGE_KEY);
+      const storedName = window.localStorage.getItem(NAME_STORAGE_KEY);
+      setAuth({
+        isLoggedIn: storedLogin === "true",
+        userName: storedName ?? "",
+        userRole: parseStoredRole(storedRole),
+      });
+    }
 
-    if (!storedLogin) {
-      saveAuthState(defaultAuthState);
-      setAuth(defaultAuthState);
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      applyLocalStorageFallback();
       return;
     }
 
-    setAuth({
-      isLoggedIn: storedLogin === "true",
-      userName: storedName || defaultAuthState.userName,
-      userRole: storedRole === "super_admin" ? "super_admin" : "",
+    let cancelled = false;
+    const supabase = createClient();
+
+    async function syncFromSession() {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (cancelled) return;
+
+      if (!session) {
+        try {
+          window.localStorage.removeItem(LOGIN_STORAGE_KEY);
+          window.localStorage.removeItem(ROLE_STORAGE_KEY);
+          window.localStorage.removeItem(NAME_STORAGE_KEY);
+        } catch {
+          /* ignore */
+        }
+        setAuth(LOGGED_OUT_AUTH);
+        return;
+      }
+
+      const { data: row } = await supabase
+        .from("cupid_memberships")
+        .select("full_name, role, status")
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+
+      if (cancelled) return;
+
+      if (!row || row.status !== "approved") {
+        const metaName = String(session.user.user_metadata?.full_name ?? "").trim();
+        setAuth({
+          isLoggedIn: true,
+          userName: metaName,
+          userRole: "",
+        });
+        return;
+      }
+
+      const role = row.role as AppRole;
+      setAuth({
+        isLoggedIn: true,
+        userName: row.full_name?.trim() ?? "",
+        userRole: role,
+      });
+
+      try {
+        window.localStorage.setItem(LOGIN_STORAGE_KEY, "true");
+        window.localStorage.setItem(NAME_STORAGE_KEY, row.full_name ?? "");
+        window.localStorage.setItem(ROLE_STORAGE_KEY, role);
+      } catch {
+        /* ignore */
+      }
+    }
+
+    void syncFromSession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(() => {
+      void syncFromSession();
     });
+
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleLogin = () => {
-    const nextState = defaultAuthState;
-    saveAuthState(nextState);
-    setAuth(nextState);
+    router.push("/login");
   };
 
-  const handleLogout = () => {
-    window.localStorage.removeItem("isLoggedIn");
-    window.localStorage.removeItem("userRole");
-    window.localStorage.removeItem(NAME_STORAGE_KEY);
-    setAuth({
-      isLoggedIn: false,
-      userName: defaultAuthState.userName,
-      userRole: "",
-    });
-    window.location.reload();
+  const handleLogout = async () => {
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+    } catch {
+      /* ignore */
+    }
+    try {
+      window.localStorage.removeItem(LOGIN_STORAGE_KEY);
+      window.localStorage.removeItem(ROLE_STORAGE_KEY);
+      window.localStorage.removeItem(NAME_STORAGE_KEY);
+    } catch {
+      /* ignore */
+    }
+    setAuth(LOGGED_OUT_AUTH);
   };
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50/30 to-orange-50/50 text-slate-800">
-      <SakuraRain />
+      <SakuraRain petalCount={56} />
       <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_top,rgba(255,242,245,0.84),rgba(255,247,243,0.68),rgba(255,255,255,0.38))]" />
 
       <Header auth={auth} onLogin={handleLogin} onLogout={handleLogout} />
 
-      <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 pb-14 pt-24 sm:px-6 lg:px-8">
-        <section className="grid gap-6 xl:grid-cols-[minmax(0,1.06fr)_minmax(360px,0.94fr)]">
+      <div className="relative z-10 mx-auto flex w-full max-w-[1600px] flex-col gap-10 px-6 pb-16 pt-24 md:px-12 lg:px-24">
+        <section className="grid gap-16 xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)] xl:items-start xl:justify-between">
           <article className="landing-reveal rounded-[36px] border border-white/50 bg-white/60 p-6 shadow-[0_8px_30px_rgb(244,114,182,0.1)] backdrop-blur-lg sm:p-8">
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
               Private Love Studio
@@ -432,19 +417,21 @@ export default function HomePage() {
               ))}
             </div>
 
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-6 flex flex-col flex-wrap items-start justify-start gap-3 sm:flex-row sm:items-center">
               <Link
                 href="/dashboard"
                 className="soft-pulse inline-flex h-12 items-center justify-center rounded-full bg-rose-500 px-6 text-sm font-semibold text-white shadow-[0_8px_30px_rgb(244,114,182,0.22)] transition hover:-translate-y-0.5 hover:bg-rose-600"
               >
                 대시보드 이동
               </Link>
-              <Link
-                href="/login"
-                className="inline-flex h-12 items-center justify-center rounded-full border border-white/60 bg-white/65 px-6 text-sm font-medium text-slate-600 transition hover:bg-white/80"
-              >
-                소개 흐름 보기
-              </Link>
+              {auth.isLoggedIn && auth.userRole === "super_admin" ? (
+                <Link
+                  href="/admin"
+                  className="inline-flex h-12 items-center justify-center rounded-full border border-rose-500 bg-white px-6 text-sm font-semibold text-rose-500 shadow-sm transition hover:bg-rose-50"
+                >
+                  권한 관리 페이지
+                </Link>
+              ) : null}
             </div>
 
             <div className="mt-8 grid gap-3 sm:grid-cols-3">
@@ -472,7 +459,7 @@ export default function HomePage() {
         </section>
 
         <section className="landing-reveal landing-delay-3 rounded-[36px] border border-white/50 bg-white/60 p-6 shadow-[0_8px_30px_rgb(244,114,182,0.1)] backdrop-blur-lg sm:p-7">
-          <div className="max-w-3xl">
+          <div className="w-full max-w-none">
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
               Preview Inventory
             </p>
@@ -485,7 +472,7 @@ export default function HomePage() {
           </div>
 
           {homePreviewCandidates.length ? (
-            <div className="mt-6 grid gap-5 lg:grid-cols-2">
+            <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xl:gap-8">
               {homePreviewCandidates.map((candidate) => (
                 <InventoryCard
                   key={candidate.id}

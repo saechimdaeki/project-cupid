@@ -234,28 +234,28 @@ export function DashboardFlowBoard({
   };
 
   const renderCandidateCard = (candidate: DashboardBoardCandidate) => {
-    const metaItems = [
+    const ageLabel = candidate.birth_year ? `${String(candidate.birth_year).slice(-2)}년생` : null;
+    const extraMeta = [
       candidate.gender || null,
       candidate.height_text ? `${candidate.height_text}` : null,
-      candidate.region || null,
       candidate.religion ? `종교 ${candidate.religion}` : null,
-    ].filter(Boolean);
+    ].filter(Boolean) as string[];
     const pairedCandidate = candidate.paired_candidate_id
       ? candidateDirectory.get(candidate.paired_candidate_id)
       : null;
 
     const body = (
       <article
-        className={`group overflow-hidden rounded-xl border border-slate-200 border-t-4 bg-white p-4 shadow-sm transition ${getStatusTopBorderClass(candidate.status)} ${
+        className={`group overflow-hidden rounded-2xl border border-rose-100/50 border-t-4 bg-white/90 p-4 shadow-[0_8px_32px_rgb(244,114,182,0.08)] backdrop-blur-sm transition ${getStatusTopBorderClass(candidate.status)} ${
           draggingId === candidate.id ? "scale-[0.99] opacity-70" : ""
-        } ${isPending ? "opacity-70" : "hover:-translate-y-0.5 hover:shadow-md"}`}
+        } ${isPending ? "opacity-70" : "hover:-translate-y-1 hover:shadow-[0_14px_44px_rgb(244,114,182,0.12)]"}`}
       >
         <div className="flex items-start gap-3">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-2xl">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-50 to-orange-50 text-2xl shadow-inner">
             {getAvatarEmoji(candidate.gender)}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-rose-400/90">
               {candidate.full_name}
             </p>
             <h3 className="mt-1 text-base font-semibold tracking-[-0.02em] text-slate-800">
@@ -268,10 +268,29 @@ export function DashboardFlowBoard({
         </div>
 
         <div className="mt-4 flex flex-wrap gap-2">
-          {metaItems.map((item) => (
+          {ageLabel ? (
+            <span className="inline-flex items-center rounded-full bg-rose-100 px-2.5 py-1 text-xs font-semibold text-rose-600">
+              {ageLabel}
+            </span>
+          ) : null}
+          {candidate.occupation ? (
+            <span className="inline-flex items-center rounded-full bg-orange-100 px-2.5 py-1 text-xs font-semibold text-orange-600">
+              {candidate.occupation}
+            </span>
+          ) : null}
+          {candidate.region ? (
+            <span className="inline-flex items-center rounded-full bg-rose-100 px-2.5 py-1 text-xs font-semibold text-rose-600">
+              {candidate.region}
+            </span>
+          ) : null}
+          {extraMeta.map((item, i) => (
             <span
               key={`${candidate.id}-${item}`}
-              className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600"
+              className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${
+                i % 2 === 0
+                  ? "bg-orange-100 text-orange-600"
+                  : "bg-rose-100 text-rose-600"
+              }`}
             >
               {item}
             </span>
@@ -279,7 +298,7 @@ export function DashboardFlowBoard({
           {candidate.highlight_tags.slice(0, 2).map((tag) => (
             <span
               key={`${candidate.id}-${tag}`}
-              className="inline-flex items-center rounded-full border border-rose-100 bg-rose-50 px-2.5 py-1 text-xs font-medium text-rose-600"
+              className="inline-flex items-center rounded-full border border-rose-200/60 bg-white/80 px-2.5 py-1 text-xs font-semibold text-rose-600"
             >
               {tag}
             </span>
@@ -287,8 +306,8 @@ export function DashboardFlowBoard({
         </div>
 
         {candidate.notes_private ? (
-          <div className="mt-4 rounded-xl bg-slate-50 px-3 py-2.5">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+          <div className="mt-4 rounded-2xl border border-rose-100/50 bg-rose-50/50 px-3 py-2.5">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-rose-400">
               Manager Note
             </p>
             <p className="mt-1 text-sm leading-6 text-slate-600 line-clamp-2">
@@ -298,24 +317,24 @@ export function DashboardFlowBoard({
         ) : null}
 
         {pairedCandidate ? (
-          <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+          <div className="mt-4 rounded-2xl border border-orange-100/60 bg-orange-50/40 px-3 py-2.5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-orange-500/90">
               Current Pair
             </p>
-            <p className="mt-1 text-xs font-medium text-slate-500">
+            <p className="mt-1 text-xs font-medium text-slate-600">
               {pairedCandidate.full_name} · {getHeadline(pairedCandidate)}
             </p>
           </div>
         ) : null}
 
-        <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
+        <div className="mt-4 flex items-center justify-between border-t border-rose-100/50 pt-3">
           <span className="text-xs font-medium text-slate-500">
             {canAccessCandidateDetail(role)
               ? "카드를 눌러 상세 확인"
               : `${getRoleLabel(role)} 권한은 목록만 확인`}
           </span>
           {canOperate ? (
-            <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-rose-300">
               drag
             </span>
           ) : null}
@@ -364,8 +383,8 @@ export function DashboardFlowBoard({
     return (
       <article
         key={status}
-        className={`rounded-2xl border p-4 shadow-sm ${getLaneSurfaceClass(status)} ${
-          dropTarget === status ? "ring-2 ring-rose-300 ring-offset-2 ring-offset-slate-50" : ""
+        className={`min-h-0 rounded-[26px] border border-white/70 p-5 shadow-[0_10px_40px_rgb(244,114,182,0.08)] backdrop-blur-sm ${getLaneSurfaceClass(status)} ${
+          dropTarget === status ? "ring-2 ring-rose-400/60 ring-offset-2 ring-offset-rose-50/80" : ""
         }`}
         onDragOver={(event) => {
           if (!canOperate) return;
@@ -408,20 +427,20 @@ export function DashboardFlowBoard({
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h3 className="text-sm font-semibold text-slate-800">{title}</h3>
-            <p className={`mt-1 text-sm text-slate-500 ${compact ? "max-w-none" : "max-w-xs"}`}>
+            <p className={`mt-1 text-sm leading-relaxed text-slate-600 ${compact ? "max-w-none" : "max-w-none xl:max-w-md"}`}>
               {description}
             </p>
           </div>
-          <div className="rounded-full bg-white px-3 py-1 text-sm font-semibold text-slate-700 shadow-sm">
+          <div className="rounded-full border border-rose-100/60 bg-white/90 px-3.5 py-1 text-sm font-semibold text-rose-600 shadow-sm">
             {laneItems.length}
           </div>
         </div>
 
-        <div className="mt-4 grid gap-3">
+        <div className="mt-5 grid gap-4">
           {laneItems.length ? (
             laneItems.map(renderCandidateCard)
           ) : (
-            <div className="rounded-xl border border-dashed border-slate-200 bg-white/70 px-4 py-8 text-sm text-slate-500">
+            <div className="rounded-2xl border border-dashed border-rose-200/60 bg-white/60 px-4 py-10 text-center text-sm text-slate-500">
               현재 이 단계에 후보가 없습니다.
             </div>
           )}
@@ -431,9 +450,9 @@ export function DashboardFlowBoard({
   };
 
   return (
-    <div className="grid gap-4">
+    <div className="grid gap-6">
       {notice ? (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 shadow-sm">
+        <div className="rounded-2xl border border-amber-200/70 bg-amber-50/90 px-4 py-3 text-sm text-amber-800 shadow-[0_8px_28px_rgb(251,191,36,0.15)] backdrop-blur-sm">
           {notice}
         </div>
       ) : null}
@@ -471,7 +490,7 @@ export function DashboardFlowBoard({
         )}
       </div>
 
-      <div className="hidden gap-4 lg:grid lg:grid-cols-2 xl:grid-cols-4">
+      <div className="hidden gap-5 lg:grid lg:grid-cols-2 xl:grid-cols-4 xl:gap-6">
         {PRIMARY_LANES.map((lane) => renderLane(lane.key, lane.title, lane.description))}
       </div>
 

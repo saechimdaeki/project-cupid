@@ -164,6 +164,7 @@ function DirectoryRow({
   );
 }
 
+/** 이 페이지와 하위 폼 액션의 권한 변경은 서버에서 super_admin만 통과(requireMembershipRole + canManageRoles). */
 export default async function AdminPage({ searchParams }: AdminPageProps) {
   const [{ message }, currentMembership, pendingUsers, managedMembers] = await Promise.all([
     searchParams,
@@ -174,10 +175,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
   return (
     <>
-      <GlobalNav membership={currentMembership} active="candidates" />
+      <GlobalNav membership={currentMembership} active="admin" />
 
-      <main className="min-h-screen bg-slate-50 px-4 py-24 text-slate-800 sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-7xl flex-col gap-6">
+      <main className="min-h-screen bg-slate-50 py-24 text-slate-800">
+        <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-6 px-6 md:px-12 lg:px-24">
           <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:p-7">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>

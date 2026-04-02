@@ -138,8 +138,8 @@ export default async function CandidateDetailPage({
     <>
       <GlobalNav membership={membership} active="profile" />
 
-      <main className="min-h-screen bg-slate-50 px-4 py-24 text-slate-800 sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-7xl flex-col gap-6">
+      <main className="min-h-screen bg-slate-50 py-24 text-slate-800">
+        <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-6 px-6 md:px-12 lg:px-24">
           <section className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_24rem]">
             <article className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
               <div className="grid gap-0 lg:grid-cols-[minmax(320px,0.9fr)_minmax(0,1.1fr)]">

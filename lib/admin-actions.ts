@@ -172,6 +172,7 @@ function buildCounterpartLabel(candidate: {
     .join(" · ");
 }
 
+/** viewer / admin / super_admin 변경은 `canManageRoles`(super_admin)만 서버에서 허용 */
 export async function updateMembershipRole(formData: FormData) {
   const membership = await requireMembership();
 
@@ -205,6 +206,7 @@ export async function updateMembershipRole(formData: FormData) {
   redirectWithMessage("/admin", "권한이 반영되었습니다.");
 }
 
+/** 거절 처리도 `canManageRoles`(super_admin) 전용 */
 export async function rejectMembership(formData: FormData) {
   const membership = await requireMembership();
 

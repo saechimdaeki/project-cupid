@@ -63,15 +63,15 @@ export function getStatusBadgeClass(status: CandidateStatus) {
 export function getLaneSurfaceClass(status: CandidateStatus) {
   switch (status) {
     case "active":
-      return "border-rose-100 bg-gradient-to-b from-rose-50/80 to-white";
+      return "border-rose-100/80 bg-gradient-to-b from-rose-50/90 to-white/95";
     case "matched":
-      return "border-blue-100 bg-gradient-to-b from-blue-50/80 to-white";
+      return "border-orange-100/80 bg-gradient-to-b from-orange-50/85 to-white/95";
     case "couple":
-      return "border-emerald-100 bg-gradient-to-b from-emerald-50/80 to-white";
+      return "border-pink-200/60 bg-gradient-to-b from-pink-50/90 to-white/95";
     case "graduated":
-      return "border-amber-100 bg-gradient-to-b from-amber-50/80 to-white";
+      return "border-amber-100/80 bg-gradient-to-b from-amber-50/80 to-white/95";
     case "archived":
-      return "border-slate-200 bg-gradient-to-b from-slate-100/80 to-white";
+      return "border-rose-100/50 bg-gradient-to-b from-rose-50/40 to-white/90";
   }
 }
 

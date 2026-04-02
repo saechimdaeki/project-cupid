@@ -64,7 +64,9 @@ export async function requireMembershipRole(roles: AppRole[]) {
   const membership = await requireApprovedMembership();
 
   if (!roles.includes(membership.role)) {
-    redirect("/dashboard");
+    redirect(
+      `/dashboard?notice=${encodeURIComponent("승인·권한 관리는 최고 관리자(super_admin)만 이용할 수 있습니다.")}`,
+    );
   }
 
   return membership;
