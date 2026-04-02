@@ -1,4 +1,5 @@
 import { mockCandidates, mockMatchRecords, mockMemberships } from "@/lib/mock-data";
+import { unstable_cache } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import type {
   Candidate,
@@ -123,6 +124,64 @@ type GetCandidatesOptions =
       includeImages?: boolean;
     };
 
+const getCachedCandidateRows = unstable_cache(
+  async (filter?: string) => {
+    const supabase = await createClient();
+
+    if (!supabase) {
+      return null;
+    }
+
+    let query = supabase
+      .from("cupid_candidates")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (filter) {
+      query = query.eq("status", filter);
+    }
+
+    const { data, error } = await query;
+
+    if (error || !data) {
+      return null;
+    }
+
+    return data;
+  },
+  ["cupid-candidates"],
+  { tags: ["candidates"], revalidate: 30 },
+);
+
+const getCachedMatchRecordRows = unstable_cache(
+  async (candidateId?: string) => {
+    const supabase = await createClient();
+
+    if (!supabase) {
+      return null;
+    }
+
+    let query = supabase
+      .from("cupid_match_records")
+      .select("*")
+      .order("happened_on", { ascending: false });
+
+    if (candidateId) {
+      query = query.eq("candidate_id", candidateId);
+    }
+
+    const { data, error } = await query;
+
+    if (error || !data) {
+      return null;
+    }
+
+    return data;
+  },
+  ["cupid-match-records"],
+  { tags: ["match-records"], revalidate: 30 },
+);
+
 export async function getCandidates(options?: GetCandidatesOptions) {
   const filter = typeof options === "string" ? options : options?.filter;
   const includeImages = typeof options === "string" ? true : options?.includeImages ?? true;
@@ -132,15 +191,9 @@ export async function getCandidates(options?: GetCandidatesOptions) {
     return filter ? mockCandidates.filter((candidate) => candidate.status === filter) : mockCandidates;
   }
 
-  let query = supabase.from("cupid_candidates").select("*").order("created_at", { ascending: false });
+  const data = await getCachedCandidateRows(filter);
 
-  if (filter) {
-    query = query.eq("status", filter);
-  }
-
-  const { data, error } = await query;
-
-  if (error || !data) {
+  if (!data) {
     return filter ? mockCandidates.filter((candidate) => candidate.status === filter) : mockCandidates;
   }
 
@@ -193,18 +246,9 @@ export async function getMatchRecords(candidateId?: string) {
       : mockMatchRecords;
   }
 
-  let query = supabase
-    .from("cupid_match_records")
-    .select("*")
-    .order("happened_on", { ascending: false });
+  const data = await getCachedMatchRecordRows(candidateId);
 
-  if (candidateId) {
-    query = query.eq("candidate_id", candidateId);
-  }
-
-  const { data, error } = await query;
-
-  if (error || !data) {
+  if (!data) {
     return candidateId
       ? mockMatchRecords.filter((record) => record.candidate_id === candidateId)
       : mockMatchRecords;
