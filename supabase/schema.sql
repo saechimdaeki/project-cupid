@@ -377,3 +377,18 @@ using (
   bucket_id = 'sogaeting'
   and public.cupid_can_edit_candidates()
 );
+
+create index if not exists cupid_memberships_status_created_at_idx
+on public.cupid_memberships (status, created_at desc);
+
+create index if not exists cupid_candidates_created_at_idx
+on public.cupid_candidates (created_at desc);
+
+create index if not exists cupid_candidate_photos_candidate_id_sort_idx
+on public.cupid_candidate_photos (candidate_id, is_primary desc, sort_order asc);
+
+create index if not exists cupid_match_records_candidate_id_happened_on_idx
+on public.cupid_match_records (candidate_id, happened_on desc);
+
+create index if not exists cupid_match_records_happened_on_idx
+on public.cupid_match_records (happened_on desc);

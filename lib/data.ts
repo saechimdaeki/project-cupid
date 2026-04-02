@@ -520,3 +520,23 @@ export async function getMembershipDirectory() {
 
   return data.map(mapMembership);
 }
+
+export async function getApprovedMemberships() {
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return mockMemberships.filter((membership) => membership.status === "approved");
+  }
+
+  const { data, error } = await supabase
+    .from("cupid_memberships")
+    .select("user_id, username, full_name, role, status, approved_by, approved_at, created_at")
+    .eq("status", "approved")
+    .order("created_at", { ascending: false });
+
+  if (error || !data) {
+    return mockMemberships.filter((membership) => membership.status === "approved");
+  }
+
+  return data.map(mapMembership);
+}

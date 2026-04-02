@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { canEditCandidates, canManageRoles, getCurrentMembership } from "@/lib/permissions";
@@ -198,9 +197,6 @@ export async function updateMembershipRole(formData: FormData) {
     redirect(`/admin?message=${encodeURIComponent(error.message)}`);
   }
 
-  revalidatePath("/admin");
-  revalidatePath("/dashboard");
-  revalidatePath("/pending");
   redirectWithMessage("/admin", "권한이 반영되었습니다.");
 }
 
@@ -227,8 +223,6 @@ export async function rejectMembership(formData: FormData) {
     redirect(`/admin?message=${encodeURIComponent(error.message)}`);
   }
 
-  revalidatePath("/admin");
-  revalidatePath("/pending");
   redirectWithMessage("/admin", "가입 요청을 거절했습니다.");
 }
 
@@ -351,7 +345,6 @@ export async function createCandidate(formData: FormData) {
       error instanceof Error &&
       error.message === "__DUPLICATE_CANDIDATE_SUBMISSION__"
     ) {
-      revalidatePath("/dashboard");
       redirect(`/profiles/${candidateId}`);
     }
 
@@ -361,13 +354,9 @@ export async function createCandidate(formData: FormData) {
   }
 
   if (existingCandidateId) {
-    revalidatePath("/dashboard");
-    revalidatePath(`/profiles/${existingCandidateId}`);
     redirect(`/profiles/${existingCandidateId}`);
   }
 
-  revalidatePath("/dashboard");
-  revalidatePath(`/profiles/${candidateId}`);
   redirect(`/profiles/${candidateId}`);
 }
 
@@ -539,9 +528,6 @@ export async function updateCandidate(formData: FormData) {
     );
   }
 
-  revalidatePath("/dashboard");
-  revalidatePath(`/profiles/${candidateId}`);
-  revalidatePath(`/profiles/${candidateId}/edit`);
   redirect(`/profiles/${candidateId}?message=updated`);
 }
 
@@ -597,8 +583,6 @@ export async function updateCandidateStatus(formData: FormData) {
     );
   }
 
-  revalidatePath("/dashboard");
-  revalidatePath(`/profiles/${candidateId}`);
   redirect(`/profiles/${candidateId}?message=status-updated`);
 }
 
@@ -662,9 +646,6 @@ export async function moveCandidateStatus(
   if (error) {
     return { ok: false, message: error.message };
   }
-
-  revalidatePath("/dashboard");
-  revalidatePath(`/profiles/${candidateId}`);
 
   return { ok: true, status: normalizedStatus };
 }
@@ -784,10 +765,6 @@ export async function moveCandidatePairStatus(
     return { ok: false, message: matchRecordError.message };
   }
 
-  revalidatePath("/dashboard");
-  revalidatePath(`/profiles/${source.id}`);
-  revalidatePath(`/profiles/${counterpart.id}`);
-
   return {
     ok: true,
     status: targetStatus as CandidateStatus,
@@ -842,8 +819,6 @@ export async function createMatchRecord(formData: FormData) {
       .eq("id", candidateId);
   }
 
-  revalidatePath("/dashboard");
-  revalidatePath(`/profiles/${candidateId}`);
   redirect(`/profiles/${candidateId}?message=match-created`);
 }
 
@@ -875,7 +850,5 @@ export async function deleteMatchRecord(formData: FormData) {
     );
   }
 
-  revalidatePath("/dashboard");
-  revalidatePath(`/profiles/${candidateId}`);
   redirect(`/profiles/${candidateId}?message=match-deleted`);
 }

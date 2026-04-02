@@ -4,7 +4,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { LandingScene } from "@/components/landing-scene";
 import { WorkspaceDecorations } from "@/components/workspace-decorations";
 import { rejectMembership, updateMembershipRole } from "@/lib/admin-actions";
-import { getMembershipDirectory, getPendingMemberships } from "@/lib/data";
+import { getApprovedMemberships, getPendingMemberships } from "@/lib/data";
 import { previewSceneCandidates } from "@/lib/preview-scene";
 import { requireMembershipRole } from "@/lib/permissions";
 
@@ -13,13 +13,12 @@ type AdminPageProps = {
 };
 
 export default async function AdminPage({ searchParams }: AdminPageProps) {
-  const [pendingUsers, allMembers, currentMembership] = await Promise.all([
+  const [pendingUsers, managedMembers, currentMembership] = await Promise.all([
     getPendingMemberships(),
-    getMembershipDirectory(),
+    getApprovedMemberships(),
     requireMembershipRole(["super_admin"]),
   ]);
   const { message } = await searchParams;
-  const managedMembers = allMembers.filter((member) => member.status === "approved");
 
   return (
     <main className="workspacePage min-h-screen bg-[linear-gradient(180deg,#fff8f2_0%,#fff3ec_42%,#fffaf6_100%)] text-[#24161c]">
