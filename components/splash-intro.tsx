@@ -11,16 +11,20 @@ export function SplashIntro() {
       return;
     }
 
+    const isPhone = window.matchMedia("(max-width: 640px)").matches;
+    const leaveDelay = isPhone ? 180 : 420;
+    const doneDelay = isPhone ? 360 : 760;
+
     setVisible(true);
 
     const leaveTimer = window.setTimeout(() => {
       setLeaving(true);
-    }, 420);
+    }, leaveDelay);
 
     const doneTimer = window.setTimeout(() => {
       window.sessionStorage.setItem("cupid-splash-seen", "1");
       setVisible(false);
-    }, 760);
+    }, doneDelay);
 
     return () => {
       window.clearTimeout(leaveTimer);

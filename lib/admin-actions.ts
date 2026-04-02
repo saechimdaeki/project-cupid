@@ -63,6 +63,12 @@ function cleanText(value: FormDataEntryValue | null) {
   return String(value ?? "").trim();
 }
 
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value,
+  );
+}
+
 function safeFileName(fileName: string) {
   const trimmed = fileName.trim().toLowerCase();
   const dotIndex = trimmed.lastIndexOf(".");
@@ -232,7 +238,8 @@ export async function createCandidate(formData: FormData) {
     .split(",")
     .map((tag) => tag.trim())
     .filter(Boolean);
-  const candidateId = crypto.randomUUID();
+  const submissionKey = cleanText(formData.get("submissionKey"));
+  const candidateId = isUuid(submissionKey) ? submissionKey : crypto.randomUUID();
   const files = formData
     .getAll("photos")
     .filter((value): value is File => value instanceof File && value.size > 0);
@@ -240,6 +247,17 @@ export async function createCandidate(formData: FormData) {
   let candidateInserted = false;
 
   try {
+    const { data: existingCandidate } = await supabase
+      .from("cupid_candidates")
+      .select("id")
+      .eq("id", candidateId)
+      .maybeSingle();
+
+    if (existingCandidate) {
+      revalidatePath("/dashboard");
+      redirect(`/profiles/${candidateId}`);
+    }
+
     uploadedPaths.push(...(await uploadCandidatePhotos(supabase, candidateId, files)));
 
     const birthYear = Number(formData.get("birthYear") ?? 0);
@@ -285,6 +303,14 @@ export async function createCandidate(formData: FormData) {
       .insert(payload);
 
     if (candidateError) {
+      const duplicateInsert =
+        candidateError.code === "23505" ||
+        candidateError.message.toLowerCase().includes("duplicate key");
+
+      if (duplicateInsert) {
+        throw new Error("__DUPLICATE_CANDIDATE_SUBMISSION__");
+      }
+
       throw new Error(candidateError.message);
     }
 
@@ -313,6 +339,14 @@ export async function createCandidate(formData: FormData) {
 
     if (uploadedPaths.length) {
       await supabase.storage.from(CANDIDATE_PHOTOS_BUCKET).remove(uploadedPaths);
+    }
+
+    if (
+      error instanceof Error &&
+      error.message === "__DUPLICATE_CANDIDATE_SUBMISSION__"
+    ) {
+      revalidatePath("/dashboard");
+      redirect(`/profiles/${candidateId}`);
     }
 
     const message =

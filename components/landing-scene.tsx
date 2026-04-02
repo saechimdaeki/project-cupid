@@ -95,7 +95,14 @@ export function LandingScene({ leftCandidate, rightCandidate }: LandingSceneProp
 
       <div className="parallaxLayer midLayer personLeftWrap leftCardMotion">
         <div className="personOrb personLeft">
-          <PersonPreview imageUrl={leftCandidate.image_url} gender={leftCandidate.gender} size="sm" />
+          <PersonPreview
+            imageUrl={leftCandidate.image_url}
+            gender={leftCandidate.gender}
+            size="sm"
+            fit="contain"
+            position="top"
+            className="bg-[#fffaf7]"
+          />
           <div className="personMeta">
             <strong>
               {String(leftCandidate.birth_year).slice(2)}년생 {leftCandidate.region}{" "}
@@ -118,7 +125,14 @@ export function LandingScene({ leftCandidate, rightCandidate }: LandingSceneProp
 
       <div className="parallaxLayer midLayer personRightWrap rightCardMotion">
         <div className="personOrb personRight">
-          <PersonPreview imageUrl={rightCandidate.image_url} gender={rightCandidate.gender} size="sm" />
+          <PersonPreview
+            imageUrl={rightCandidate.image_url}
+            gender={rightCandidate.gender}
+            size="sm"
+            fit="contain"
+            position="top"
+            className="bg-[#fffaf7]"
+          />
           <div className="personMeta">
             <strong>
               {String(rightCandidate.birth_year).slice(2)}년생 {rightCandidate.region}{" "}

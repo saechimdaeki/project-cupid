@@ -4171,6 +4171,66 @@ button {
   .segmentLabel {
     justify-content: center;
   }
+
+  .landingPage .blossomPetal.petal2,
+  .landingPage .blossomPetal.petal4,
+  .workspacePage .blossomPetal.petal2,
+  .workspacePage .blossomPetal.petal4,
+  .landingPage .floatingHeart.heartThree,
+  .landingPage .floatingHeart.heartFour,
+  .workspacePage .floatingHeart.heartThree,
+  .workspacePage .floatingHeart.heartFour,
+  .loveCanvas .scenePetalEdge,
+  .loveCanvas .loveCanvasRibbon,
+  .loveCanvas .loveCanvasGlow.glowTwo,
+  .loveCanvas .loveCanvasSpotlight,
+  .loveCanvas .miniToken.tokenFlower,
+  .loveCanvas .signatureWrap {
+    display: none;
+  }
+
+  .landingPage .loveCanvas,
+  .workspacePage .loveCanvas {
+    min-height: 420px;
+    padding: 16px;
+    box-shadow: 0 16px 36px rgba(143, 95, 89, 0.1);
+  }
+
+  .loveCanvas .personOrb {
+    padding: 12px;
+    border-radius: 22px;
+  }
+
+  .loveCanvas .personPreview.sm {
+    height: 160px;
+  }
+
+  .loveCanvas .personMeta {
+    gap: 4px;
+  }
+
+  .loveCanvas .personMeta strong {
+    font-size: 0.9rem;
+    line-height: 1.35;
+  }
+
+  .loveCanvas .personMeta span {
+    font-size: 0.84rem;
+    line-height: 1.45;
+  }
+
+  .loveCanvas .connectionBeam {
+    min-height: 56px;
+  }
+
+  .loveCanvas .beamLabel {
+    font-size: 0.76rem;
+    padding: 7px 10px;
+  }
+
+  .dashboardHero {
+    padding: 6px 0 0;
+  }
 }
 
 @media (max-width: 420px) {
@@ -4231,5 +4291,47 @@ button {
   .portraitPreview.personPreview.lg,
   .portraitPreview {
     min-height: 260px;
+  }
+
+  .landingPage .loveCanvas,
+  .workspacePage .loveCanvas {
+    min-height: 360px;
+    padding: 14px;
+  }
+
+  .loveCanvas .personPreview.sm {
+    height: 142px;
+  }
+
+  .loveCanvas .beamTop,
+  .loveCanvas .beamMiddle {
+    position: static;
+  }
+
+  .loveCanvas .connectionBeam {
+    display: grid;
+    gap: 8px;
+    justify-items: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .splashAura,
+  .splashFloatHeart,
+  .splashOrb.left,
+  .splashOrb.right,
+  .heartPulse,
+  .heartGlyph,
+  .loveCanvas,
+  .loveCanvasGlow,
+  .loveSpark,
+  .blossomPetal,
+  .floatingHeart,
+  .leftCardMotion,
+  .rightCardMotion,
+  .scenePetal,
+  .scenePetalEdge,
+  .beamOrbit {
+    animation: none !important;
   }
 }

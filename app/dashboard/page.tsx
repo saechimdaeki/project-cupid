@@ -2,13 +2,13 @@ import Link from "next/link";
 import { AccountPanel } from "@/components/account-panel";
 import { CandidateCard } from "@/components/candidate-card";
 import { DashboardFlowBoard } from "@/components/dashboard-flow-board";
-import { LandingScene } from "@/components/landing-scene";
+import { DesktopSceneShell } from "@/components/desktop-scene-shell";
 import { WorkspaceDecorations } from "@/components/workspace-decorations";
 import {
+  buildTimelineEvents,
   getCandidates,
   getCurrentMembershipWithFallback,
   getMatchRecords,
-  getTimelineEvents,
 } from "@/lib/data";
 import { mockCandidates } from "@/lib/mock-data";
 import { canEditCandidates, roleLabel } from "@/lib/permissions";
@@ -86,11 +86,14 @@ function FilterSelect({
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const { filter, religion, gender, q, message } = await searchParams;
   const membership = await getCurrentMembershipWithFallback();
-  const [allCandidates, recentMatches, timelineEvents] = await Promise.all([
+  const [allCandidates, recentMatches] = await Promise.all([
     getCandidates({ includeImages: false }),
     getMatchRecords(),
-    getTimelineEvents(),
   ]);
+  const timelineEvents = buildTimelineEvents(
+    recentMatches,
+    new Map(allCandidates.map((candidate) => [candidate.id, candidate])),
+  );
   const query = (q ?? "").trim().toLowerCase();
 
   if (!membership) {
@@ -227,6 +230,20 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               {heroBody}
             </p>
 
+            <div className="mt-6 grid gap-3 xl:hidden">
+              <div className="rounded-[24px] border border-[#ecdcc8] bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(255,249,241,0.98))] px-4 py-4 shadow-[0_10px_24px_rgba(143,95,89,0.06)]">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#b46d59]">
+                  오늘의 무드
+                </p>
+                <strong className="mt-2 block text-lg font-semibold tracking-[-0.05em] text-[#24161c]">
+                  조급하지 않게, 가장 자연스러운 연결부터 봅니다
+                </strong>
+                <p className="mt-2 text-sm leading-6 text-[#6d5961]">
+                  모바일에서는 꼭 필요한 신호만 먼저 보여주고, 상세 판단은 아래 보드에서 이어집니다.
+                </p>
+              </div>
+            </div>
+
             <div className="mt-7 grid gap-3 sm:grid-cols-3">
               <article className="rounded-[24px] border border-[#f0d8dd] bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(255,247,248,0.96))] p-4 shadow-[0_12px_28px_rgba(143,95,89,0.06)]">
                 <span
@@ -282,8 +299,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             </div>
           </div>
 
-          <div className="relative overflow-hidden rounded-[30px] border border-[#ead8cf] bg-white/66 p-3 shadow-[0_18px_44px_rgba(143,95,89,0.08)]">
-            <LandingScene leftCandidate={mockCandidates[0]} rightCandidate={mockCandidates[1] ?? mockCandidates[0]} />
+          <div className="relative hidden overflow-hidden rounded-[30px] border border-[#ead8cf] bg-white/66 p-3 shadow-[0_18px_44px_rgba(143,95,89,0.08)] xl:block">
+            <DesktopSceneShell leftCandidate={mockCandidates[0]} rightCandidate={mockCandidates[1] ?? mockCandidates[0]} />
           </div>
           {message === "viewer-role" ? (
             <div className="mt-5 rounded-2xl border border-[#f0ddd2] bg-[#fff8f3] px-4 py-3 text-sm font-medium text-[#8a6b74]">

@@ -5,6 +5,8 @@ type PersonPreviewProps = {
   gender?: string | null;
   className?: string;
   size?: "sm" | "lg";
+  fit?: "cover" | "contain";
+  position?: "center" | "top";
 };
 
 function getFallbackClass(gender?: string | null) {
@@ -24,11 +26,15 @@ export function PersonPreview({
   gender,
   className = "",
   size = "lg",
+  fit = "cover",
+  position = "center",
 }: PersonPreviewProps) {
   const fallbackClass = getFallbackClass(gender);
   const style = imageUrl
     ? ({
         backgroundImage: `url("${imageUrl}")`,
+        backgroundSize: fit,
+        backgroundPosition: position === "top" ? "center top" : "center",
       } as CSSProperties)
     : undefined;
 

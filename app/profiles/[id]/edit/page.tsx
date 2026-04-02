@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { FormSubmitButton } from "@/components/form-submit-button";
 import { GenderToggleField } from "@/components/gender-toggle-field";
 import { PhotoUploadField } from "@/components/photo-upload-field";
 import { getCandidateById, getCandidatePhotos } from "@/lib/data";
@@ -126,9 +127,11 @@ export default async function EditCandidatePage({ params, searchParams }: EditCa
                   <input name="highlightTags" defaultValue={candidate.highlight_tags.join(", ")} className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]" />
                 </label>
                 <PhotoUploadField />
-                <button className="inline-flex min-h-12 items-center justify-center rounded-full border border-[#d8b28a] bg-gradient-to-r from-[#f2c98d] to-[#c78662] px-6 text-sm font-semibold text-[#2b1b11]" type="submit">
-                  수정 내용 저장
-                </button>
+                <FormSubmitButton
+                  idleLabel="수정 내용 저장"
+                  pendingLabel="저장 중..."
+                  className="inline-flex min-h-12 items-center justify-center rounded-full border border-[#d8b28a] bg-gradient-to-r from-[#f2c98d] to-[#c78662] px-6 text-sm font-semibold text-[#2b1b11] disabled:cursor-not-allowed disabled:opacity-60"
+                />
               </div>
             </article>
           </section>

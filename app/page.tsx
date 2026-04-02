@@ -1,10 +1,9 @@
 import Link from "next/link";
+import { HomeAccountShell } from "@/components/home-account-shell";
 import { LandingScene } from "@/components/landing-scene";
 import { PersonPreview } from "@/components/person-preview";
 import { SplashIntro } from "@/components/splash-intro";
-import { signOut } from "@/lib/auth-actions";
 import { mockCandidates } from "@/lib/mock-data";
-import { canManageRoles, getCurrentMembership, getRoleLabel } from "@/lib/permissions";
 
 function QuickStat({
   label,
@@ -48,7 +47,7 @@ function InventoryCard({
       }`}
     >
       <div className="rounded-[22px] bg-white/85 p-3">
-        <PersonPreview imageUrl={imageUrl} size="sm" />
+        <PersonPreview imageUrl={imageUrl} size="sm" fit="contain" position="top" className="min-h-[220px] bg-[#fffaf7]" />
       </div>
       <div className="px-1 pb-1 pt-4">
         <h3 className="text-xl font-semibold tracking-[-0.04em] text-[#24161c]">{title}</h3>
@@ -58,8 +57,7 @@ function InventoryCard({
   );
 }
 
-export default async function HomePage() {
-  const membership = await getCurrentMembership();
+export default function HomePage() {
   const previewCandidates = mockCandidates.slice(0, 2);
   const leftCandidate = previewCandidates[0];
   const rightCandidate = previewCandidates[1] ?? previewCandidates[0];
@@ -103,60 +101,7 @@ export default async function HomePage() {
             </div>
           </div>
 
-          {membership ? (
-            <div className="flex w-full flex-col gap-3 lg:w-auto lg:min-w-[320px]">
-              <div className="rounded-[28px] border border-[#ead8cf] bg-gradient-to-br from-white to-[#fff6ef] p-5 shadow-[0_14px_40px_rgba(143,95,89,0.1)]">
-                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#b46d59]">
-                  환영합니다
-                </p>
-                <strong className="mt-2 block text-[clamp(1.75rem,7vw,2.4rem)] font-semibold tracking-[-0.06em] text-[#24161c]">
-                  {membership.full_name}님
-                </strong>
-                <span className="mt-2 block text-sm leading-6 text-[#7a636b] sm:text-base">
-                  @{membership.username} · {getRoleLabel(membership.role)}
-                </span>
-                <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-                  <Link
-                    className="inline-flex min-h-12 w-full items-center justify-center rounded-full border border-[#d8b28a] bg-gradient-to-r from-[#f2c98d] to-[#c78662] px-5 text-sm font-semibold text-[#2b1b11] shadow-[0_10px_24px_rgba(198,132,99,0.18)] transition hover:-translate-y-0.5"
-                    href="/dashboard"
-                  >
-                    대시보드
-                  </Link>
-                  {canManageRoles(membership.role) ? (
-                    <Link
-                      className="inline-flex min-h-12 w-full items-center justify-center rounded-full border border-[#ead8cf] bg-white/90 px-5 text-sm font-semibold text-[#2d1e24] transition hover:-translate-y-0.5"
-                      href="/admin"
-                    >
-                      승인 관리
-                    </Link>
-                  ) : null}
-                </div>
-                <form action={signOut} className="mt-3">
-                  <button
-                    className="inline-flex min-h-12 w-full items-center justify-center rounded-full border border-[#ead8cf] bg-white/90 px-5 text-sm font-semibold text-[#2d1e24] transition hover:-translate-y-0.5"
-                    type="submit"
-                  >
-                    로그아웃
-                  </button>
-                </form>
-              </div>
-            </div>
-          ) : (
-            <div className="flex w-full flex-col gap-2 sm:flex-row lg:w-auto">
-              <Link
-                className="inline-flex min-h-12 w-full items-center justify-center rounded-full border border-[#ead8cf] bg-white/90 px-5 text-sm font-semibold text-[#2d1e24] transition hover:-translate-y-0.5 lg:w-auto"
-                href="/login"
-              >
-                회원가입 / 로그인
-              </Link>
-              <Link
-                className="inline-flex min-h-12 w-full items-center justify-center rounded-full border border-[#d8b28a] bg-gradient-to-r from-[#f2c98d] to-[#c78662] px-5 text-sm font-semibold text-[#2b1b11] shadow-[0_10px_24px_rgba(198,132,99,0.18)] transition hover:-translate-y-0.5 lg:w-auto"
-                href="/dashboard"
-              >
-                보드 열기
-              </Link>
-            </div>
-          )}
+          <HomeAccountShell />
         </header>
 
         <section className="grid gap-5 lg:grid-cols-[minmax(0,1.08fr)_minmax(320px,0.92fr)] lg:items-stretch">
@@ -187,37 +132,18 @@ export default async function HomePage() {
             </div>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              {membership ? (
-                <>
-                  <Link
-                    className="inline-flex min-h-12 items-center justify-center rounded-full border border-[#d8b28a] bg-gradient-to-r from-[#f2c98d] to-[#c78662] px-6 text-sm font-semibold text-[#2b1b11] shadow-[0_10px_24px_rgba(198,132,99,0.18)] transition hover:-translate-y-0.5"
-                    href="/dashboard"
-                  >
-                    대시보드로 이동
-                  </Link>
-                  <Link
-                    className="inline-flex min-h-12 items-center justify-center rounded-full border border-[#ead8cf] bg-white/90 px-6 text-sm font-semibold text-[#2d1e24] transition hover:-translate-y-0.5"
-                    href={canManageRoles(membership.role) ? "/admin" : "/dashboard?filter=active"}
-                  >
-                    {canManageRoles(membership.role) ? "권한 관리" : "활성 매물 보기"}
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <Link
-                    className="inline-flex min-h-12 items-center justify-center rounded-full border border-[#d8b28a] bg-gradient-to-r from-[#f2c98d] to-[#c78662] px-6 text-sm font-semibold text-[#2b1b11] shadow-[0_10px_24px_rgba(198,132,99,0.18)] transition hover:-translate-y-0.5"
-                    href="/login"
-                  >
-                    회원가입 / 로그인
-                  </Link>
-                  <Link
-                    className="inline-flex min-h-12 items-center justify-center rounded-full border border-[#ead8cf] bg-white/90 px-6 text-sm font-semibold text-[#2d1e24] transition hover:-translate-y-0.5"
-                    href="/dashboard"
-                  >
-                    둘러보기
-                  </Link>
-                </>
-              )}
+              <Link
+                className="inline-flex min-h-12 items-center justify-center rounded-full border border-[#d8b28a] bg-gradient-to-r from-[#f2c98d] to-[#c78662] px-6 text-sm font-semibold text-[#2b1b11] shadow-[0_10px_24px_rgba(198,132,99,0.18)] transition hover:-translate-y-0.5"
+                href="/dashboard"
+              >
+                대시보드로 이동
+              </Link>
+              <Link
+                className="inline-flex min-h-12 items-center justify-center rounded-full border border-[#ead8cf] bg-white/90 px-6 text-sm font-semibold text-[#2d1e24] transition hover:-translate-y-0.5"
+                href="/dashboard?filter=active"
+              >
+                소개 흐름 보기
+              </Link>
             </div>
 
             <div className="mt-8 grid gap-3 sm:grid-cols-3">

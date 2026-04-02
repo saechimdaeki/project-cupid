@@ -213,7 +213,7 @@ export async function getMatchRecords(candidateId?: string) {
   return data.map(mapMatchRecord);
 }
 
-function dedupeTimelineEvents(
+export function buildTimelineEvents(
   records: MatchRecord[],
   candidateDirectory: Map<string, Candidate>,
 ) {
@@ -269,7 +269,7 @@ export async function getTimelineEvents() {
   ]);
   const candidateDirectory = new Map(candidates.map((candidate) => [candidate.id, candidate]));
 
-  return dedupeTimelineEvents(records, candidateDirectory);
+  return buildTimelineEvents(records, candidateDirectory);
 }
 
 export async function getCandidatePhotos(candidateId: string) {

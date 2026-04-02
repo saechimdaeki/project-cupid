@@ -15,6 +15,11 @@ type PreviewItem = {
   helperText: string;
 };
 
+type ProcessedFile = {
+  file: File;
+  helperText: string;
+};
+
 function formatBytes(bytes: number) {
   if (bytes >= 1024 * 1024) {
     return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
@@ -105,6 +110,48 @@ async function optimizeImageFile(file: File) {
   }
 }
 
+function buildNativeProcessedFiles(files: File[]): ProcessedFile[] {
+  return files.map((file) => ({
+    file,
+    helperText: `${formatBytes(file.size)} · 원본 유지`,
+  }));
+}
+
+function isMobileUploadFallback() {
+  if (typeof navigator === "undefined") {
+    return false;
+  }
+
+  return /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent);
+}
+
+function buildPreviewItems(items: ProcessedFile[]) {
+  return items.map((item, index) => ({
+    id: `${item.file.name}-${item.file.size}-${index}`,
+    url: URL.createObjectURL(item.file),
+    name: item.file.name,
+    sizeText: formatBytes(item.file.size),
+    helperText: index === 0 ? `${item.helperText} · 대표 사진` : item.helperText,
+  }));
+}
+
+function canAssignFilesToInput(input: HTMLInputElement | null, files: File[]) {
+  if (!input || typeof DataTransfer === "undefined") {
+    return false;
+  }
+
+  try {
+    const nextDataTransfer = new DataTransfer();
+
+    files.forEach((file) => nextDataTransfer.items.add(file));
+    input.files = nextDataTransfer.files;
+
+    return input.files?.length === files.length;
+  } catch {
+    return false;
+  }
+}
+
 export function PhotoUploadField() {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [previews, setPreviews] = useState<PreviewItem[]>([]);
@@ -112,6 +159,7 @@ export function PhotoUploadField() {
     "여러 장을 첨부하면 첫 사진이 대표 사진이 됩니다.",
   );
   const [isProcessing, setIsProcessing] = useState(false);
+  const [nativeMode, setNativeMode] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -119,39 +167,57 @@ export function PhotoUploadField() {
     };
   }, [previews]);
 
-  async function syncFiles(files: File[]) {
-    const processed = await Promise.all(files.map(optimizeImageFile));
+  function updatePreviewState(processed: ProcessedFile[]) {
+    setPreviews((current) => {
+      current.forEach((preview) => URL.revokeObjectURL(preview.url));
+
+      return buildPreviewItems(processed);
+    });
+  }
+
+  function updateMessage(processed: ProcessedFile[], usedNativeMode: boolean) {
     const totalBytes = processed.reduce((sum, item) => sum + item.file.size, 0);
 
     if (totalBytes > MAX_TOTAL_UPLOAD_BYTES) {
       setMessage(
         `압축 후에도 총 용량이 ${formatBytes(totalBytes)}입니다. 45MB 이하로 줄이려면 사진 수를 조금 줄여주세요.`,
       );
+    } else if (usedNativeMode) {
+      setMessage(`모바일에서는 원본 그대로 업로드됩니다 · 총 ${formatBytes(totalBytes)} 예정`);
     } else if (processed.some((item) => item.file.type === "image/webp")) {
       setMessage(`자동 최적화 완료 · 총 ${formatBytes(totalBytes)} 업로드 예정`);
     } else {
       setMessage(`총 ${formatBytes(totalBytes)} 업로드 예정`);
     }
+  }
 
-    const nextDataTransfer = new DataTransfer();
+  async function syncFiles(files: File[]) {
+    const useNativeMode = nativeMode || isMobileUploadFallback();
 
-    processed.forEach((item) => nextDataTransfer.items.add(item.file));
-
-    if (inputRef.current) {
-      inputRef.current.files = nextDataTransfer.files;
+    if (useNativeMode && !nativeMode) {
+      setNativeMode(true);
     }
 
-    setPreviews((current) => {
-      current.forEach((preview) => URL.revokeObjectURL(preview.url));
+    let processed = useNativeMode
+      ? buildNativeProcessedFiles(files)
+      : await Promise.all(files.map(optimizeImageFile));
+    let usedNativeMode = useNativeMode;
 
-      return processed.map((item, index) => ({
-        id: `${item.file.name}-${item.file.size}-${index}`,
-        url: URL.createObjectURL(item.file),
-        name: item.file.name,
-        sizeText: formatBytes(item.file.size),
-        helperText: index === 0 ? `${item.helperText} · 대표 사진` : item.helperText,
-      }));
-    });
+    if (!usedNativeMode) {
+      const assigned = canAssignFilesToInput(
+        inputRef.current,
+        processed.map((item) => item.file),
+      );
+
+      if (!assigned) {
+        setNativeMode(true);
+        processed = buildNativeProcessedFiles(files);
+        usedNativeMode = true;
+      }
+    }
+
+    updateMessage(processed, usedNativeMode);
+    updatePreviewState(processed);
   }
 
   async function handleChange(event: ChangeEvent<HTMLInputElement>) {
@@ -167,6 +233,19 @@ export function PhotoUploadField() {
   }
 
   async function removeFile(indexToRemove: number) {
+    if (nativeMode) {
+      if (inputRef.current) {
+        inputRef.current.value = "";
+      }
+
+      setPreviews((current) => {
+        current.forEach((preview) => URL.revokeObjectURL(preview.url));
+        return [];
+      });
+      setMessage("모바일에서는 개별 제거 대신 사진을 다시 선택해 주세요.");
+      return;
+    }
+
     const nextFiles = Array.from(inputRef.current?.files ?? []).filter(
       (_, index) => index !== indexToRemove,
     );
@@ -189,7 +268,7 @@ export function PhotoUploadField() {
       <label className="grid cursor-pointer gap-2 rounded-[26px] border border-dashed border-[#dcb79e] bg-gradient-to-br from-[#fffaf7] to-[#fff3eb] p-5 transition hover:border-[#c98a6b]">
         <span className="text-sm font-semibold text-[#7b626a]">사진 첨부</span>
         <span className="text-sm leading-7 text-[#8b6a63]">
-          JPG, PNG, WEBP는 브라우저에서 자동 압축됩니다. HEIC/HEIF는 원본으로 업로드됩니다.
+          JPG, PNG, WEBP는 브라우저에서 자동 압축됩니다. 모바일에서는 더 안정적으로 원본 업로드를 우선 사용합니다.
         </span>
         <span className="inline-flex min-h-11 w-full items-center justify-center rounded-full border border-[#d8b28a] bg-white px-4 text-sm font-semibold text-[#7b6049] sm:w-fit">
           사진 선택하기
@@ -233,13 +312,14 @@ export function PhotoUploadField() {
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-xs font-semibold text-[#b46d59]">{preview.sizeText}</span>
                   <button
-                    className="inline-flex min-h-9 items-center rounded-full border border-[#ead8cf] bg-white px-3 text-xs font-semibold text-[#5e4850]"
+                    className="inline-flex min-h-9 items-center rounded-full border border-[#ead8cf] bg-white px-3 text-xs font-semibold text-[#5e4850] disabled:cursor-not-allowed disabled:opacity-50"
                     type="button"
+                    disabled={isProcessing}
                     onClick={() => {
                       void removeFile(index);
                     }}
                   >
-                    제거
+                    {nativeMode ? "다시 선택" : "제거"}
                   </button>
                 </div>
               </div>

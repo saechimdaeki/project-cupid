@@ -24,7 +24,13 @@ export default async function PendingPage({ searchParams }: PendingPageProps) {
       <section className="authLayout">
         <article className="authPanel">
           <p className="eyebrow">Approval Pending</p>
-          <h1 className="authTitle">saechimdaeki 에게 카톡이나 개인 연락으로 승인을 요청하세요</h1>
+          <h1 className="max-w-[10ch] text-[clamp(2rem,5.2vw,3.5rem)] font-semibold leading-[1.02] tracking-[-0.06em] text-[#24161c]">
+            saechimdaeki에게
+            <br />
+            카톡이나 개인 연락으로
+            <br />
+            승인 요청을 보내세요
+          </h1>
           <p className="heroSubtitle">
             이 서비스는 신뢰 기반 소개팅 운영 도구라서 승인 전에는 데이터 보드에 접근하지 못합니다.
           </p>

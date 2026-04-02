@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FormSubmitButton } from "@/components/form-submit-button";
 import { GenderToggleField } from "@/components/gender-toggle-field";
 import { PhotoUploadField } from "@/components/photo-upload-field";
 import { createCandidate } from "@/lib/admin-actions";
@@ -13,6 +14,7 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 
 export default async function NewCandidatePage({ searchParams }: NewCandidatePageProps) {
   const { message } = await searchParams;
+  const submissionKey = crypto.randomUUID();
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#fff8f2_0%,#fff3ec_42%,#fffaf6_100%)] text-[#24161c]">
@@ -42,6 +44,7 @@ export default async function NewCandidatePage({ searchParams }: NewCandidatePag
         ) : null}
 
         <form action={createCandidate} className="grid gap-5">
+          <input type="hidden" name="submissionKey" value={submissionKey} />
           <section className="grid gap-5 xl:grid-cols-2">
             <article className="rounded-[30px] border border-[#ead8cf] bg-white/90 p-5 shadow-[0_18px_44px_rgba(143,95,89,0.08)] sm:p-6">
               <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#b46d59]">Basic Info</p>
@@ -108,9 +111,11 @@ export default async function NewCandidatePage({ searchParams }: NewCandidatePag
                   <input name="highlightTags" placeholder="대화잘함, 서울거주, 비흡연" className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]" />
                 </label>
                 <PhotoUploadField />
-                <button className="inline-flex min-h-12 items-center justify-center rounded-full border border-[#d8b28a] bg-gradient-to-r from-[#f2c98d] to-[#c78662] px-6 text-sm font-semibold text-[#2b1b11]" type="submit">
-                  매물 등록하기
-                </button>
+                <FormSubmitButton
+                  idleLabel="매물 등록하기"
+                  pendingLabel="등록 중..."
+                  className="inline-flex min-h-12 items-center justify-center rounded-full border border-[#d8b28a] bg-gradient-to-r from-[#f2c98d] to-[#c78662] px-6 text-sm font-semibold text-[#2b1b11] disabled:cursor-not-allowed disabled:opacity-60"
+                />
               </div>
               <div className="mt-4 rounded-2xl border border-[#f0ddd2] bg-[#fff8f3] px-4 py-4 text-sm leading-6 text-[#8a6b74]">
                 이름, 출생연도, 성별, 직업은 필수입니다. 사진은 private bucket에 저장되고, 상세 화면에서는 signed URL로만 열립니다.
