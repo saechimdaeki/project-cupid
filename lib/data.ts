@@ -1,5 +1,4 @@
 import { mockCandidates, mockMatchRecords, mockMemberships } from "@/lib/mock-data";
-import { unstable_cache } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import type {
   Candidate,
@@ -117,70 +116,36 @@ function mapPhoto(row: any): CandidatePhoto {
   };
 }
 
+function mapDashboardCandidate(row: any): Candidate {
+  return {
+    id: row.id,
+    full_name: row.full_name,
+    birth_year: row.birth_year,
+    gender: normalizeGender(row.gender),
+    region: row.region ?? "",
+    occupation: row.occupation ?? "",
+    work_summary: row.work_summary ?? "",
+    education: "",
+    religion: row.religion ?? "",
+    mbti: null,
+    personality_summary: row.personality_summary ?? "",
+    ideal_type: "",
+    notes_private: "",
+    status: row.status,
+    highlight_tags: row.highlight_tags ?? [],
+    image_url: null,
+    paired_candidate_id: row.paired_candidate_id ?? null,
+    created_at: row.created_at,
+    created_by_name: row.created_by_name,
+  };
+}
+
 type GetCandidatesOptions =
   | string
   | {
       filter?: string;
       includeImages?: boolean;
     };
-
-const getCachedCandidateRows = unstable_cache(
-  async (filter?: string) => {
-    const supabase = await createClient();
-
-    if (!supabase) {
-      return null;
-    }
-
-    let query = supabase
-      .from("cupid_candidates")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (filter) {
-      query = query.eq("status", filter);
-    }
-
-    const { data, error } = await query;
-
-    if (error || !data) {
-      return null;
-    }
-
-    return data;
-  },
-  ["cupid-candidates"],
-  { tags: ["candidates"], revalidate: 30 },
-);
-
-const getCachedMatchRecordRows = unstable_cache(
-  async (candidateId?: string) => {
-    const supabase = await createClient();
-
-    if (!supabase) {
-      return null;
-    }
-
-    let query = supabase
-      .from("cupid_match_records")
-      .select("*")
-      .order("happened_on", { ascending: false });
-
-    if (candidateId) {
-      query = query.eq("candidate_id", candidateId);
-    }
-
-    const { data, error } = await query;
-
-    if (error || !data) {
-      return null;
-    }
-
-    return data;
-  },
-  ["cupid-match-records"],
-  { tags: ["match-records"], revalidate: 30 },
-);
 
 export async function getCandidates(options?: GetCandidatesOptions) {
   const filter = typeof options === "string" ? options : options?.filter;
@@ -191,9 +156,15 @@ export async function getCandidates(options?: GetCandidatesOptions) {
     return filter ? mockCandidates.filter((candidate) => candidate.status === filter) : mockCandidates;
   }
 
-  const data = await getCachedCandidateRows(filter);
+  let query = supabase.from("cupid_candidates").select("*").order("created_at", { ascending: false });
 
-  if (!data) {
+  if (filter) {
+    query = query.eq("status", filter);
+  }
+
+  const { data, error } = await query;
+
+  if (error || !data) {
     return filter ? mockCandidates.filter((candidate) => candidate.status === filter) : mockCandidates;
   }
 
@@ -210,6 +181,27 @@ export async function getCandidates(options?: GetCandidatesOptions) {
       };
     }),
   );
+}
+
+export async function getDashboardCandidates() {
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return mockCandidates;
+  }
+
+  const { data, error } = await supabase
+    .from("cupid_candidates")
+    .select(
+      "id, full_name, birth_year, gender, region, occupation, work_summary, religion, personality_summary, status, highlight_tags, paired_candidate_id, created_at",
+    )
+    .order("created_at", { ascending: false });
+
+  if (error || !data) {
+    return mockCandidates;
+  }
+
+  return data.map((row) => mapDashboardCandidate(row));
 }
 
 export async function getCandidateById(id: string) {
@@ -246,12 +238,42 @@ export async function getMatchRecords(candidateId?: string) {
       : mockMatchRecords;
   }
 
-  const data = await getCachedMatchRecordRows(candidateId);
+  let query = supabase
+    .from("cupid_match_records")
+    .select("*")
+    .order("happened_on", { ascending: false });
 
-  if (!data) {
+  if (candidateId) {
+    query = query.eq("candidate_id", candidateId);
+  }
+
+  const { data, error } = await query;
+
+  if (error || !data) {
     return candidateId
       ? mockMatchRecords.filter((record) => record.candidate_id === candidateId)
       : mockMatchRecords;
+  }
+
+  return data.map(mapMatchRecord);
+}
+
+export async function getDashboardMatchRecords() {
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return mockMatchRecords;
+  }
+
+  const { data, error } = await supabase
+    .from("cupid_match_records")
+    .select(
+      "id, candidate_id, counterpart_label, counterpart_candidate_id, matchmaker_name, outcome, summary, happened_on",
+    )
+    .order("happened_on", { ascending: false });
+
+  if (error || !data) {
+    return mockMatchRecords;
   }
 
   return data.map(mapMatchRecord);

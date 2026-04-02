@@ -6,9 +6,9 @@ import { DesktopSceneShell } from "@/components/desktop-scene-shell";
 import { WorkspaceDecorations } from "@/components/workspace-decorations";
 import {
   buildTimelineEvents,
-  getCandidates,
+  getDashboardCandidates,
+  getDashboardMatchRecords,
   getCurrentMembershipWithFallback,
-  getMatchRecords,
 } from "@/lib/data";
 import { mockCandidates } from "@/lib/mock-data";
 import { canEditCandidates, roleLabel } from "@/lib/permissions";
@@ -87,8 +87,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const { filter, religion, gender, q, message } = await searchParams;
   const membership = await getCurrentMembershipWithFallback();
   const [allCandidates, recentMatches] = await Promise.all([
-    getCandidates({ includeImages: false }),
-    getMatchRecords(),
+    getDashboardCandidates(),
+    getDashboardMatchRecords(),
   ]);
   const timelineEvents = buildTimelineEvents(
     recentMatches,
@@ -153,7 +153,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   return (
     <main className="workspacePage min-h-screen bg-[linear-gradient(180deg,#fff8f2_0%,#fff3ec_42%,#fffaf6_100%)] text-[#24161c]">
       <div className="landingWrap relative mx-auto flex w-full max-w-[1400px] flex-col gap-6 px-4 pb-10 pt-4 sm:px-6 lg:px-8">
-        <WorkspaceDecorations />
+        <WorkspaceDecorations density="soft" />
         <header className="flex flex-col gap-4 rounded-[30px] border border-[#ead8cf] bg-white/85 p-4 shadow-[0_14px_40px_rgba(143,95,89,0.08)] backdrop-blur-sm lg:flex-row lg:items-start lg:justify-between">
           <Link href="/" className="flex min-w-0 items-center gap-4">
             <div className="grid h-12 w-12 shrink-0 place-items-center rounded-[18px] border border-[#e9d7cf] bg-gradient-to-br from-[#fffaf7] to-[#fff1e8] text-2xl font-semibold text-[#d1a06b]">
