@@ -1,48 +1,103 @@
 import Link from "next/link";
+import { AccountPanel } from "@/components/account-panel";
 import { CandidateCard } from "@/components/candidate-card";
+import { DashboardFlowBoard } from "@/components/dashboard-flow-board";
 import { StatusBadge } from "@/components/status-badge";
 import { getCandidates, getCurrentMembershipWithFallback, getMatchRecords } from "@/lib/data";
 import { canEditCandidates, roleLabel } from "@/lib/permissions";
 
 type DashboardPageProps = {
-  searchParams: Promise<{ filter?: string; message?: string }>;
+  searchParams: Promise<{
+    filter?: string;
+    religion?: string;
+    gender?: string;
+    q?: string;
+    message?: string;
+  }>;
 };
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
-  const { filter, message } = await searchParams;
+  const { filter, religion, gender, q, message } = await searchParams;
   const membership = await getCurrentMembershipWithFallback();
   const [allCandidates, recentMatches] = await Promise.all([
     getCandidates(),
     getMatchRecords(),
   ]);
-  const visibleCandidates = filter
-    ? allCandidates.filter((candidate) => candidate.status === filter)
-    : allCandidates;
+  const query = (q ?? "").trim().toLowerCase();
+  const religionOptions = Array.from(
+    new Set(
+      allCandidates
+        .map((candidate) => candidate.religion)
+        .filter(Boolean),
+    ),
+  ).sort();
+  const genderOptions = Array.from(
+    new Set(
+      allCandidates
+        .map((candidate) => candidate.gender)
+        .filter(Boolean),
+    ),
+  ).sort();
+  const visibleCandidates = allCandidates.filter((candidate) => {
+    if (filter && candidate.status !== filter) {
+      return false;
+    }
 
+    if (religion && candidate.religion !== religion) {
+      return false;
+    }
+
+    if (gender && candidate.gender !== gender) {
+      return false;
+    }
+
+    if (query) {
+      const haystack = [
+        candidate.full_name,
+        candidate.region,
+        candidate.occupation,
+        candidate.work_summary,
+        candidate.religion,
+        candidate.personality_summary,
+        ...candidate.highlight_tags,
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      if (!haystack.includes(query)) {
+        return false;
+      }
+    }
+
+    return true;
+  });
   if (!membership) {
     return null;
   }
 
   return (
-    <main className="pageFrame">
+    <main className="pageFrame workspacePage">
       <div className="landingWrap">
         <div className="topbar">
-          <div className="brandLockup">
+          <Link href="/" className="brandLockup">
             <div className="brandMark">C</div>
             <div className="brandText">
               <strong>Project Cupid</strong>
               <span>{membership.full_name} · {roleLabel(membership.role)}</span>
             </div>
-          </div>
-          <div className="headerActions">
-            {canEditCandidates(membership.role) ? (
-              <Link className="primaryButton" href="/candidates/new">
-                매물 등록
+          </Link>
+          <div className="topbarCluster">
+            <div className="headerActions topbarButtons">
+              <Link className="ghostButton" href="/">
+                홈으로
               </Link>
-            ) : null}
-            <StatusBadge>총 {allCandidates.length}건</StatusBadge>
-            <StatusBadge tone="warning">진행중 {allCandidates.filter((item) => item.status === "matched").length}</StatusBadge>
-            <StatusBadge tone="success">커플/졸업 {allCandidates.filter((item) => item.status === "couple" || item.status === "graduated").length}</StatusBadge>
+              {canEditCandidates(membership.role) ? (
+                <Link className="primaryButton" href="/candidates/new">
+                  매물 등록
+                </Link>
+              ) : null}
+            </div>
+            <AccountPanel membership={membership} />
           </div>
         </div>
 
@@ -72,6 +127,86 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           </div>
         </section>
 
+        <section className="sectionBlock">
+          <div className="sectionHeader">
+            <div>
+              <p className="eyebrow">Filter Desk</p>
+              <h2 className="pageTitle">필터로 후보를 바로 좁혀봅니다</h2>
+              <p className="pageMeta">
+                이름, 직업, 지역 검색과 상태/성별/종교 조건을 함께 써서 지금 필요한 매물을 빠르게 찾을 수 있습니다.
+              </p>
+            </div>
+          </div>
+
+          <form className="filterToolbar" method="get">
+            <label className="filterField search">
+              <span>검색</span>
+              <input
+                name="q"
+                defaultValue={q ?? ""}
+                placeholder="이름, 직업, 지역, 태그 검색"
+              />
+            </label>
+            <label className="filterField">
+              <span>상태</span>
+              <select name="filter" defaultValue={filter ?? ""}>
+                <option value="">전체</option>
+                <option value="active">active</option>
+                <option value="matched">matched</option>
+                <option value="couple">couple</option>
+                <option value="graduated">graduated</option>
+                <option value="archived">archived</option>
+              </select>
+            </label>
+            <label className="filterField">
+              <span>성별</span>
+              <select name="gender" defaultValue={gender ?? ""}>
+                <option value="">전체</option>
+                {genderOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="filterField">
+              <span>종교</span>
+              <select name="religion" defaultValue={religion ?? ""}>
+                <option value="">전체</option>
+                {religionOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div className="filterActions">
+              <button className="primaryButton" type="submit">
+                필터 적용
+              </button>
+              {filter || religion || gender || q ? (
+                <Link className="ghostButton" href="/dashboard">
+                  초기화
+                </Link>
+              ) : null}
+            </div>
+          </form>
+
+          {filter || religion || gender || q ? (
+            <div className="activeFilterRow">
+              {q ? <span className="activeFilterChip">검색: {q}</span> : null}
+              {filter ? <span className="activeFilterChip">상태: {filter}</span> : null}
+              {gender ? <span className="activeFilterChip">성별: {gender}</span> : null}
+              {religion ? (
+                <span className="activeFilterChip">종교: {religion}</span>
+              ) : null}
+              <span className="activeFilterCount">
+                {visibleCandidates.length}명 표시 중
+              </span>
+            </div>
+          ) : null}
+        </section>
+
         <section className="metricStrip">
           <article className="metricCard">
             <p className="eyebrow">Active Board</p>
@@ -95,13 +230,31 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           </article>
         </section>
 
+        <section className="sectionBlock">
+          <div className="sectionHeader">
+            <div>
+              <p className="eyebrow">Flow Board</p>
+              <h2 className="pageTitle">지금 관계 흐름이 어떻게 움직이는지 바로 봅니다</h2>
+              <p className="pageMeta">
+                필터 결과가 그대로 운영 칸반에 반영되어, 지금 손대야 할 후보와 이미 감정선이 붙은 후보를 한눈에 나눠볼 수 있습니다.
+              </p>
+            </div>
+          </div>
+
+          <DashboardFlowBoard
+            candidates={visibleCandidates}
+            allCandidates={allCandidates}
+            role={membership.role}
+          />
+        </section>
+
         <section className="dashboardLayout">
           <div>
             <div className="sectionHeader">
               <div>
                 <p className="eyebrow">Curated Inventory</p>
-                <h2 className="pageTitle">지금 연결 가능한 사람들</h2>
-                <p className="pageMeta">카드 하나하나가 소개 판단의 단서가 되도록, 조건과 인상이 함께 보이게 구성합니다.</p>
+                <h2 className="pageTitle">전체 후보를 카드로 다시 훑어봅니다</h2>
+                <p className="pageMeta">칸반으로 흐름을 본 뒤에는, 카드 리스트에서 세부 인상과 태그를 비교하면서 최종 판단을 정리합니다.</p>
               </div>
             </div>
 

@@ -17,6 +17,12 @@ type CandidateCardProps = {
 };
 
 export function CandidateCard({ candidate, role = "viewer" }: CandidateCardProps) {
+  const metaItems = [
+    candidate.birth_year ? `${candidate.birth_year}년생` : null,
+    candidate.gender || null,
+    candidate.occupation || null,
+  ].filter(Boolean);
+
   const cardBody = (
     <article className="candidateCard">
       <div className="cardTop">
@@ -30,10 +36,12 @@ export function CandidateCard({ candidate, role = "viewer" }: CandidateCardProps
       </div>
 
       <p className="candidateMeta">
-        {candidate.birth_year}년생 · {candidate.gender} · {candidate.occupation}
+        {metaItems.length ? metaItems.join(" · ") : "기본 정보는 상세 화면에서 확인합니다"}
       </p>
 
-      <p className="cardHeadline">{candidate.personality_summary}</p>
+      <p className="cardHeadline">
+        {candidate.personality_summary || "소개 메모는 아직 입력되지 않았습니다."}
+      </p>
 
       <div className="tagRow">
         {candidate.highlight_tags.map((tag) => (

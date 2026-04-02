@@ -1,10 +1,12 @@
 import Link from "next/link";
+import { AccountPanel } from "@/components/account-panel";
 import { LandingScene } from "@/components/landing-scene";
 import { SplashIntro } from "@/components/splash-intro";
-import { UserWelcome } from "@/components/user-welcome";
 import { mockCandidates } from "@/lib/mock-data";
+import { canManageRoles, getCurrentMembership } from "@/lib/permissions";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const membership = await getCurrentMembership();
   const previewCandidates = mockCandidates.slice(0, 2);
   const leftCandidate = previewCandidates[0];
   const rightCandidate = previewCandidates[1] ?? previewCandidates[0];
@@ -31,13 +33,19 @@ export default function HomePage() {
               <span>Private Matchmaking Workspace</span>
             </div>
           </div>
-          <div className="heroActions">
-            <Link className="ghostButton" href="/admin">
-              권한 관리
-            </Link>
-            <Link className="primaryButton" href="/dashboard">
-              보드 열기
-            </Link>
+          <div className="topbarCluster">
+            {membership ? (
+              <AccountPanel membership={membership} />
+            ) : (
+              <div className="heroActions topbarButtons">
+                <Link className="ghostButton" href="/login">
+                  회원가입 / 로그인
+                </Link>
+                <Link className="primaryButton" href="/dashboard">
+                  보드 열기
+                </Link>
+              </div>
+            )}
           </div>
         </header>
 
@@ -48,7 +56,6 @@ export default function HomePage() {
             <div className="heroDoodle doodleRing" />
             <div className="heroDoodle doodleMiniHeart">♥</div>
             <p className="eyebrow">Private Matchmaking Studio</p>
-            <UserWelcome />
             <h1 className="heroTitle">
               좋은 인연을
               <br />
@@ -84,12 +91,28 @@ export default function HomePage() {
             </div>
 
             <div className="heroActions">
-              <Link className="primaryButton" href="/login">
-                회원가입 / 로그인
-              </Link>
-              <Link className="ghostButton" href="/dashboard">
-                둘러보기
-              </Link>
+              {membership ? (
+                <>
+                  <Link className="primaryButton" href="/dashboard">
+                    대시보드로 이동
+                  </Link>
+                  <Link
+                    className="ghostButton"
+                    href={canManageRoles(membership.role) ? "/admin" : "/dashboard?filter=active"}
+                  >
+                    {canManageRoles(membership.role) ? "권한 관리" : "활성 매물 보기"}
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link className="primaryButton" href="/login">
+                    회원가입 / 로그인
+                  </Link>
+                  <Link className="ghostButton" href="/dashboard">
+                    둘러보기
+                  </Link>
+                </>
+              )}
             </div>
           </article>
 

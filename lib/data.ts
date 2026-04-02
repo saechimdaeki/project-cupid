@@ -2,12 +2,59 @@ import { mockCandidates, mockMatchRecords, mockMemberships } from "@/lib/mock-da
 import { createClient } from "@/lib/supabase/server";
 import type { Candidate, CandidatePhoto, MatchRecord, Membership } from "@/lib/types";
 
+const CANDIDATE_PHOTOS_BUCKET = "sogaeting";
+const SIGNED_URL_TTL_SECONDS = 60 * 60;
+
+function normalizeGender(value: string | null | undefined) {
+  if (value === "남" || value === "남성") {
+    return "남";
+  }
+
+  if (value === "여" || value === "여성") {
+    return "여";
+  }
+
+  return value ?? "";
+}
+
+function isDirectImageUrl(value: string | null | undefined) {
+  return Boolean(
+    value &&
+      (value.startsWith("/") ||
+        value.startsWith("http://") ||
+        value.startsWith("https://")),
+  );
+}
+
+async function resolveCandidateImage(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  value: string | null,
+) {
+  if (!value) {
+    return null;
+  }
+
+  if (isDirectImageUrl(value) || !supabase) {
+    return value;
+  }
+
+  const { data, error } = await supabase.storage
+    .from(CANDIDATE_PHOTOS_BUCKET)
+    .createSignedUrl(value, SIGNED_URL_TTL_SECONDS);
+
+  if (error || !data?.signedUrl) {
+    return null;
+  }
+
+  return data.signedUrl;
+}
+
 function mapCandidate(row: any): Candidate {
   return {
     id: row.id,
     full_name: row.full_name,
     birth_year: row.birth_year,
-    gender: row.gender,
+    gender: normalizeGender(row.gender),
     region: row.region,
     occupation: row.occupation,
     work_summary: row.work_summary,
@@ -20,6 +67,7 @@ function mapCandidate(row: any): Candidate {
     status: row.status,
     highlight_tags: row.highlight_tags ?? [],
     image_url: row.image_url,
+    paired_candidate_id: row.paired_candidate_id ?? null,
     created_at: row.created_at,
     created_by_name: row.created_by_name,
   };
@@ -30,6 +78,7 @@ function mapMatchRecord(row: any): MatchRecord {
     id: row.id,
     candidate_id: row.candidate_id,
     counterpart_label: row.counterpart_label,
+    counterpart_candidate_id: row.counterpart_candidate_id ?? null,
     matchmaker_name: row.matchmaker_name,
     outcome: row.outcome,
     summary: row.summary,
@@ -80,7 +129,15 @@ export async function getCandidates(filter?: string) {
     return filter ? mockCandidates.filter((candidate) => candidate.status === filter) : mockCandidates;
   }
 
-  return data.map(mapCandidate);
+  return Promise.all(
+    data.map(async (row) => {
+      const candidate = mapCandidate(row);
+      return {
+        ...candidate,
+        image_url: await resolveCandidateImage(supabase, candidate.image_url),
+      };
+    }),
+  );
 }
 
 export async function getCandidateById(id: string) {
@@ -100,7 +157,12 @@ export async function getCandidateById(id: string) {
     return mockCandidates.find((candidate) => candidate.id === id) ?? null;
   }
 
-  return mapCandidate(data);
+  const candidate = mapCandidate(data);
+
+  return {
+    ...candidate,
+    image_url: await resolveCandidateImage(supabase, candidate.image_url),
+  };
 }
 
 export async function getMatchRecords(candidateId?: string) {
@@ -174,7 +236,15 @@ export async function getCandidatePhotos(candidateId: string) {
       : [];
   }
 
-  return data.map(mapPhoto);
+  return Promise.all(
+    data.map(async (row) => {
+      const photo = mapPhoto(row);
+      return {
+        ...photo,
+        image_url: (await resolveCandidateImage(supabase, photo.image_url)) ?? photo.image_url,
+      };
+    }),
+  );
 }
 
 export async function getPendingMemberships() {

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AccountPanel } from "@/components/account-panel";
 import { StatusBadge } from "@/components/status-badge";
 import { updateMembershipRole, rejectMembership } from "@/lib/admin-actions";
 import { getCurrentMembership } from "@/lib/permissions";
@@ -18,8 +19,34 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const managedMembers = allMembers.filter((member) => member.status === "approved");
 
   return (
-    <main className="pageFrame">
+    <main className="pageFrame workspacePage">
       <div className="landingWrap">
+        {currentMembership ? (
+          <div className="topbar">
+            <Link href="/" className="brandLockup">
+              <div className="brandMark">C</div>
+              <div className="brandText">
+                <strong>Project Cupid</strong>
+                <span>{currentMembership.full_name} · 슈퍼어드민</span>
+              </div>
+            </Link>
+            <div className="topbarCluster">
+              <div className="headerActions topbarButtons">
+                <Link className="ghostButton" href="/">
+                  홈으로
+                </Link>
+                <Link className="ghostButton" href="/dashboard">
+                  대시보드
+                </Link>
+                <Link className="primaryButton" href="/candidates/new">
+                  매물 등록
+                </Link>
+              </div>
+              <AccountPanel membership={currentMembership} />
+            </div>
+          </div>
+        ) : null}
+
         <div className="pageHeader">
           <div>
             <p className="eyebrow">Super Admin Control</p>
@@ -28,9 +55,6 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           </div>
           <div className="heroActions">
             <StatusBadge tone="warning">대기 {pendingUsers.length}명</StatusBadge>
-            <Link className="primaryButton" href="/candidates/new">
-              매물 등록
-            </Link>
           </div>
         </div>
 

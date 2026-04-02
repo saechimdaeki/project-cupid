@@ -30,6 +30,7 @@ export type Candidate = {
   status: CandidateStatus;
   highlight_tags: string[];
   image_url: string | null;
+  paired_candidate_id: string | null;
   created_at: string;
   created_by_name?: string;
 };
@@ -47,6 +48,7 @@ export type MatchRecord = {
   id: string;
   candidate_id: string;
   counterpart_label: string;
+  counterpart_candidate_id?: string | null;
   matchmaker_name: string;
   outcome: MatchOutcome;
   summary: string;

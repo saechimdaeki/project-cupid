@@ -13,6 +13,10 @@ type PendingPageProps = {
 
 export default async function PendingPage({ searchParams }: PendingPageProps) {
   const { reason, code, uid, status, role } = await searchParams;
+  const pendingMessage =
+    reason || status || role || code || uid
+      ? "아직 계정 승인이 끝나지 않았습니다. 승인 완료 후 다시 자동으로 입장할 수 있습니다."
+      : null;
 
   return (
     <main className="authWrap">
@@ -20,19 +24,11 @@ export default async function PendingPage({ searchParams }: PendingPageProps) {
       <section className="authLayout">
         <article className="authPanel">
           <p className="eyebrow">Approval Pending</p>
-          <h1 className="authTitle">가입 요청은 들어왔고, 이제 승인만 남았습니다</h1>
+          <h1 className="authTitle">saechimdaeki 에게 카톡이나 개인 연락으로 승인을 요청하세요</h1>
           <p className="heroSubtitle">
             이 서비스는 신뢰 기반 소개팅 운영 도구라서 승인 전에는 데이터 보드에 접근하지 못합니다.
           </p>
-          {reason ? (
-            <div className="notice">
-              pending reason: {reason}
-              {status ? ` / status=${status}` : ""}
-              {role ? ` / role=${role}` : ""}
-              {code ? ` / code=${code}` : ""}
-              {uid ? ` / uid=${uid}` : ""}
-            </div>
-          ) : null}
+          {pendingMessage ? <div className="notice">{pendingMessage}</div> : null}
           <div className="heroActions">
             <Link className="primaryButton" href="/admin">
               승인 관리 보기

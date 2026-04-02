@@ -95,6 +95,7 @@ create table if not exists public.cupid_candidates (
   status public.cupid_candidate_status not null default 'active',
   highlight_tags text[] not null default '{}',
   image_url text,
+  paired_candidate_id uuid references public.cupid_candidates(id),
   created_by uuid references auth.users(id),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -102,6 +103,23 @@ create table if not exists public.cupid_candidates (
 
 alter table public.cupid_candidates
   add column if not exists work_summary text not null default '';
+
+alter table public.cupid_candidates
+  add column if not exists paired_candidate_id uuid references public.cupid_candidates(id);
+
+update public.cupid_candidates
+set gender = case
+  when gender in ('남성', '남') then '남'
+  when gender in ('여성', '여') then '여'
+  else gender
+end;
+
+alter table public.cupid_candidates
+  drop constraint if exists cupid_candidates_gender_check;
+
+alter table public.cupid_candidates
+  add constraint cupid_candidates_gender_check
+  check (gender in ('남', '여'));
 
 create table if not exists public.cupid_candidate_photos (
   id uuid primary key default gen_random_uuid(),
@@ -116,6 +134,7 @@ create table if not exists public.cupid_match_records (
   id uuid primary key default gen_random_uuid(),
   candidate_id uuid not null references public.cupid_candidates(id) on delete cascade,
   counterpart_label text not null,
+  counterpart_candidate_id uuid references public.cupid_candidates(id) on delete set null,
   matchmaker_id uuid references auth.users(id),
   matchmaker_name text not null,
   outcome public.cupid_match_outcome not null default 'intro_sent',
@@ -123,6 +142,29 @@ create table if not exists public.cupid_match_records (
   happened_on date not null,
   created_at timestamptz not null default now()
 );
+
+alter table public.cupid_match_records
+  add column if not exists counterpart_candidate_id uuid references public.cupid_candidates(id) on delete set null;
+
+create index if not exists cupid_candidates_paired_candidate_id_idx
+on public.cupid_candidates (paired_candidate_id);
+
+create index if not exists cupid_match_records_counterpart_candidate_id_idx
+on public.cupid_match_records (counterpart_candidate_id);
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'sogaeting',
+  'sogaeting',
+  false,
+  10485760,
+  array['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif']
+)
+on conflict (id) do update
+set
+  public = excluded.public,
+  file_size_limit = excluded.file_size_limit,
+  allowed_mime_types = excluded.allowed_mime_types;
 
 create or replace function public.cupid_is_approved_member()
 returns boolean
@@ -291,3 +333,47 @@ for all
 to authenticated
 using (public.cupid_can_edit_candidates())
 with check (public.cupid_can_edit_candidates());
+
+drop policy if exists "cupid_detail roles read private candidate photos" on storage.objects;
+create policy "cupid_detail roles read private candidate photos"
+on storage.objects
+for select
+to authenticated
+using (
+  bucket_id = 'sogaeting'
+  and public.cupid_can_view_candidate_detail()
+);
+
+drop policy if exists "cupid_edit roles upload private candidate photos" on storage.objects;
+create policy "cupid_edit roles upload private candidate photos"
+on storage.objects
+for insert
+to authenticated
+with check (
+  bucket_id = 'sogaeting'
+  and public.cupid_can_edit_candidates()
+);
+
+drop policy if exists "cupid_edit roles update private candidate photos" on storage.objects;
+create policy "cupid_edit roles update private candidate photos"
+on storage.objects
+for update
+to authenticated
+using (
+  bucket_id = 'sogaeting'
+  and public.cupid_can_edit_candidates()
+)
+with check (
+  bucket_id = 'sogaeting'
+  and public.cupid_can_edit_candidates()
+);
+
+drop policy if exists "cupid_edit roles delete private candidate photos" on storage.objects;
+create policy "cupid_edit roles delete private candidate photos"
+on storage.objects
+for delete
+to authenticated
+using (
+  bucket_id = 'sogaeting'
+  and public.cupid_can_edit_candidates()
+);
