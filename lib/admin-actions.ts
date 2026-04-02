@@ -289,6 +289,10 @@ export async function createCandidate(formData: FormData) {
         throw new Error("성별은 남 또는 여만 선택할 수 있습니다.");
       }
 
+      if (!payload.region) {
+        throw new Error("지역은 필수입니다.");
+      }
+
       if (!payload.occupation) {
         throw new Error("직업은 필수입니다.");
       }
@@ -447,6 +451,10 @@ export async function updateCandidate(formData: FormData) {
 
     if (!GENDER_VALUES.has(payload.gender)) {
       throw new Error("성별은 남 또는 여만 선택할 수 있습니다.");
+    }
+
+    if (!payload.region) {
+      throw new Error("지역은 필수입니다.");
     }
 
     if (!payload.occupation) {

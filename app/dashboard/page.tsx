@@ -7,7 +7,7 @@ import { WorkspaceDecorations } from "@/components/workspace-decorations";
 import {
   buildTimelineEvents,
   getDashboardCandidates,
-  getDashboardMatchRecords,
+  getDashboardTimelineData,
 } from "@/lib/data";
 import { dashboardPreviewMatchRecords, homePreviewCandidates, previewSceneCandidates } from "@/lib/preview-scene";
 import { canEditCandidates, requireApprovedMembership, roleLabel } from "@/lib/permissions";
@@ -83,15 +83,23 @@ function FilterSelect({
 }
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
-  const { filter, religion, gender, q, message } = await searchParams;
-  const membership = await requireApprovedMembership();
-  const [fetchedCandidates, fetchedMatches] = await Promise.all([
+  const [
+    { filter, religion, gender, q, message },
+    membership,
+    fetchedCandidates,
+    timelineData,
+  ] = await Promise.all([
+    searchParams,
+    requireApprovedMembership(),
     getDashboardCandidates(),
-    getDashboardMatchRecords(),
+    getDashboardTimelineData(),
   ]);
   const isPreviewMode = fetchedCandidates.length === 0;
   const allCandidates = isPreviewMode ? homePreviewCandidates : fetchedCandidates;
-  const recentMatches = isPreviewMode ? dashboardPreviewMatchRecords : fetchedMatches;
+  const recentMatches = isPreviewMode ? dashboardPreviewMatchRecords : timelineData.records;
+  const timelineCount = isPreviewMode
+    ? dashboardPreviewMatchRecords.length
+    : timelineData.totalCount;
   const timelineEvents = buildTimelineEvents(
     recentMatches,
     new Map(allCandidates.map((candidate) => [candidate.id, candidate])),
@@ -364,7 +372,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           <MetricCard label="Active Board" value={allCandidates.filter((item) => item.status === "active").length} description="지금 바로 연결 가능한 매물" />
           <MetricCard label="In Progress" value={allCandidates.filter((item) => item.status === "matched").length} description="소개 이후 후속 만남 진행 중" />
           <MetricCard label="Couple" value={allCandidates.filter((item) => item.status === "couple").length} description="커플 성사 상태" />
-          <MetricCard label="Timeline" value={recentMatches.length} description="누적 매칭 이력" />
+          <MetricCard label="Timeline" value={timelineCount} description="누적 매칭 이력" />
         </section>
 
         <section className="rounded-[34px] border border-[#ead8cf] bg-white/88 p-5 shadow-[0_18px_44px_rgba(143,95,89,0.08)] sm:p-6">

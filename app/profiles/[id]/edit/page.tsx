@@ -13,8 +13,25 @@ type EditCandidatePageProps = {
   searchParams: Promise<{ message?: string }>;
 };
 
-function FieldLabel({ children }: { children: React.ReactNode }) {
-  return <span className="text-[0.96rem] font-bold text-[#725761]">{children}</span>;
+function FieldLabel({
+  children,
+  required = false,
+}: {
+  children: React.ReactNode;
+  required?: boolean;
+}) {
+  return (
+    <span className="flex flex-wrap items-center gap-2 text-[0.96rem] font-bold text-[#725761]">
+      <span>{children}</span>
+      <span
+        className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+          required ? "bg-[#fff1e6] text-[#b46d59]" : "bg-[#f7f0eb] text-[#8b6a63]"
+        }`}
+      >
+        {required ? "[필수]" : "[선택]"}
+      </span>
+    </span>
+  );
 }
 
 export default async function EditCandidatePage({ params, searchParams }: EditCandidatePageProps) {
@@ -62,22 +79,25 @@ export default async function EditCandidatePage({ params, searchParams }: EditCa
             <article className="rounded-[30px] border border-[#ead8cf] bg-white/90 p-5 shadow-[0_18px_44px_rgba(143,95,89,0.08)] sm:p-6">
               <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#b46d59]">Basic Info</p>
               <h2 className="mt-3 text-[clamp(1.6rem,7vw,2.4rem)] font-semibold tracking-[-0.05em] text-[#24161c]">기본 프로필</h2>
+              <p className="mt-3 text-sm leading-6 text-[#8b6a63]">
+                필수 입력: 이름, 지역, 출생연도, 성별, 직업
+              </p>
               <div className="mt-6 grid gap-4">
                 <label className="grid gap-2">
-                  <FieldLabel>이름</FieldLabel>
+                  <FieldLabel required>이름</FieldLabel>
                   <input name="fullName" defaultValue={candidate.full_name} required className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]" />
                 </label>
                 <label className="grid gap-2">
-                  <FieldLabel>출생연도</FieldLabel>
+                  <FieldLabel required>출생연도</FieldLabel>
                   <input name="birthYear" type="number" defaultValue={candidate.birth_year} required className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]" />
                 </label>
                 <GenderToggleField name="gender" defaultValue={candidate.gender} required />
                 <label className="grid gap-2">
-                  <FieldLabel>지역</FieldLabel>
-                  <input name="region" defaultValue={candidate.region} className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]" />
+                  <FieldLabel required>지역</FieldLabel>
+                  <input name="region" defaultValue={candidate.region} required className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]" />
                 </label>
                 <label className="grid gap-2">
-                  <FieldLabel>직업</FieldLabel>
+                  <FieldLabel required>직업</FieldLabel>
                   <input name="occupation" defaultValue={candidate.occupation} required className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]" />
                 </label>
                 <label className="grid gap-2">
@@ -135,6 +155,9 @@ export default async function EditCandidatePage({ params, searchParams }: EditCa
                   pendingLabel="저장 중..."
                   className="inline-flex min-h-12 items-center justify-center rounded-full border border-[#d8b28a] bg-gradient-to-r from-[#f2c98d] to-[#c78662] px-6 text-sm font-semibold text-[#2b1b11] disabled:cursor-not-allowed disabled:opacity-60"
                 />
+              </div>
+              <div className="mt-4 rounded-2xl border border-[#f0ddd2] bg-[#fff8f3] px-4 py-4 text-sm leading-6 text-[#8a6b74]">
+                이름, 지역, 출생연도, 성별, 직업은 필수입니다. 나머지는 선택 입력입니다.
               </div>
             </article>
           </section>

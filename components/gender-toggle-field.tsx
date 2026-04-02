@@ -16,7 +16,18 @@ export function GenderToggleField({
 
   return (
     <fieldset className="grid gap-2">
-      <legend className="text-[0.96rem] font-bold text-[#725761]">{label}</legend>
+      <legend className="flex flex-wrap items-center gap-2 text-[0.96rem] font-bold text-[#725761]">
+        <span>{label}</span>
+        <span
+          className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+            required
+              ? "bg-[#fff1e6] text-[#b46d59]"
+              : "bg-[#f7f0eb] text-[#8b6a63]"
+          }`}
+        >
+          {required ? "[필수]" : "[선택]"}
+        </span>
+      </legend>
       <div className="grid grid-cols-2 gap-3">
         <label className="group">
           <input

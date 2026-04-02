@@ -142,17 +142,16 @@ export default async function CandidateDetailPage({
 }: CandidateDetailPageProps) {
   const { id } = await params;
   const { message } = await searchParams;
-  const candidate = await getCandidateById(id);
+  const [candidate, history, photos, membership] = await Promise.all([
+    getCandidateById(id),
+    getMatchRecords(id),
+    getCandidatePhotos(id),
+    requireMembershipRole(["admin", "super_admin"]),
+  ]);
 
   if (!candidate) {
     notFound();
   }
-
-  const [history, photos, membership] = await Promise.all([
-    getMatchRecords(candidate.id),
-    getCandidatePhotos(candidate.id),
-    requireMembershipRole(["admin", "super_admin"]),
-  ]);
   const heroImageUrl = isRenderableImageUrl(candidate.image_url)
     ? candidate.image_url
     : photos[0]?.image_url ?? null;

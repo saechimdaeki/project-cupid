@@ -304,9 +304,14 @@ export function PhotoUploadField({
   return (
     <div className="grid gap-4">
       <label className="grid cursor-pointer gap-2 rounded-[26px] border border-dashed border-[#dcb79e] bg-gradient-to-br from-[#fffaf7] to-[#fff3eb] p-5 transition hover:border-[#c98a6b]">
-        <span className="text-sm font-semibold text-[#7b626a]">사진 첨부</span>
+        <span className="flex flex-wrap items-center gap-2 text-sm font-semibold text-[#7b626a]">
+          <span>사진 첨부</span>
+          <span className="inline-flex items-center rounded-full bg-[#f7f0eb] px-2 py-0.5 text-[11px] font-semibold text-[#8b6a63]">
+            [선택]
+          </span>
+        </span>
         <span className="text-sm leading-7 text-[#8b6a63]">
-          사진은 브라우저에서 바로 안전하게 업로드됩니다. 모바일에서는 원본 업로드를 우선 사용합니다.
+          선택 사항입니다. 사진은 브라우저에서 바로 안전하게 업로드됩니다. 모바일에서는 원본 업로드를 우선 사용합니다.
         </span>
         <span className="inline-flex min-h-11 w-full items-center justify-center rounded-full border border-[#d8b28a] bg-white px-4 text-sm font-semibold text-[#7b6049] sm:w-fit">
           사진 선택하기

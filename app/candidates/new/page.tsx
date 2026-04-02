@@ -9,8 +9,25 @@ type NewCandidatePageProps = {
   searchParams: Promise<{ message?: string }>;
 };
 
-function FieldLabel({ children }: { children: React.ReactNode }) {
-  return <span className="text-[0.96rem] font-bold text-[#725761]">{children}</span>;
+function FieldLabel({
+  children,
+  required = false,
+}: {
+  children: React.ReactNode;
+  required?: boolean;
+}) {
+  return (
+    <span className="flex flex-wrap items-center gap-2 text-[0.96rem] font-bold text-[#725761]">
+      <span>{children}</span>
+      <span
+        className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+          required ? "bg-[#fff1e6] text-[#b46d59]" : "bg-[#f7f0eb] text-[#8b6a63]"
+        }`}
+      >
+        {required ? "[필수]" : "[선택]"}
+      </span>
+    </span>
+  );
 }
 
 export default async function NewCandidatePage({ searchParams }: NewCandidatePageProps) {
@@ -51,43 +68,46 @@ export default async function NewCandidatePage({ searchParams }: NewCandidatePag
             <article className="rounded-[30px] border border-[#ead8cf] bg-white/90 p-5 shadow-[0_18px_44px_rgba(143,95,89,0.08)] sm:p-6">
               <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#b46d59]">Basic Info</p>
               <h2 className="mt-3 text-[clamp(1.6rem,7vw,2.4rem)] font-semibold tracking-[-0.05em] text-[#24161c]">기본 프로필</h2>
+              <p className="mt-3 text-sm leading-6 text-[#8b6a63]">
+                필수 입력: 이름, 지역, 출생연도, 성별, 직업
+              </p>
               <div className="mt-6 grid gap-4">
                 <label className="grid gap-2">
-                  <FieldLabel>이름</FieldLabel>
-                  <input name="fullName" placeholder="김서연" required className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]" />
+                  <FieldLabel required>이름</FieldLabel>
+                  <input name="fullName" placeholder="[필수] 이름을 입력해주세요" required className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]" />
                 </label>
                 <label className="grid gap-2">
-                  <FieldLabel>출생연도</FieldLabel>
-                  <input name="birthYear" type="number" placeholder="1994" required className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]" />
+                  <FieldLabel required>출생연도</FieldLabel>
+                  <input name="birthYear" type="number" placeholder="[필수] 예: 1994" required className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]" />
                 </label>
                 <GenderToggleField name="gender" required />
                 <label className="grid gap-2">
-                  <FieldLabel>지역</FieldLabel>
-                  <input name="region" placeholder="서울" className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]" />
+                  <FieldLabel required>지역</FieldLabel>
+                  <input name="region" placeholder="[필수] 예: 서울" required className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]" />
                 </label>
                 <label className="grid gap-2">
-                  <FieldLabel>직업</FieldLabel>
-                  <input name="occupation" placeholder="기획자" required className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]" />
+                  <FieldLabel required>직업</FieldLabel>
+                  <input name="occupation" placeholder="[필수] 예: 기획자" required className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]" />
                 </label>
                 <label className="grid gap-2">
                   <FieldLabel>직장 / 직무</FieldLabel>
-                  <input name="workSummary" placeholder="INNOVATE · 서비스 기획" className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]" />
+                  <input name="workSummary" placeholder="[선택] 예: INNOVATE · 서비스 기획" className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]" />
                 </label>
                 <label className="grid gap-2">
                   <FieldLabel>학력</FieldLabel>
-                  <input name="education" placeholder="연세대학교" className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]" />
+                  <input name="education" placeholder="[선택] 예: 연세대학교" className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]" />
                 </label>
                 <label className="grid gap-2">
                   <FieldLabel>종교</FieldLabel>
-                  <input name="religion" placeholder="무교" className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]" />
+                  <input name="religion" placeholder="[선택] 예: 무교" className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]" />
                 </label>
                 <label className="grid gap-2">
                   <FieldLabel>MBTI</FieldLabel>
-                  <input name="mbti" placeholder="ENFJ" className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]" />
+                  <input name="mbti" placeholder="[선택] 예: ENFJ" className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]" />
                 </label>
                 <label className="grid gap-2">
                   <FieldLabel>상태</FieldLabel>
-                  <input name="status" placeholder="active" defaultValue="active" className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]" />
+                  <input name="status" placeholder="[선택] 기본값 active" defaultValue="active" className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]" />
                 </label>
               </div>
             </article>
@@ -98,19 +118,19 @@ export default async function NewCandidatePage({ searchParams }: NewCandidatePag
               <div className="mt-6 grid gap-4">
                 <label className="grid gap-2">
                   <FieldLabel>인상 요약</FieldLabel>
-                  <textarea name="personalitySummary" rows={4} placeholder="차분하고 센스가 있으며..." className="rounded-[22px] border border-[#ead8cf] bg-white/95 px-4 py-3 text-sm font-semibold text-[#37232b]" />
+                  <textarea name="personalitySummary" rows={4} placeholder="[선택] 차분하고 센스가 있으며..." className="rounded-[22px] border border-[#ead8cf] bg-white/95 px-4 py-3 text-sm font-semibold text-[#37232b]" />
                 </label>
                 <label className="grid gap-2">
                   <FieldLabel>이상형</FieldLabel>
-                  <textarea name="idealType" rows={3} placeholder="성실하고 유머가 있으며..." className="rounded-[22px] border border-[#ead8cf] bg-white/95 px-4 py-3 text-sm font-semibold text-[#37232b]" />
+                  <textarea name="idealType" rows={3} placeholder="[선택] 성실하고 유머가 있으며..." className="rounded-[22px] border border-[#ead8cf] bg-white/95 px-4 py-3 text-sm font-semibold text-[#37232b]" />
                 </label>
                 <label className="grid gap-2">
                   <FieldLabel>비공개 메모</FieldLabel>
-                  <textarea name="notesPrivate" rows={4} placeholder="주말 취향, 비흡연 여부 등" className="rounded-[22px] border border-[#ead8cf] bg-white/95 px-4 py-3 text-sm font-semibold text-[#37232b]" />
+                  <textarea name="notesPrivate" rows={4} placeholder="[선택] 주말 취향, 비흡연 여부 등" className="rounded-[22px] border border-[#ead8cf] bg-white/95 px-4 py-3 text-sm font-semibold text-[#37232b]" />
                 </label>
                 <label className="grid gap-2">
                   <FieldLabel>태그</FieldLabel>
-                  <input name="highlightTags" placeholder="대화잘함, 서울거주, 비흡연" className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]" />
+                  <input name="highlightTags" placeholder="[선택] 예: 대화잘함, 서울거주, 비흡연" className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]" />
                 </label>
                 <PhotoUploadField storageFolderId={submissionKey} />
                 <FormSubmitButton
@@ -120,7 +140,7 @@ export default async function NewCandidatePage({ searchParams }: NewCandidatePag
                 />
               </div>
               <div className="mt-4 rounded-2xl border border-[#f0ddd2] bg-[#fff8f3] px-4 py-4 text-sm leading-6 text-[#8a6b74]">
-                이름, 출생연도, 성별, 직업은 필수입니다. 사진은 private bucket에 저장되고, 상세 화면에서는 signed URL로만 열립니다.
+                이름, 지역, 출생연도, 성별, 직업은 필수입니다. 나머지는 선택 입력입니다. 사진은 private bucket에 저장되고, 상세 화면에서는 signed URL로만 열립니다.
               </div>
             </article>
           </section>

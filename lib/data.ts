@@ -10,6 +10,7 @@ import type {
 
 const CANDIDATE_PHOTOS_BUCKET = "sogaeting";
 const SIGNED_URL_TTL_SECONDS = 60 * 60;
+const DASHBOARD_TIMELINE_FETCH_LIMIT = 80;
 const IMAGE_TRANSFORMS = {
   card: {
     height: 720,
@@ -364,6 +365,50 @@ export async function getDashboardMatchRecords() {
   }
 
   return mergeMatchRecords(data.map(mapMatchRecord), mockMatchRecords);
+}
+
+export async function getDashboardTimelineData() {
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return {
+      records: mockMatchRecords,
+      totalCount: mockMatchRecords.length,
+    };
+  }
+
+  const [countResult, recordsResult] = await Promise.all([
+    supabase
+      .from("cupid_match_records")
+      .select("id", { count: "exact", head: true }),
+    supabase
+      .from("cupid_match_records")
+      .select(
+        "id, candidate_id, counterpart_label, counterpart_candidate_id, matchmaker_name, outcome, summary, happened_on",
+      )
+      .order("happened_on", { ascending: false })
+      .limit(DASHBOARD_TIMELINE_FETCH_LIMIT),
+  ]);
+
+  const { count, error: countError } = countResult;
+  const { data, error } = recordsResult;
+
+  if (error || !data) {
+    return {
+      records: mockMatchRecords,
+      totalCount: mockMatchRecords.length,
+    };
+  }
+
+  const mergedRecords = mergeMatchRecords(data.map(mapMatchRecord), mockMatchRecords);
+
+  return {
+    records: mergedRecords,
+    totalCount:
+      countError || typeof count !== "number"
+        ? mergedRecords.length
+        : Math.max(count, mergedRecords.length),
+  };
 }
 
 export function buildTimelineEvents(
