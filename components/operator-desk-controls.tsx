@@ -1,23 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
 import {
   closeMatchWithRecord,
   promoteToCoupleFromDesk,
-  updateCandidateStatus,
+  setStatusFromDesk,
 } from "@/lib/admin-actions";
 import type { CandidateStatus } from "@/lib/types";
 import { getStatusLabel } from "@/lib/status-ui";
 
 const CLOSURE_SELECT_VALUE = "__match_closure__";
 
-// '졸업(graduated)' 제거 — 기획에 없는 옵션
+// '졸업(graduated)' 제거
 const STATUS_OPTIONS: CandidateStatus[] = ["active", "matched", "couple", "archived"];
 
 type OperatorDeskControlsProps = {
   candidateId: string;
   currentStatus: CandidateStatus;
-  /** paired_candidate_id: 연결된 상대 ID. null이면 페어 없음 */
   pairedCandidateId: string | null;
   canOperate: boolean;
 };
@@ -31,10 +31,14 @@ export function OperatorDeskControls({
   const hasPair = Boolean(pairedCandidateId);
   const [selectValue, setSelectValue] = useState<string>(currentStatus);
   const [closureMode, setClosureMode] = useState(false);
+  const [inlineError, setInlineError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
   useEffect(() => {
     setSelectValue(currentStatus);
     setClosureMode(false);
+    setInlineError(null);
   }, [currentStatus]);
 
   if (!canOperate) {
@@ -45,22 +49,40 @@ export function OperatorDeskControls({
   const showClosurePanel = closureMode && selectValue === CLOSURE_SELECT_VALUE;
   const showDefaultButton = !showCouplePanel && !showClosurePanel;
 
+  // Bug 2 fix: form action redirect(303) 방식 제거 → startTransition으로 직접 호출
+  // 첫 클릭에 확실하게 동작하며 에러 상태 없음
+  const handleStatusChange = () => {
+    if (isPending) return;
+    setInlineError(null);
+    startTransition(async () => {
+      const result = await setStatusFromDesk(candidateId, selectValue);
+      if (result.ok) {
+        router.push(`/profiles/${candidateId}?message=status-updated`);
+      } else {
+        setInlineError(result.error ?? "상태 변경에 실패했습니다.");
+      }
+    });
+  };
+
   return (
     <div className="mt-5 grid gap-3">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
         <select
           value={closureMode ? CLOSURE_SELECT_VALUE : selectValue}
+          disabled={isPending}
           onChange={(e) => {
             const v = e.target.value;
             if (v === CLOSURE_SELECT_VALUE) {
               setSelectValue(CLOSURE_SELECT_VALUE);
               setClosureMode(true);
+              setInlineError(null);
               return;
             }
             setSelectValue(v);
             setClosureMode(false);
+            setInlineError(null);
           }}
-          className="h-11 min-w-0 flex-1 rounded-xl border border-rose-100/80 bg-white/90 px-4 text-sm text-slate-700 shadow-sm outline-none focus:border-rose-200 focus:ring-2 focus:ring-rose-100"
+          className="h-11 min-w-0 flex-1 rounded-xl border border-rose-100/80 bg-white/90 px-4 text-sm text-slate-700 shadow-sm outline-none focus:border-rose-200 focus:ring-2 focus:ring-rose-100 disabled:opacity-60"
           aria-label="후보 상태"
         >
           {STATUS_OPTIONS.map((status) => (
@@ -72,18 +94,22 @@ export function OperatorDeskControls({
         </select>
 
         {showDefaultButton ? (
-          <form action={updateCandidateStatus} className="shrink-0">
-            <input type="hidden" name="candidateId" value={candidateId} />
-            <input type="hidden" name="status" value={selectValue} />
-            <button
-              type="submit"
-              className="inline-flex h-11 w-full items-center justify-center rounded-full border border-rose-200/80 bg-white/90 px-4 text-sm font-medium text-rose-700 shadow-sm transition hover:bg-rose-50 sm:w-auto sm:min-w-[7.5rem]"
-            >
-              상태 변경
-            </button>
-          </form>
+          <button
+            type="button"
+            onClick={handleStatusChange}
+            disabled={isPending || selectValue === currentStatus}
+            className="inline-flex h-11 w-full items-center justify-center rounded-full border border-rose-200/80 bg-white/90 px-4 text-sm font-medium text-rose-700 shadow-sm transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:min-w-[7.5rem]"
+          >
+            {isPending ? "처리 중…" : "상태 변경"}
+          </button>
         ) : null}
       </div>
+
+      {inlineError ? (
+        <p className="rounded-xl border border-amber-200/70 bg-amber-50/60 px-3 py-2 text-xs font-medium text-amber-800">
+          {inlineError}
+        </p>
+      ) : null}
 
       {/* 커플완성 확정 패널 */}
       {showCouplePanel ? (

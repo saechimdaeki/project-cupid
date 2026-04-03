@@ -1008,6 +1008,79 @@ export async function closeMatchWithRecord(formData: FormData) {
 }
 
 /**
+ * 운영 데스크 상태 변경 전용 (non-redirecting).
+ * - "active" 전환 시 기존 페어의 진행 중 MatchRecord를 closed로 이동 → 칸반 동기화
+ * - redirect() 없이 결과를 반환 → 클라이언트가 router.push로 직접 이동 (303 이중클릭 버그 제거)
+ */
+export async function setStatusFromDesk(
+  candidateId: string,
+  status: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const membership = await requireMembership();
+
+  if (!canEditCandidates(membership.role)) {
+    return { ok: false, error: "권한이 없습니다." };
+  }
+
+  const supabase = await createClient();
+  if (!supabase) return { ok: false, error: "Supabase 환경변수가 없습니다." };
+  if (!candidateId) return { ok: false, error: "후보 정보를 찾지 못했습니다." };
+
+  const normalizedStatus = CANDIDATE_STATUS_VALUES.has(status)
+    ? (status as string)
+    : "active";
+
+  if (PAIR_REQUIRED_STATUS_VALUES.has(normalizedStatus)) {
+    return {
+      ok: false,
+      error: "매칭진행중/커플완성은 대시보드에서 상대 후보를 선택해 변경해주세요.",
+    };
+  }
+
+  const { data: candidate, error: fetchError } = await supabase
+    .from("cupid_candidates")
+    .select("id, paired_candidate_id")
+    .eq("id", candidateId)
+    .maybeSingle();
+
+  if (fetchError || !candidate) {
+    return { ok: false, error: fetchError?.message ?? "후보 정보를 찾지 못했습니다." };
+  }
+
+  const pairIds = candidate.paired_candidate_id
+    ? [candidateId, candidate.paired_candidate_id]
+    : [candidateId];
+
+  const payload =
+    normalizedStatus === "active"
+      ? { status: normalizedStatus, paired_candidate_id: null }
+      : { status: normalizedStatus };
+
+  const { error: updateError } = await supabase
+    .from("cupid_candidates")
+    .update(payload)
+    .in("id", pairIds);
+
+  if (updateError) return { ok: false, error: updateError.message };
+
+  // Bug 1 fix: "active"로 복귀 시 해당 페어의 진행 중 매칭 기록을 closed로 이동
+  // → 칸반 "진행 중" 컬럼에서 카드가 즉시 사라지고 "종료" 컬럼으로 이동
+  if (normalizedStatus === "active" && candidate.paired_candidate_id) {
+    const pairOr = buildPairMatchRecordsOrFilter(candidateId, candidate.paired_candidate_id);
+    await supabase
+      .from("cupid_match_records")
+      .update({
+        outcome: "closed",
+        summary: "상태 변경(적극검토 복귀)으로 인한 매칭 흐름 종료",
+      })
+      .or(pairOr)
+      .in("outcome", ONGOING_MATCH_OUTCOMES);
+  }
+
+  return { ok: true };
+}
+
+/**
  * 운영 데스크에서 커플완성을 확정합니다.
  * 양측 후보 status를 couple로, 진행 중 MatchRecord outcome을 couple로 갱신합니다.
  */
