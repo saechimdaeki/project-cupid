@@ -36,7 +36,7 @@ function Header({
 }) {
   return (
     <header className="fixed inset-x-0 top-0 z-40 border-b border-white/50 bg-white/30 backdrop-blur-lg">
-      <div className="mx-auto flex w-full max-w-[1440px] items-center justify-between gap-4 px-8 py-3 lg:px-12">
+      <div className="mx-auto flex w-full max-w-[1440px] items-center justify-between gap-2 px-4 py-3 md:gap-4 md:px-8 lg:px-12">
         <div className="flex min-w-0 items-center gap-4">
           <Link href="/" className="flex min-w-0 items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-3xl border border-white/60 bg-white/70 text-sm font-semibold text-rose-500 shadow-[0_8px_30px_rgb(244,114,182,0.12)]">
@@ -384,13 +384,13 @@ export default function HomePage() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50/30 to-orange-50/50 text-slate-800">
+    <main className="min-h-screen overflow-x-hidden bg-gradient-to-br from-rose-50 via-pink-50/30 to-orange-50/50 text-slate-800">
       <SakuraRain petalCount={56} />
       <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_top,rgba(255,242,245,0.84),rgba(255,247,243,0.68),rgba(255,255,255,0.38))]" />
 
       <Header auth={auth} onLogin={handleLogin} onLogout={handleLogout} />
 
-      <div className="relative z-10 mx-auto flex w-full max-w-[1440px] flex-col gap-10 px-8 pb-16 pt-24 lg:px-12">
+      <div className="relative z-10 mx-auto flex w-full max-w-[1440px] flex-col gap-10 px-4 pb-16 pt-24 md:px-8 lg:px-12">
         <section className="grid gap-16 xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)] xl:items-start xl:justify-between">
           <article className="landing-reveal rounded-[36px] border border-white/50 bg-white/60 p-6 shadow-[0_8px_30px_rgb(244,114,182,0.1)] backdrop-blur-lg sm:p-8">
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">

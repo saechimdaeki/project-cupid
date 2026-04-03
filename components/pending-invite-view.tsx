@@ -56,13 +56,13 @@ export function PendingInviteView({
   ] as const;
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-gradient-to-br from-rose-50 via-pink-50/30 to-orange-50/50 text-slate-800">
+    <main className="relative min-h-screen overflow-x-hidden bg-gradient-to-br from-rose-50 via-pink-50/30 to-orange-50/50 text-slate-800">
       <SakuraRain petalCount={56} />
       <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_top,rgba(255,242,245,0.84),rgba(255,247,243,0.68),rgba(255,255,255,0.38))]" />
       <PendingStatusGuard />
 
       <header className="fixed inset-x-0 top-0 z-40 border-b border-white/50 bg-white/30 backdrop-blur-lg">
-        <div className="mx-auto flex w-full max-w-[1440px] items-center justify-between gap-4 px-8 py-3 lg:px-12">
+        <div className="mx-auto flex w-full max-w-[1440px] items-center justify-between gap-2 px-4 py-3 md:gap-4 md:px-8 lg:px-12">
           <Link href="/" className="flex min-w-0 items-center gap-3">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-3xl border border-white/60 bg-white/70 text-sm font-semibold text-rose-500 shadow-[0_8px_30px_rgb(244,114,182,0.12)]">
               C
@@ -79,7 +79,7 @@ export function PendingInviteView({
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-rose-100 to-orange-100 text-sm font-semibold text-slate-700">
               {displayName.slice(0, 1)}
             </div>
-            <p className="hidden text-sm font-medium text-slate-600 sm:block">
+            <p className="hidden text-sm font-medium text-slate-600 md:block">
               <span className="text-slate-800">{displayName}</span>님, 곧 만나요 💌
             </p>
             <button
@@ -93,7 +93,7 @@ export function PendingInviteView({
         </div>
       </header>
 
-      <div className="relative z-10 mx-auto flex w-full max-w-[1440px] flex-col items-center px-8 pb-24 pt-28 lg:px-12">
+      <div className="relative z-10 mx-auto flex w-full max-w-[1440px] flex-col items-center overflow-x-hidden px-4 pb-24 pt-28 md:px-8 lg:px-12">
         <div className="w-full max-w-xl rounded-3xl border border-white/70 bg-white/80 p-8 shadow-xl backdrop-blur-md sm:p-10">
           <p className="text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-rose-400/90">
             Private invitation

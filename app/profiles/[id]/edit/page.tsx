@@ -50,8 +50,8 @@ export default async function EditCandidatePage({ params, searchParams }: EditCa
   return (
     <>
       <GlobalNav membership={membership} active="profile" />
-      <main className="min-h-screen bg-slate-50 text-[#24161c]">
-      <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 px-8 pb-10 pt-24 lg:px-12">
+      <main className="min-h-screen overflow-x-hidden bg-slate-50 text-[#24161c]">
+      <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 px-4 pb-10 pt-24 md:px-8 lg:px-12">
         <section className="flex flex-col gap-4 rounded-[34px] border border-[#ead8cf] bg-[linear-gradient(135deg,rgba(255,255,255,0.92),rgba(255,244,239,0.96))] p-6 shadow-[0_24px_70px_rgba(143,95,89,0.12)] sm:flex-row sm:items-end sm:justify-between sm:p-8">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#b46d59]">Candidate Edit</p>

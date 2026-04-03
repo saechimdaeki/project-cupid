@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { GlobalNav } from "@/components/global-nav";
-import { PersonPreview } from "@/components/person-preview";
+import { ProfilePortrait } from "@/components/profile-portrait";
 import { StudioPageShell } from "@/components/studio-page-shell";
 import { deleteMatchRecord, updateCandidateStatus } from "@/lib/admin-actions";
 import { getCandidateById, getCandidatePhotos, getMatchRecords } from "@/lib/data";
@@ -146,8 +146,8 @@ export default async function CandidateDetailPage({
       <GlobalNav membership={membership} active="profile" />
 
       <StudioPageShell petalCount={58}>
-        <main className="pb-32 pt-24 text-slate-800 sm:pb-40">
-          <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-8 px-8 lg:px-12">
+        <main className="overflow-x-hidden pb-32 pt-24 text-slate-800 sm:pb-40">
+          <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-8 px-4 md:px-8 lg:px-12">
           <section className="grid gap-8 xl:grid-cols-[minmax(0,1.2fr)_minmax(22rem,28rem)] xl:items-start">
             <article className="overflow-hidden rounded-3xl border border-white/60 bg-white/85 shadow-xl shadow-rose-200/25 backdrop-blur-md">
               <div className="grid gap-0 lg:grid-cols-[minmax(340px,0.95fr)_minmax(0,1.15fr)]">
@@ -157,19 +157,14 @@ export default async function CandidateDetailPage({
                       {candidate.full_name}
                       <span className="mt-0.5 block font-normal text-slate-500">대표 사진</span>
                     </p>
-                    <div className="relative mx-auto w-full max-w-xl overflow-hidden rounded-2xl bg-rose-50/40 lg:max-w-none">
-                      <div className="relative aspect-[3/4] w-full min-h-[280px] max-h-[min(85vh,720px)] overflow-hidden rounded-2xl bg-rose-50/30 sm:min-h-[320px] lg:min-h-[400px]">
-                        <PersonPreview
-                          imageUrl={heroImageUrl}
-                          gender={candidate.gender}
-                          className="!absolute inset-0 h-full w-full min-h-0 rounded-2xl bg-rose-50/40"
-                          fetchPriority="high"
-                          loading="eager"
-                          size="lg"
-                          fit="contain"
-                          position="center"
-                        />
-                      </div>
+                    <div className="relative mx-auto w-full max-w-xl lg:max-w-none">
+                      <ProfilePortrait
+                        imageUrl={heroImageUrl}
+                        sizes="(max-width: 1024px) 100vw, 42vw"
+                        roundedClassName="rounded-3xl"
+                        priority
+                        className="min-h-[280px] max-h-[min(85vh,720px)] w-full sm:min-h-[320px] lg:min-h-[400px]"
+                      />
                     </div>
                   </div>
                 </div>
@@ -294,15 +289,12 @@ export default async function CandidateDetailPage({
                     Current Pair · 연결 중
                   </p>
                   <div className="mt-4 flex flex-col items-center gap-4 sm:flex-row sm:items-start">
-                    <div className="relative aspect-[3/4] w-full max-w-[200px] shrink-0 overflow-hidden rounded-2xl border border-white/80 bg-white/60 shadow-[0_12px_36px_rgba(251,146,60,0.2)] sm:max-w-[176px]">
-                      <PersonPreview
+                    <div className="w-full max-w-[200px] shrink-0 border border-white/80 bg-rose-50 shadow-[0_12px_36px_rgba(251,146,60,0.2)] sm:max-w-[176px]">
+                      <ProfilePortrait
                         imageUrl={counterpartHeroUrl}
-                        gender={counterpartCandidate.gender}
-                        className="!absolute inset-0 h-full w-full min-h-0 rounded-2xl bg-orange-50/50"
-                        loading="eager"
-                        size="lg"
-                        fit="contain"
-                        position="center"
+                        sizes="200px"
+                        roundedClassName="rounded-2xl"
+                        className="border-0"
                       />
                     </div>
                     <div className="min-w-0 flex-1 text-center sm:text-left">
