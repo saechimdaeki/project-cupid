@@ -773,31 +773,40 @@ export async function moveCandidatePairStatus(
   }
 
   if (!updatedOpenRows?.length) {
-    const { error: matchRecordError } = await supabase.from("cupid_match_records").insert([
-      {
-        candidate_id: source.id,
-        counterpart_label: buildCounterpartLabel(counterpart),
-        counterpart_candidate_id: counterpart.id,
-        matchmaker_id: membership.user_id,
-        matchmaker_name: membership.full_name,
-        outcome,
-        summary,
-        happened_on: happenedOn,
-      },
-      {
-        candidate_id: counterpart.id,
-        counterpart_label: buildCounterpartLabel(source),
-        counterpart_candidate_id: source.id,
-        matchmaker_id: membership.user_id,
-        matchmaker_name: membership.full_name,
-        outcome,
-        summary,
-        happened_on: happenedOn,
-      },
-    ]);
+    // 이미 동일 outcome 레코드가 있으면 중복 삽입 방지
+    const { data: existingRows } = await supabase
+      .from("cupid_match_records")
+      .select("id")
+      .or(pairOr)
+      .eq("outcome", outcome);
 
-    if (matchRecordError) {
-      return { ok: false, message: matchRecordError.message };
+    if (!existingRows?.length) {
+      const { error: matchRecordError } = await supabase.from("cupid_match_records").insert([
+        {
+          candidate_id: source.id,
+          counterpart_label: buildCounterpartLabel(counterpart),
+          counterpart_candidate_id: counterpart.id,
+          matchmaker_id: membership.user_id,
+          matchmaker_name: membership.full_name,
+          outcome,
+          summary,
+          happened_on: happenedOn,
+        },
+        {
+          candidate_id: counterpart.id,
+          counterpart_label: buildCounterpartLabel(source),
+          counterpart_candidate_id: source.id,
+          matchmaker_id: membership.user_id,
+          matchmaker_name: membership.full_name,
+          outcome,
+          summary,
+          happened_on: happenedOn,
+        },
+      ]);
+
+      if (matchRecordError) {
+        return { ok: false, message: matchRecordError.message };
+      }
     }
   }
 
@@ -828,13 +837,31 @@ export async function createMatchRecord(formData: FormData) {
     redirect("/dashboard?message=invalid-candidate");
   }
 
+  const counterpartCandidateId = cleanText(formData.get("counterpartCandidateId")) || null;
+
   if (!counterpartLabel || !summary || !happenedOn || !MATCH_OUTCOME_VALUES.has(outcome)) {
     redirect(`/profiles/${candidateId}?message=match-invalid`);
+  }
+
+  // couple / closed는 같은 상대에게 레코드가 이미 있으면 중복 삽입 방지
+  if ((outcome === "couple" || outcome === "closed") && counterpartCandidateId) {
+    const { data: existing } = await supabase
+      .from("cupid_match_records")
+      .select("id")
+      .eq("candidate_id", candidateId)
+      .eq("counterpart_candidate_id", counterpartCandidateId)
+      .eq("outcome", outcome)
+      .maybeSingle();
+
+    if (existing) {
+      redirect(`/profiles/${candidateId}?message=${encodeURIComponent("이미 동일한 결과 기록이 존재합니다.")}`);
+    }
   }
 
   const { error } = await supabase.from("cupid_match_records").insert({
     candidate_id: candidateId,
     counterpart_label: counterpartLabel,
+    counterpart_candidate_id: counterpartCandidateId,
     matchmaker_id: membership.user_id,
     matchmaker_name: membership.full_name,
     outcome,
@@ -967,31 +994,40 @@ export async function closeMatchWithRecord(formData: FormData) {
   }
 
   if (!closedFromOpen?.length) {
-    const { error: insertError } = await supabase.from("cupid_match_records").insert([
-      {
-        candidate_id: source.id,
-        counterpart_label: buildCounterpartLabel(counterpart),
-        counterpart_candidate_id: counterpart.id,
-        matchmaker_id: membership.user_id,
-        matchmaker_name: membership.full_name,
-        outcome: "closed",
-        summary: closureReason,
-        happened_on: happenedOn,
-      },
-      {
-        candidate_id: counterpart.id,
-        counterpart_label: buildCounterpartLabel(source),
-        counterpart_candidate_id: source.id,
-        matchmaker_id: membership.user_id,
-        matchmaker_name: membership.full_name,
-        outcome: "closed",
-        summary: closureReason,
-        happened_on: happenedOn,
-      },
-    ]);
+    // 이미 closed 레코드가 있으면 중복 삽입 방지
+    const { data: existingClosedRows } = await supabase
+      .from("cupid_match_records")
+      .select("id")
+      .or(pairOr)
+      .eq("outcome", "closed");
 
-    if (insertError) {
-      redirect(`/profiles/${candidateId}?message=${encodeURIComponent(insertError.message)}`);
+    if (!existingClosedRows?.length) {
+      const { error: insertError } = await supabase.from("cupid_match_records").insert([
+        {
+          candidate_id: source.id,
+          counterpart_label: buildCounterpartLabel(counterpart),
+          counterpart_candidate_id: counterpart.id,
+          matchmaker_id: membership.user_id,
+          matchmaker_name: membership.full_name,
+          outcome: "closed",
+          summary: closureReason,
+          happened_on: happenedOn,
+        },
+        {
+          candidate_id: counterpart.id,
+          counterpart_label: buildCounterpartLabel(source),
+          counterpart_candidate_id: source.id,
+          matchmaker_id: membership.user_id,
+          matchmaker_name: membership.full_name,
+          outcome: "closed",
+          summary: closureReason,
+          happened_on: happenedOn,
+        },
+      ]);
+
+      if (insertError) {
+        redirect(`/profiles/${candidateId}?message=${encodeURIComponent(insertError.message)}`);
+      }
     }
   }
 
@@ -1140,28 +1176,37 @@ export async function promoteToCoupleFromDesk(formData: FormData) {
     .select("id");
 
   if (!updatedRows?.length) {
-    await supabase.from("cupid_match_records").insert([
-      {
-        candidate_id: source.id,
-        counterpart_label: buildCounterpartLabel(counterpart),
-        counterpart_candidate_id: counterpart.id,
-        matchmaker_id: membership.user_id,
-        matchmaker_name: membership.full_name,
-        outcome: "couple",
-        summary,
-        happened_on: happenedOn,
-      },
-      {
-        candidate_id: counterpart.id,
-        counterpart_label: buildCounterpartLabel(source),
-        counterpart_candidate_id: source.id,
-        matchmaker_id: membership.user_id,
-        matchmaker_name: membership.full_name,
-        outcome: "couple",
-        summary,
-        happened_on: happenedOn,
-      },
-    ]);
+    // 이미 couple 레코드가 있으면 중복 삽입 방지
+    const { data: existingCoupleRows } = await supabase
+      .from("cupid_match_records")
+      .select("id")
+      .or(pairOr)
+      .eq("outcome", "couple");
+
+    if (!existingCoupleRows?.length) {
+      await supabase.from("cupid_match_records").insert([
+        {
+          candidate_id: source.id,
+          counterpart_label: buildCounterpartLabel(counterpart),
+          counterpart_candidate_id: counterpart.id,
+          matchmaker_id: membership.user_id,
+          matchmaker_name: membership.full_name,
+          outcome: "couple",
+          summary,
+          happened_on: happenedOn,
+        },
+        {
+          candidate_id: counterpart.id,
+          counterpart_label: buildCounterpartLabel(source),
+          counterpart_candidate_id: source.id,
+          matchmaker_id: membership.user_id,
+          matchmaker_name: membership.full_name,
+          outcome: "couple",
+          summary,
+          happened_on: happenedOn,
+        },
+      ]);
+    }
   }
 
   redirect(`/profiles/${candidateId}?message=couple-confirmed`);

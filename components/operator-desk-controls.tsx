@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import {
   closeMatchWithRecord,
   promoteToCoupleFromDesk,
@@ -33,6 +33,7 @@ export function OperatorDeskControls({
   const [closureMode, setClosureMode] = useState(false);
   const [inlineError, setInlineError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const closureFormRef = useRef<HTMLFormElement>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -49,8 +50,6 @@ export function OperatorDeskControls({
   const showClosurePanel = closureMode && selectValue === CLOSURE_SELECT_VALUE;
   const showDefaultButton = !showCouplePanel && !showClosurePanel;
 
-  // Bug 2 fix: form action redirect(303) 방식 제거 → startTransition으로 직접 호출
-  // 첫 클릭에 확실하게 동작하며 에러 상태 없음
   const handleStatusChange = () => {
     if (isPending) return;
     setInlineError(null);
@@ -61,6 +60,30 @@ export function OperatorDeskControls({
       } else {
         setInlineError(result.error ?? "상태 변경에 실패했습니다.");
       }
+    });
+  };
+
+  // 커플 확정: isPending으로 더블클릭 방지 (form action 직접 호출 → redirect 포함)
+  const handleCoupleConfirm = () => {
+    if (isPending) return;
+    const formData = new FormData();
+    formData.set("candidateId", candidateId);
+    formData.set("counterpartId", pairedCandidateId ?? "");
+    startTransition(async () => {
+      await promoteToCoupleFromDesk(formData);
+    });
+  };
+
+  // 종료 확정: isPending으로 더블클릭 방지 (form ref에서 FormData 직접 생성)
+  const handleCloseMatch = () => {
+    if (isPending || !closureFormRef.current) return;
+    const closureReason = (closureFormRef.current.elements.namedItem("closureReason") as HTMLTextAreaElement)?.value?.trim();
+    if (!closureReason) return;
+    const formData = new FormData();
+    formData.set("candidateId", candidateId);
+    formData.set("closureReason", closureReason);
+    startTransition(async () => {
+      await closeMatchWithRecord(formData);
     });
   };
 
@@ -124,23 +147,24 @@ export function OperatorDeskControls({
               <p className="text-sm font-medium text-orange-800">
                 현재 연결된 상대와의 매칭을 커플완성으로 확정합니다.
               </p>
-              <form action={promoteToCoupleFromDesk} className="flex flex-wrap gap-2">
-                <input type="hidden" name="candidateId" value={candidateId} />
-                <input type="hidden" name="counterpartId" value={pairedCandidateId ?? ""} />
+              <div className="flex flex-wrap gap-2">
                 <button
-                  type="submit"
-                  className="inline-flex h-11 items-center justify-center rounded-full bg-orange-500 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600"
+                  type="button"
+                  onClick={handleCoupleConfirm}
+                  disabled={isPending}
+                  className="inline-flex h-11 items-center justify-center rounded-full bg-orange-500 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  커플 확정
+                  {isPending ? "처리 중…" : "커플 확정"}
                 </button>
                 <button
                   type="button"
-                  className="inline-flex h-11 items-center justify-center rounded-full border border-rose-200/80 bg-white/90 px-5 text-sm font-medium text-slate-600 transition hover:bg-white"
+                  disabled={isPending}
+                  className="inline-flex h-11 items-center justify-center rounded-full border border-rose-200/80 bg-white/90 px-5 text-sm font-medium text-slate-600 transition hover:bg-white disabled:opacity-60"
                   onClick={() => setSelectValue(currentStatus)}
                 >
                   취소
                 </button>
-              </form>
+              </div>
             </div>
           )}
         </div>
@@ -155,8 +179,7 @@ export function OperatorDeskControls({
               대시보드에서 매칭을 연결해 주세요.
             </p>
           ) : (
-            <form action={closeMatchWithRecord} className="grid gap-3">
-              <input type="hidden" name="candidateId" value={candidateId} />
+            <form ref={closureFormRef} onSubmit={(e) => e.preventDefault()} className="grid gap-3">
               <label className="grid gap-1.5">
                 <span className="text-xs font-semibold text-rose-600/90">
                   종료 사유 (예: 성향 차이, 연락 두절 등)
@@ -165,20 +188,24 @@ export function OperatorDeskControls({
                   name="closureReason"
                   required
                   rows={4}
+                  disabled={isPending}
                   placeholder="주선자 비공개 메모로 PAST RECORDS에 저장됩니다."
-                  className="min-h-[6rem] rounded-xl border border-rose-100/80 bg-white/95 px-3 py-2 text-sm text-slate-700 shadow-sm outline-none focus:border-rose-200 focus:ring-2 focus:ring-rose-100"
+                  className="min-h-[6rem] rounded-xl border border-rose-100/80 bg-white/95 px-3 py-2 text-sm text-slate-700 shadow-sm outline-none focus:border-rose-200 focus:ring-2 focus:ring-rose-100 disabled:opacity-60"
                 />
               </label>
               <div className="flex flex-wrap gap-2">
                 <button
-                  type="submit"
-                  className="inline-flex h-11 items-center justify-center rounded-full bg-slate-700 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
+                  type="button"
+                  onClick={handleCloseMatch}
+                  disabled={isPending}
+                  className="inline-flex h-11 items-center justify-center rounded-full bg-slate-700 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  종료 확정
+                  {isPending ? "처리 중…" : "종료 확정"}
                 </button>
                 <button
                   type="button"
-                  className="inline-flex h-11 items-center justify-center rounded-full border border-rose-200/80 bg-white/90 px-5 text-sm font-medium text-slate-600 transition hover:bg-white"
+                  disabled={isPending}
+                  className="inline-flex h-11 items-center justify-center rounded-full border border-rose-200/80 bg-white/90 px-5 text-sm font-medium text-slate-600 transition hover:bg-white disabled:opacity-60"
                   onClick={() => {
                     setClosureMode(false);
                     setSelectValue(currentStatus);
