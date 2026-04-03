@@ -325,6 +325,40 @@ export async function getCandidateById(id: string) {
   };
 }
 
+/**
+ * 여러 후보의 기본 정보를 단 1번의 DB 쿼리로 가져옵니다.
+ * getCandidateById를 N번 호출하는 대신 이 함수를 씁니다.
+ * Signed URL은 발급하지 않습니다 — 이름/나이/직업/지역 텍스트 표시용.
+ */
+export async function getCandidatesBasicByIds(ids: string[]): Promise<Candidate[]> {
+  if (!ids.length) return [];
+
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return ids
+      .map((id) => mockCandidates.find((c) => c.id === id))
+      .filter(Boolean) as Candidate[];
+  }
+
+  const { data, error } = await supabase
+    .from("cupid_candidates")
+    .select(
+      "id, full_name, birth_year, height_text, gender, region, occupation, work_summary, education, religion, mbti, personality_summary, ideal_type, notes_private, status, highlight_tags, image_url, paired_candidate_id, created_at",
+    )
+    .in("id", ids);
+
+  if (error || !data) {
+    return ids
+      .map((id) => mockCandidates.find((c) => c.id === id))
+      .filter(Boolean) as Candidate[];
+  }
+
+  // image_url은 Storage path 그대로 유지 (Signed URL 발급 생략)
+  // 과거 이력 표시에는 텍스트 정보만 필요하므로 API 왕복 N번 절감
+  return data.map(mapCandidate);
+}
+
 export async function getMatchRecords(candidateId?: string) {
   const supabase = await createClient();
   const preview = previewMatchRecordsForCandidate(candidateId);

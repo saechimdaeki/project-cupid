@@ -48,9 +48,10 @@ export function GlobalNav({ membership, active = "dashboard" }: GlobalNavProps) 
         <div className="flex min-w-0 shrink items-center gap-2 sm:gap-3 md:gap-4">
           <Link
             href="/"
-            className="font-serif text-lg font-bold tracking-[0.12em] text-rose-500 transition hover:text-rose-600 md:tracking-[0.18em] md:text-2xl"
+            className="font-serif text-base font-bold tracking-[0.1em] text-rose-500 transition hover:text-rose-600 sm:text-lg sm:tracking-[0.14em] md:text-2xl md:tracking-[0.18em]"
           >
-            PROJECT CUPID
+            <span className="hidden sm:inline">PROJECT CUPID</span>
+            <span className="sm:hidden">CUPID</span>
           </Link>
           <Link
             href="/"
@@ -80,7 +81,7 @@ export function GlobalNav({ membership, active = "dashboard" }: GlobalNavProps) 
           {canEditCandidates(membership.role) ? (
             <Link
               href="/candidates/new"
-              className="hidden rounded-full border border-rose-200/80 bg-white/70 px-4 py-2 text-sm font-semibold text-rose-600 shadow-sm transition hover:border-rose-300 hover:bg-white sm:inline-flex"
+              className="inline-flex shrink-0 items-center rounded-full border border-rose-200/80 bg-white/70 px-3 py-1.5 text-xs font-semibold text-rose-600 shadow-sm transition hover:border-rose-300 hover:bg-white sm:px-4 sm:py-2 sm:text-sm"
             >
               매물 등록
             </Link>

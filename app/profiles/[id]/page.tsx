@@ -8,7 +8,7 @@ import { MatchRecordsProvider } from "@/components/match-records-provider";
 import { OperatorDeskControls } from "@/components/operator-desk-controls";
 import { ProfileMatchKanban } from "@/components/profile-match-kanban";
 import { ProfilePastMatchRecords } from "@/components/profile-past-match-records";
-import { getCandidateById, getCandidatePhotos, getMatchRecords } from "@/lib/data";
+import { getCandidateById, getCandidatePhotos, getCandidatesBasicByIds, getMatchRecords } from "@/lib/data";
 import { canEditCandidates, requireMembershipRole } from "@/lib/permissions";
 import { getStatusBadgeClass, getStatusLabel } from "@/lib/status-ui";
 import type { Candidate, CandidatePhoto } from "@/lib/types";
@@ -100,10 +100,9 @@ export default async function CandidateDetailPage({
         .filter(Boolean) as string[],
     ),
   ];
-  const pastCounterpartRows = await Promise.all(pastCounterpartIds.map((cid) => getCandidateById(cid)));
-  const pastCounterpartById = new Map(
-    pastCounterpartRows.filter(Boolean).map((c) => [c!.id, c!]),
-  );
+  // getCandidateById N번 → getCandidatesBasicByIds 1번으로 교체 (DB 쿼리 + Signed URL API 왕복 N번 절감)
+  const pastCounterpartRows = await getCandidatesBasicByIds(pastCounterpartIds);
+  const pastCounterpartById = new Map(pastCounterpartRows.map((c) => [c.id, c]));
   const counterpartsById = Object.fromEntries(pastCounterpartById) as Record<string, Candidate>;
 
   const canOperate = canEditCandidates(membership.role);
