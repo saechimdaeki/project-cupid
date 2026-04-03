@@ -1,4 +1,3 @@
-
 사람의 결을 읽고, 가장 좋은 타이밍에 인연을 잇기 위한 프라이빗 매칭 워크스페이스입니다.
 
 `Project Cupid`는 소개를 “등록하고 끝내는” 도구가 아니라,  
@@ -8,6 +7,9 @@
 ## 이 프로젝트는 무엇인가요?
 
 - 승인된 운영자만 접근할 수 있는 소개팅 매칭 보드입니다.
+
+<img width="1097" height="602" alt="image" src="https://github.com/user-attachments/assets/7c8ffce7-f34e-4a71-bb45-bc20d747cb4c" />
+
 - 후보 등록, 사진 관리, 상태 이동, 매칭 진행, 커플 성사 흐름을 한곳에서 다룹니다.
 - 단순 리스트보다 `분위기`, `타이밍`, `흐름`을 같이 보는 데 초점을 둡니다.
 
@@ -17,7 +19,8 @@
 2. 조건과 인상을 함께 보며 소개 우선순위를 정합니다.
 3. 매칭 진행중, 커플완성, 졸업/보관 상태로 흐름을 관리합니다.
 
-<img width="1465" height="695" alt="image" src="https://github.com/user-attachments/assets/a2994ed0-4982-4834-aefe-c49db7c5d0ec" />
+<img width="1453" height="732" alt="image" src="https://github.com/user-attachments/assets/1e19f11c-66e5-41e1-99b0-ecc60c9dca14" />
+
 
 4. 타임라인에 기록을 남기며 다음 판단의 감각을 쌓아갑니다.
 
