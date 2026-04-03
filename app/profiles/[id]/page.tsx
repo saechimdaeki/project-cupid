@@ -1,71 +1,22 @@
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { GlobalNav } from "@/components/global-nav";
+import { ProfileInteractiveGallery } from "@/components/profile-interactive-gallery";
 import { ProfilePortrait } from "@/components/profile-portrait";
 import { StudioPageShell } from "@/components/studio-page-shell";
-import { deleteMatchRecord, updateCandidateStatus } from "@/lib/admin-actions";
+import { MatchRecordsProvider } from "@/components/match-records-provider";
+import { OperatorDeskControls } from "@/components/operator-desk-controls";
+import { ProfileMatchKanban } from "@/components/profile-match-kanban";
+import { ProfilePastMatchRecords } from "@/components/profile-past-match-records";
 import { getCandidateById, getCandidatePhotos, getMatchRecords } from "@/lib/data";
 import { canEditCandidates, requireMembershipRole } from "@/lib/permissions";
 import { getStatusBadgeClass, getStatusLabel } from "@/lib/status-ui";
-import type { MatchOutcome, MatchRecord } from "@/lib/types";
+import type { Candidate, CandidatePhoto } from "@/lib/types";
 
 type CandidateDetailPageProps = {
   params: Promise<{ id: string }>;
   searchParams: Promise<{ message?: string }>;
 };
-
-const STATUS_OPTIONS = ["active", "matched", "couple", "archived"] as const;
-
-const MATCH_GROUPS: Array<{
-  key: "ongoing" | "couple" | "closed";
-  label: string;
-  outcomes: MatchOutcome[];
-}> = [
-  {
-    key: "ongoing",
-    label: "진행 중",
-    outcomes: ["intro_sent", "first_meeting", "dating"],
-  },
-  {
-    key: "couple",
-    label: "커플완성",
-    outcomes: ["couple"],
-  },
-  {
-    key: "closed",
-    label: "종료",
-    outcomes: ["closed"],
-  },
-];
-
-function getOutcomeLabel(outcome: MatchOutcome) {
-  switch (outcome) {
-    case "intro_sent":
-      return "소개 시작";
-    case "first_meeting":
-      return "첫 만남";
-    case "dating":
-      return "후속 진행";
-    case "couple":
-      return "커플완성";
-    case "closed":
-      return "종료";
-  }
-}
-
-function getOutcomeBadgeClass(outcome: MatchOutcome) {
-  switch (outcome) {
-    case "intro_sent":
-    case "first_meeting":
-    case "dating":
-      return "border-rose-200/80 bg-rose-50 text-rose-600";
-    case "couple":
-      return "border-orange-200/80 bg-orange-50 text-orange-700";
-    case "closed":
-      return "border-rose-100 bg-white/80 text-slate-500";
-  }
-}
 
 function isRenderableImageUrl(value: string | null | undefined) {
   return Boolean(
@@ -100,14 +51,24 @@ function getDeskMessage(message?: string) {
   if (message === "match-deleted") return "매칭 기록이 정리되었습니다.";
   if (message === "status-updated") return "후보 상태가 업데이트되었습니다.";
   if (message === "match-invalid") return "매칭 기록 입력값을 다시 확인해주세요.";
+  if (message === "match-closed") return "매칭이 종료 처리되었고 과거 이력에 반영되었습니다.";
+  if (message === "couple-confirmed") return "커플완성으로 확정되었습니다.";
   return message ?? null;
 }
 
-function groupRecords(records: MatchRecord[]) {
-  return MATCH_GROUPS.map((group) => ({
-    ...group,
-    records: records.filter((record) => group.outcomes.includes(record.outcome)),
-  }));
+function buildProfileGalleryUrls(candidate: Candidate, photos: CandidatePhoto[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  const add = (url: string | null | undefined) => {
+    if (!isRenderableImageUrl(url) || seen.has(url!)) return;
+    seen.add(url!);
+    out.push(url!);
+  };
+  add(candidate.image_url);
+  for (const photo of photos) {
+    add(photo.image_url);
+  }
+  return out;
 }
 
 export default async function CandidateDetailPage({
@@ -131,14 +92,27 @@ export default async function CandidateDetailPage({
     candidate.paired_candidate_id ? getCandidateById(candidate.paired_candidate_id) : Promise.resolve(null),
   ]);
 
+  const pastCounterpartIds = [
+    ...new Set(
+      records
+        .filter((record) => record.outcome === "closed")
+        .map((r) => r.counterpart_candidate_id)
+        .filter(Boolean) as string[],
+    ),
+  ];
+  const pastCounterpartRows = await Promise.all(pastCounterpartIds.map((cid) => getCandidateById(cid)));
+  const pastCounterpartById = new Map(
+    pastCounterpartRows.filter(Boolean).map((c) => [c!.id, c!]),
+  );
+  const counterpartsById = Object.fromEntries(pastCounterpartById) as Record<string, Candidate>;
+
   const canOperate = canEditCandidates(membership.role);
-  const heroImageUrl = isRenderableImageUrl(candidate.image_url) ? candidate.image_url : null;
+  const galleryImageUrls = buildProfileGalleryUrls(candidate, photos);
   const counterpartHeroUrl =
     counterpartCandidate && isRenderableImageUrl(counterpartCandidate.image_url)
       ? counterpartCandidate.image_url
       : null;
   const metaChips = getStudioMetaChips(candidate);
-  const groupedRecords = groupRecords(records);
   const deskMessage = getDeskMessage(message);
 
   return (
@@ -147,23 +121,21 @@ export default async function CandidateDetailPage({
 
       <StudioPageShell petalCount={58}>
         <main className="overflow-x-hidden pb-32 pt-24 text-slate-800 sm:pb-40">
+          <MatchRecordsProvider initialRecords={records}>
           <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-8 px-4 md:px-8 lg:px-12">
           <section className="grid gap-8 xl:grid-cols-[minmax(0,1.2fr)_minmax(22rem,28rem)] xl:items-start">
             <article className="overflow-hidden rounded-3xl border border-white/60 bg-white/85 shadow-xl shadow-rose-200/25 backdrop-blur-md">
-              <div className="grid gap-0 lg:grid-cols-[minmax(340px,0.95fr)_minmax(0,1.15fr)]">
-                <div className="p-4 sm:p-5 lg:p-6">
+              <div className="grid gap-0 lg:grid-cols-[minmax(0,9fr)_minmax(0,11fr)]">
+                <div className="min-w-0 p-4 sm:p-5 lg:p-6">
                   <div className="relative overflow-hidden rounded-3xl border border-white/70 bg-gradient-to-b from-rose-50/80 to-white/40 p-2 shadow-[0_28px_70px_rgba(244,114,182,0.28)] backdrop-blur-sm sm:p-3">
                     <p className="mb-2 px-1 text-center text-xs font-semibold text-rose-600/90 sm:text-left">
                       {candidate.full_name}
-                      <span className="mt-0.5 block font-normal text-slate-500">대표 사진</span>
+                      <span className="mt-0.5 block font-normal text-slate-500">프로필 갤러리</span>
                     </p>
-                    <div className="relative mx-auto w-full max-w-xl lg:max-w-none">
-                      <ProfilePortrait
-                        imageUrl={heroImageUrl}
-                        sizes="(max-width: 1024px) 100vw, 42vw"
-                        roundedClassName="rounded-3xl"
-                        priority
-                        className="min-h-[280px] max-h-[min(85vh,720px)] w-full sm:min-h-[320px] lg:min-h-[400px]"
+                    <div className="relative w-full">
+                      <ProfileInteractiveGallery
+                        images={galleryImageUrls}
+                        sizes="(max-width: 1024px) 100vw, 48vw"
                       />
                     </div>
                   </div>
@@ -261,26 +233,12 @@ export default async function CandidateDetailPage({
                   </Link>
                 ) : null}
 
-                <form action={updateCandidateStatus} className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
-                  <input type="hidden" name="candidateId" value={candidate.id} />
-                  <select
-                    name="status"
-                    defaultValue={candidate.status}
-                    className="h-11 rounded-xl border border-rose-100/80 bg-white/90 px-4 text-sm text-slate-700 shadow-sm outline-none focus:border-rose-200 focus:ring-2 focus:ring-rose-100"
-                  >
-                    {STATUS_OPTIONS.map((status) => (
-                      <option key={status} value={status}>
-                        {getStatusLabel(status)}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    type="submit"
-                    className="inline-flex h-11 items-center justify-center rounded-full border border-rose-200/80 bg-white/90 px-4 text-sm font-medium text-rose-700 shadow-sm transition hover:bg-rose-50"
-                  >
-                    상태 변경
-                  </button>
-                </form>
+                <OperatorDeskControls
+                  candidateId={candidate.id}
+                  currentStatus={candidate.status}
+                  pairedCandidateId={candidate.paired_candidate_id}
+                  canOperate={canOperate}
+                />
               </div>
 
               {counterpartCandidate ? (
@@ -347,131 +305,72 @@ export default async function CandidateDetailPage({
             </div>
           ) : null}
 
-          <section className="rounded-3xl border border-white/60 bg-white/85 p-6 shadow-xl shadow-rose-200/20 backdrop-blur-md sm:p-8">
-            <div className="flex flex-wrap items-end justify-between gap-4">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rose-400/90">
-                  Match Flow
-                </p>
-                <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-slate-800">
-                  칸반 흐름
-                </h2>
+          <section className="grid gap-8 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,min(28rem,1fr))] xl:items-start">
+            <div className="rounded-3xl border border-white/60 bg-white/85 p-6 shadow-xl shadow-rose-200/20 backdrop-blur-md sm:p-8">
+              <div className="flex flex-wrap items-end justify-between gap-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rose-400/90">
+                    Match Flow
+                  </p>
+                  <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-slate-800">
+                    칸반 흐름
+                  </h2>
+                </div>
               </div>
+
+              <ProfileMatchKanban candidateId={candidate.id} canOperate={canOperate} />
             </div>
 
-            <div className="mt-6 grid gap-5 lg:grid-cols-3">
-              {groupedRecords.map((group) => (
-                <article key={group.key} className="rounded-2xl border border-white/50 bg-white/60 p-5 backdrop-blur-sm">
-                  <div className="flex items-center justify-between gap-3">
-                    <h3 className="text-sm font-semibold text-slate-800">{group.label}</h3>
-                    <span className="rounded-full bg-rose-100/80 px-3 py-1 text-xs font-semibold text-rose-600">
-                      {group.records.length}
-                    </span>
-                  </div>
+            <aside className="rounded-3xl border border-slate-200/90 bg-slate-50 p-6 shadow-lg shadow-slate-200/30 backdrop-blur-md sm:p-8">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                  Past Records
+                </p>
+                <h2 className="mt-2 text-xl font-semibold tracking-[-0.04em] text-slate-700 sm:text-2xl">
+                  과거 매칭 이력
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-slate-500">
+                  커플로 이어지지 않고 종료된 만남만 모아, 다음 주선 시 참고할 수 있게 정리했습니다.
+                </p>
+              </div>
 
-                  <div className="mt-4 grid gap-3">
-                    {group.records.length ? (
-                      group.records.map((record) => (
-                        <article key={record.id} className="rounded-xl border border-rose-100/50 bg-white/90 p-4 shadow-sm backdrop-blur-sm">
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <h4 className="text-sm font-semibold text-slate-800">
-                                {record.counterpart_label}
-                              </h4>
-                              <p className="mt-1 text-xs text-slate-400">{record.happened_on}</p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span
-                                className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-medium ${getOutcomeBadgeClass(record.outcome)}`}
-                              >
-                                {getOutcomeLabel(record.outcome)}
-                              </span>
-                              {canOperate ? (
-                                <form action={deleteMatchRecord}>
-                                  <input type="hidden" name="candidateId" value={candidate.id} />
-                                  <input type="hidden" name="recordId" value={record.id} />
-                                  <button
-                                    type="submit"
-                                    className="text-[11px] font-medium text-slate-400 hover:text-slate-700"
-                                  >
-                                    삭제
-                                  </button>
-                                </form>
-                              ) : null}
-                            </div>
-                          </div>
-                          <p className="mt-3 text-sm leading-6 text-slate-600">{record.summary}</p>
-                        </article>
-                      ))
-                    ) : (
-                      <div className="rounded-xl border border-dashed border-rose-200/60 bg-white/70 px-4 py-8 text-sm text-slate-500">
-                        아직 기록이 없습니다.
-                      </div>
-                    )}
-                  </div>
+              <ProfilePastMatchRecords
+                candidateId={candidate.id}
+                canOperate={canOperate}
+                counterpartsById={counterpartsById}
+              />
+            </aside>
+          </section>
+
+          <section className="rounded-3xl border border-white/60 bg-white/85 p-6 shadow-xl shadow-rose-200/20 backdrop-blur-md sm:p-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rose-400/90">
+              Profile Read
+            </p>
+            <h3 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-slate-800">
+              소개 판단 메모
+            </h3>
+            <p className="mt-2 text-sm text-slate-500">
+              사진은 상단 프로필 갤러리에서 썸네일로 전환하고, 메인 사진을 누르면 전체 화면으로 감상할 수 있습니다.
+              {galleryImageUrls.length > 0 ? ` (등록 ${galleryImageUrls.length}장)` : null}
+            </p>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              {[
+                { label: "직장 / 직무", value: candidate.work_summary || "미입력" },
+                { label: "학력", value: candidate.education || "미입력" },
+                { label: "MBTI", value: candidate.mbti || "미입력" },
+                { label: "이상형", value: candidate.ideal_type || "미입력" },
+              ].map((item) => (
+                <article key={item.label} className="rounded-2xl border border-white/50 bg-white/65 p-4 backdrop-blur-sm">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-rose-400/90">
+                    {item.label}
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{item.value}</p>
                 </article>
               ))}
             </div>
           </section>
-
-          <section className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-            <article className="rounded-3xl border border-white/60 bg-white/85 p-6 shadow-xl shadow-rose-200/20 backdrop-blur-md sm:p-8">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rose-400/90">
-                Profile Read
-              </p>
-              <h3 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-slate-800">
-                소개 판단 메모
-              </h3>
-              <div className="mt-5 grid gap-3">
-                {[
-                  { label: "직장 / 직무", value: candidate.work_summary || "미입력" },
-                  { label: "학력", value: candidate.education || "미입력" },
-                  { label: "MBTI", value: candidate.mbti || "미입력" },
-                  { label: "이상형", value: candidate.ideal_type || "미입력" },
-                ].map((item) => (
-                  <article key={item.label} className="rounded-2xl border border-white/50 bg-white/65 p-4 backdrop-blur-sm">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-rose-400/90">
-                      {item.label}
-                    </p>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">{item.value}</p>
-                  </article>
-                ))}
-              </div>
-            </article>
-
-            <article className="rounded-3xl border border-white/60 bg-white/85 p-6 shadow-xl shadow-rose-200/20 backdrop-blur-md sm:p-8">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rose-400/90">
-                Photo Gallery
-              </p>
-              <h3 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-slate-800">
-                등록된 사진
-              </h3>
-
-              <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {photos.length ? (
-                  photos.map((photo) => (
-                    <div
-                      key={photo.id}
-                      className="relative aspect-[4/5] overflow-hidden rounded-2xl border border-rose-100/60 bg-rose-50/30 shadow-[0_12px_36px_rgba(244,114,182,0.15)]"
-                    >
-                      <Image
-                        src={photo.image_url}
-                        alt=""
-                        fill
-                        sizes="(min-width: 1280px) 24vw, (min-width: 640px) 40vw, 90vw"
-                        className="object-cover"
-                      />
-                    </div>
-                  ))
-                ) : (
-                  <div className="rounded-2xl border border-dashed border-rose-200/60 bg-white/70 px-4 py-10 text-sm text-slate-500 backdrop-blur-sm">
-                    등록된 사진이 없습니다.
-                  </div>
-                )}
-              </div>
-            </article>
-          </section>
         </div>
+          </MatchRecordsProvider>
         </main>
       </StudioPageShell>
     </>

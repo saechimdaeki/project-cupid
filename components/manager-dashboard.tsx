@@ -6,6 +6,8 @@ import {
   DashboardFlowBoard,
   type DashboardBoardCandidate,
 } from "@/components/dashboard-flow-board";
+import { MatchDetailModal } from "@/components/match-detail-modal";
+import { MatchHistoryListModal } from "@/components/match-history-list-modal";
 import { SakuraRain } from "@/components/sakura-rain";
 import { canEditCandidates } from "@/lib/role-utils";
 import { getOutcomeDotClass } from "@/lib/status-ui";
@@ -110,56 +112,97 @@ function FilterSelect({
   );
 }
 
+const RECENT_MATCH_LIMIT = 3;
+
 function TimelinePanel({
   events,
   className = "",
+  onSelectEvent,
+  onViewAll,
+  embedInSheet = false,
 }: {
   events: TimelineEvent[];
   className?: string;
+  onSelectEvent?: (event: TimelineEvent) => void;
+  onViewAll?: () => void;
+  embedInSheet?: boolean;
 }) {
+  const preview = events.slice(0, RECENT_MATCH_LIMIT);
+  const showViewAll = Boolean(onViewAll && events.length > RECENT_MATCH_LIMIT);
+
+  const list = (
+    <div className="mt-6 grid gap-4">
+      {events.length ? (
+        preview.map((event, index) => (
+          <button
+            key={event.id}
+            type="button"
+            onClick={() => onSelectEvent?.(event)}
+            className="relative w-full cursor-pointer pl-6 text-left transition hover:opacity-95"
+          >
+            {index < preview.length - 1 ? (
+              <span className="absolute left-[7px] top-7 h-[calc(100%-0.25rem)] w-px bg-gradient-to-b from-rose-200/80 to-orange-100/50" />
+            ) : null}
+            <span
+              className={`absolute left-0 top-1.5 h-4 w-4 rounded-full border-[3px] border-white shadow-[0_2px_8px_rgb(244,114,182,0.2)] ${getOutcomeDotClass(event.outcome)}`}
+            />
+            <div className="rounded-2xl border border-rose-100/40 bg-rose-50/35 p-3.5">
+              <div className="flex items-start justify-between gap-3">
+                <strong className="text-sm font-semibold text-slate-800">{event.title}</strong>
+                <span className="shrink-0 text-xs font-medium text-rose-400">{event.happened_on}</span>
+              </div>
+              <p className="mt-1.5 text-sm leading-6 text-slate-600">{event.summary}</p>
+            </div>
+          </button>
+        ))
+      ) : (
+        <div className="rounded-2xl border border-dashed border-rose-200/60 bg-white/60 px-4 py-6 text-center text-sm text-slate-500">
+          최근 매칭 기록이 아직 없습니다.
+        </div>
+      )}
+    </div>
+  );
+
+  const headerRow = (
+    <div className="flex items-start justify-between gap-3">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-100 to-orange-100 text-rose-500">
+          <TimelineIcon />
+        </div>
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-rose-400/90">
+            Recent Matching History
+          </p>
+          <h3 className="mt-1 text-lg font-semibold tracking-[-0.03em] text-slate-800">최근 매칭 기록</h3>
+        </div>
+      </div>
+      {showViewAll ? (
+        <button
+          type="button"
+          onClick={onViewAll}
+          className="shrink-0 cursor-pointer text-sm text-rose-400 transition hover:text-rose-600"
+        >
+          전체보기
+        </button>
+      ) : null}
+    </div>
+  );
+
+  if (embedInSheet) {
+    return (
+      <div className={className}>
+        {headerRow}
+        {list}
+      </div>
+    );
+  }
+
   return (
     <aside
       className={`w-full rounded-[28px] border border-white/60 bg-white/75 p-6 shadow-[0_12px_40px_rgb(244,114,182,0.1)] backdrop-blur-md ${className}`}
     >
-      <div className="flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-100 to-orange-100 text-rose-500">
-          <TimelineIcon />
-        </div>
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-rose-400/90">
-            Recent Matching History
-          </p>
-          <h3 className="mt-1 text-lg font-semibold tracking-[-0.03em] text-slate-800">
-            최근 매칭 기록
-          </h3>
-        </div>
-      </div>
-
-      <div className="mt-6 grid gap-4">
-        {events.length ? (
-          events.slice(0, 8).map((event, index) => (
-            <article key={event.id} className="relative pl-6">
-              {index < Math.min(events.length, 8) - 1 ? (
-                <span className="absolute left-[7px] top-7 h-[calc(100%-0.25rem)] w-px bg-gradient-to-b from-rose-200/80 to-orange-100/50" />
-              ) : null}
-              <span
-                className={`absolute left-0 top-1.5 h-4 w-4 rounded-full border-[3px] border-white shadow-[0_2px_8px_rgb(244,114,182,0.2)] ${getOutcomeDotClass(event.outcome)}`}
-              />
-              <div className="rounded-2xl border border-rose-100/40 bg-rose-50/35 p-3.5">
-                <div className="flex items-start justify-between gap-3">
-                  <strong className="text-sm font-semibold text-slate-800">{event.title}</strong>
-                  <span className="shrink-0 text-xs font-medium text-rose-400">{event.happened_on}</span>
-                </div>
-                <p className="mt-1.5 text-sm leading-6 text-slate-600">{event.summary}</p>
-              </div>
-            </article>
-          ))
-        ) : (
-          <div className="rounded-2xl border border-dashed border-rose-200/60 bg-white/60 px-4 py-6 text-center text-sm text-slate-500">
-            최근 매칭 기록이 아직 없습니다.
-          </div>
-        )}
-      </div>
+      {headerRow}
+      {list}
     </aside>
   );
 }
@@ -177,6 +220,8 @@ export function ManagerDashboard({
   const [gender, setGender] = useState("");
   const [religion, setReligion] = useState("");
   const [timelineOpen, setTimelineOpen] = useState(false);
+  const [historyListOpen, setHistoryListOpen] = useState(false);
+  const [selectedTimelineEvent, setSelectedTimelineEvent] = useState<TimelineEvent | null>(null);
   const [isFiltering, startTransition] = useTransition();
   const deferredSearch = useDeferredValue(search);
   const role: AppRole = membership.role;
@@ -243,6 +288,15 @@ export function ManagerDashboard({
     const ids = new Set(filteredCandidates.map((candidate) => candidate.id));
     return boardCandidates.filter((candidate) => ids.has(candidate.id));
   }, [boardCandidates, filteredCandidates]);
+
+  const candidateById = useMemo(
+    () => new Map(candidates.map((candidate) => [candidate.id, candidate])),
+    [candidates],
+  );
+
+  const openMatchDetail = (event: TimelineEvent) => {
+    setSelectedTimelineEvent(event);
+  };
 
   const stats = useMemo(
     () => [
@@ -418,7 +472,12 @@ export function ManagerDashboard({
             </div>
 
             <div className="hidden xl:block">
-              <TimelinePanel events={timelineEvents} className="sticky top-28 w-full min-w-[18rem]" />
+              <TimelinePanel
+                events={timelineEvents}
+                className="sticky top-28 w-full min-w-[18rem]"
+                onSelectEvent={openMatchDetail}
+                onViewAll={() => setHistoryListOpen(true)}
+              />
             </div>
           </section>
         )}
@@ -444,8 +503,7 @@ export function ManagerDashboard({
                 />
                 <div className="relative w-full rounded-t-[32px] border border-white/60 bg-gradient-to-b from-rose-50/95 to-pink-50/90 p-5 shadow-2xl">
                   <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-rose-200/80" />
-                  <div className="mb-4 flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-slate-800">최근 매칭 기록</h3>
+                  <div className="mb-4 flex justify-end">
                     <button
                       type="button"
                       onClick={() => setTimelineOpen(false)}
@@ -454,7 +512,18 @@ export function ManagerDashboard({
                       닫기
                     </button>
                   </div>
-                  <TimelinePanel events={timelineEvents} />
+                  <TimelinePanel
+                    embedInSheet
+                    events={timelineEvents}
+                    onSelectEvent={(event) => {
+                      setTimelineOpen(false);
+                      openMatchDetail(event);
+                    }}
+                    onViewAll={() => {
+                      setTimelineOpen(false);
+                      setHistoryListOpen(true);
+                    }}
+                  />
                 </div>
               </div>
             ) : null}
@@ -467,6 +536,21 @@ export function ManagerDashboard({
           </div>
         ) : null}
       </main>
+
+      <MatchHistoryListModal
+        open={historyListOpen}
+        events={timelineEvents}
+        onClose={() => setHistoryListOpen(false)}
+        onPick={(event) => {
+          setHistoryListOpen(false);
+          openMatchDetail(event);
+        }}
+      />
+      <MatchDetailModal
+        event={selectedTimelineEvent}
+        candidateById={candidateById}
+        onClose={() => setSelectedTimelineEvent(null)}
+      />
     </div>
   );
 }

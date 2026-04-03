@@ -36,7 +36,7 @@ function Header({
 }) {
   return (
     <header className="fixed inset-x-0 top-0 z-40 border-b border-white/50 bg-white/30 backdrop-blur-lg">
-      <div className="mx-auto flex w-full max-w-[1440px] items-center justify-between gap-2 px-4 py-3 md:gap-4 md:px-8 lg:px-12">
+      <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between gap-2 px-4 py-3 sm:px-8 lg:px-16">
         <div className="flex min-w-0 items-center gap-4">
           <Link href="/" className="flex min-w-0 items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-3xl border border-white/60 bg-white/70 text-sm font-semibold text-rose-500 shadow-[0_8px_30px_rgb(244,114,182,0.12)]">
@@ -390,9 +390,9 @@ export default function HomePage() {
 
       <Header auth={auth} onLogin={handleLogin} onLogout={handleLogout} />
 
-      <div className="relative z-10 mx-auto flex w-full max-w-[1440px] flex-col gap-10 px-4 pb-16 pt-24 md:px-8 lg:px-12">
-        <section className="grid gap-16 xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)] xl:items-start xl:justify-between">
-          <article className="landing-reveal rounded-[36px] border border-white/50 bg-white/60 p-6 shadow-[0_8px_30px_rgb(244,114,182,0.1)] backdrop-blur-lg sm:p-8">
+      <div className="relative z-10 w-full max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-16 flex flex-col gap-12 pt-24 pb-16">
+        <section className="w-full flex flex-col lg:flex-row justify-between items-center gap-16">
+          <article className="landing-reveal w-full min-w-0 flex-1 basis-0 rounded-[36px] border border-white/50 bg-white/60 p-6 shadow-[0_8px_30px_rgb(244,114,182,0.1)] backdrop-blur-lg sm:p-8">
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
               Private Love Studio
             </p>
@@ -453,7 +453,7 @@ export default function HomePage() {
             </div>
           </article>
 
-          <div className="landing-reveal landing-delay-2">
+          <div className="landing-reveal landing-delay-2 w-full min-w-0 flex-1 basis-0">
             <ConnectionPreview />
           </div>
         </section>
@@ -472,7 +472,7 @@ export default function HomePage() {
           </div>
 
           {homePreviewCandidates.length ? (
-            <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xl:gap-8">
+            <div className="mt-8 w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
               {homePreviewCandidates.map((candidate) => (
                 <InventoryCard
                   key={candidate.id}

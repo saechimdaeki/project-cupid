@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { buildPairMatchRecordsOrFilter, ONGOING_MATCH_OUTCOMES } from "@/lib/match-flow-columns";
 import { canEditCandidates, canManageRoles, getCurrentMembership } from "@/lib/permissions";
 import type { CandidateStatus, Membership } from "@/lib/types";
 
@@ -754,10 +755,25 @@ export async function moveCandidatePairStatus(
       ? `${source.full_name}와 ${counterpart.full_name}의 매칭 진행을 시작했습니다.`
       : `${source.full_name}와 ${counterpart.full_name}을 커플완성으로 확정했습니다.`;
   const happenedOn = new Date().toISOString().slice(0, 10);
+  const pairOr = buildPairMatchRecordsOrFilter(source.id, counterpart.id);
 
-  const { error: matchRecordError } = await supabase
+  const { data: updatedOpenRows, error: promoteError } = await supabase
     .from("cupid_match_records")
-    .insert([
+    .update({
+      outcome,
+      summary,
+      happened_on: happenedOn,
+    })
+    .or(pairOr)
+    .in("outcome", ONGOING_MATCH_OUTCOMES)
+    .select("id");
+
+  if (promoteError) {
+    return { ok: false, message: promoteError.message };
+  }
+
+  if (!updatedOpenRows?.length) {
+    const { error: matchRecordError } = await supabase.from("cupid_match_records").insert([
       {
         candidate_id: source.id,
         counterpart_label: buildCounterpartLabel(counterpart),
@@ -780,8 +796,9 @@ export async function moveCandidatePairStatus(
       },
     ]);
 
-  if (matchRecordError) {
-    return { ok: false, message: matchRecordError.message };
+    if (matchRecordError) {
+      return { ok: false, message: matchRecordError.message };
+    }
   }
 
   return {
@@ -870,4 +887,209 @@ export async function deleteMatchRecord(formData: FormData) {
   }
 
   redirect(`/profiles/${candidateId}?message=match-deleted`);
+}
+
+/**
+ * 연결된 상대와의 매칭을 종료하고, 양측에 outcome=closed 기록을 남긴 뒤 페어링을 해제합니다.
+ */
+export async function closeMatchWithRecord(formData: FormData) {
+  const membership = await requireMembership();
+
+  if (!canEditCandidates(membership.role)) {
+    redirect("/dashboard?message=forbidden");
+  }
+
+  const supabase = await requireSupabaseClient("/dashboard");
+
+  const candidateId = cleanText(formData.get("candidateId"));
+  const closureReason = cleanText(formData.get("closureReason"));
+
+  if (!candidateId) {
+    redirect("/dashboard?message=invalid-candidate");
+  }
+
+  if (!closureReason) {
+    redirect(`/profiles/${candidateId}?message=${encodeURIComponent("종료 사유를 입력해주세요.")}`);
+  }
+
+  const {
+    data: source,
+    error: sourceError,
+  } = await supabase
+    .from("cupid_candidates")
+    .select("id, full_name, birth_year, region, occupation, paired_candidate_id")
+    .eq("id", candidateId)
+    .maybeSingle();
+
+  if (sourceError || !source) {
+    redirect(
+      `/profiles/${candidateId}?message=${encodeURIComponent(sourceError?.message ?? "후보 정보를 찾지 못했습니다.")}`,
+    );
+  }
+
+  if (!source.paired_candidate_id) {
+    redirect(
+      `/profiles/${candidateId}?message=${encodeURIComponent("연결된 상대가 없어 매칭 종료 기록을 남길 수 없습니다.")}`,
+    );
+  }
+
+  const {
+    data: counterpart,
+    error: counterpartError,
+  } = await supabase
+    .from("cupid_candidates")
+    .select("id, full_name, birth_year, region, occupation")
+    .eq("id", source.paired_candidate_id)
+    .maybeSingle();
+
+  if (counterpartError || !counterpart) {
+    redirect(
+      `/profiles/${candidateId}?message=${encodeURIComponent(counterpartError?.message ?? "상대 후보 정보를 찾지 못했습니다.")}`,
+    );
+  }
+
+  const happenedOn = new Date().toISOString().slice(0, 10);
+  const pairOr = buildPairMatchRecordsOrFilter(source.id, counterpart.id);
+
+  const { data: closedFromOpen, error: closePromoteError } = await supabase
+    .from("cupid_match_records")
+    .update({
+      outcome: "closed",
+      summary: closureReason,
+      happened_on: happenedOn,
+    })
+    .or(pairOr)
+    .in("outcome", ONGOING_MATCH_OUTCOMES)
+    .select("id");
+
+  if (closePromoteError) {
+    redirect(`/profiles/${candidateId}?message=${encodeURIComponent(closePromoteError.message)}`);
+  }
+
+  if (!closedFromOpen?.length) {
+    const { error: insertError } = await supabase.from("cupid_match_records").insert([
+      {
+        candidate_id: source.id,
+        counterpart_label: buildCounterpartLabel(counterpart),
+        counterpart_candidate_id: counterpart.id,
+        matchmaker_id: membership.user_id,
+        matchmaker_name: membership.full_name,
+        outcome: "closed",
+        summary: closureReason,
+        happened_on: happenedOn,
+      },
+      {
+        candidate_id: counterpart.id,
+        counterpart_label: buildCounterpartLabel(source),
+        counterpart_candidate_id: source.id,
+        matchmaker_id: membership.user_id,
+        matchmaker_name: membership.full_name,
+        outcome: "closed",
+        summary: closureReason,
+        happened_on: happenedOn,
+      },
+    ]);
+
+    if (insertError) {
+      redirect(`/profiles/${candidateId}?message=${encodeURIComponent(insertError.message)}`);
+    }
+  }
+
+  const { error: updateError } = await supabase
+    .from("cupid_candidates")
+    .update({ status: "active", paired_candidate_id: null })
+    .in("id", [source.id, counterpart.id]);
+
+  if (updateError) {
+    redirect(`/profiles/${candidateId}?message=${encodeURIComponent(updateError.message)}`);
+  }
+
+  redirect(`/profiles/${candidateId}?message=match-closed`);
+}
+
+/**
+ * 운영 데스크에서 커플완성을 확정합니다.
+ * 양측 후보 status를 couple로, 진행 중 MatchRecord outcome을 couple로 갱신합니다.
+ */
+export async function promoteToCoupleFromDesk(formData: FormData) {
+  const membership = await requireMembership();
+
+  if (!canEditCandidates(membership.role)) {
+    redirect("/dashboard?message=forbidden");
+  }
+
+  const supabase = await requireSupabaseClient("/dashboard");
+
+  const candidateId = cleanText(formData.get("candidateId"));
+  const counterpartId = cleanText(formData.get("counterpartId"));
+
+  if (!candidateId || !counterpartId) {
+    redirect(`/profiles/${candidateId || ""}?message=${encodeURIComponent("커플 확정에 필요한 정보가 없습니다.")}`);
+  }
+
+  const { data: candidates, error: fetchError } = await supabase
+    .from("cupid_candidates")
+    .select("id, full_name, birth_year, region, occupation, paired_candidate_id")
+    .in("id", [candidateId, counterpartId]);
+
+  if (fetchError || !candidates || candidates.length !== 2) {
+    redirect(
+      `/profiles/${candidateId}?message=${encodeURIComponent(fetchError?.message ?? "후보 정보를 찾지 못했습니다.")}`,
+    );
+  }
+
+  const source = candidates.find((c) => c.id === candidateId)!;
+  const counterpart = candidates.find((c) => c.id === counterpartId)!;
+
+  const { error: sourceStatusError } = await supabase
+    .from("cupid_candidates")
+    .update({ status: "couple", paired_candidate_id: counterpart.id })
+    .eq("id", source.id);
+
+  if (sourceStatusError) {
+    redirect(`/profiles/${candidateId}?message=${encodeURIComponent(sourceStatusError.message)}`);
+  }
+
+  await supabase
+    .from("cupid_candidates")
+    .update({ status: "couple", paired_candidate_id: source.id })
+    .eq("id", counterpart.id);
+
+  const happenedOn = new Date().toISOString().slice(0, 10);
+  const summary = `${source.full_name}와 ${counterpart.full_name}을 커플완성으로 확정했습니다.`;
+  const pairOr = buildPairMatchRecordsOrFilter(source.id, counterpart.id);
+
+  const { data: updatedRows } = await supabase
+    .from("cupid_match_records")
+    .update({ outcome: "couple", summary, happened_on: happenedOn })
+    .or(pairOr)
+    .in("outcome", ONGOING_MATCH_OUTCOMES)
+    .select("id");
+
+  if (!updatedRows?.length) {
+    await supabase.from("cupid_match_records").insert([
+      {
+        candidate_id: source.id,
+        counterpart_label: buildCounterpartLabel(counterpart),
+        counterpart_candidate_id: counterpart.id,
+        matchmaker_id: membership.user_id,
+        matchmaker_name: membership.full_name,
+        outcome: "couple",
+        summary,
+        happened_on: happenedOn,
+      },
+      {
+        candidate_id: counterpart.id,
+        counterpart_label: buildCounterpartLabel(source),
+        counterpart_candidate_id: source.id,
+        matchmaker_id: membership.user_id,
+        matchmaker_name: membership.full_name,
+        outcome: "couple",
+        summary,
+        happened_on: happenedOn,
+      },
+    ]);
+  }
+
+  redirect(`/profiles/${candidateId}?message=couple-confirmed`);
 }

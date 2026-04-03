@@ -1,4 +1,5 @@
 import { mockCandidates, mockMatchRecords, mockMemberships } from "@/lib/mock-data";
+import { dashboardPreviewMatchRecords } from "@/lib/preview-scene";
 import { createClient } from "@/lib/supabase/server";
 import type {
   Candidate,
@@ -58,6 +59,11 @@ function mergeMatchRecords(primary: MatchRecord[], secondary: MatchRecord[]) {
   return Array.from(merged.values()).sort((left, right) =>
     right.happened_on.localeCompare(left.happened_on),
   );
+}
+
+function previewMatchRecordsForCandidate(candidateId?: string): MatchRecord[] {
+  if (!candidateId) return [];
+  return dashboardPreviewMatchRecords.filter((record) => record.candidate_id === candidateId);
 }
 
 function normalizeGender(value: string | null | undefined) {
@@ -321,11 +327,13 @@ export async function getCandidateById(id: string) {
 
 export async function getMatchRecords(candidateId?: string) {
   const supabase = await createClient();
+  const preview = previewMatchRecordsForCandidate(candidateId);
 
   if (!supabase) {
-    return candidateId
+    const base = candidateId
       ? mockMatchRecords.filter((record) => record.candidate_id === candidateId)
       : mockMatchRecords;
+    return mergeMatchRecords(base, preview);
   }
 
   let query = supabase
@@ -340,16 +348,20 @@ export async function getMatchRecords(candidateId?: string) {
   const { data, error } = await query;
 
   if (error || !data) {
-    return candidateId
+    const base = candidateId
       ? mockMatchRecords.filter((record) => record.candidate_id === candidateId)
       : mockMatchRecords;
+    return mergeMatchRecords(base, preview);
   }
 
   return mergeMatchRecords(
-    data.map(mapMatchRecord),
-    candidateId
-      ? mockMatchRecords.filter((record) => record.candidate_id === candidateId)
-      : mockMatchRecords,
+    mergeMatchRecords(
+      data.map(mapMatchRecord),
+      candidateId
+        ? mockMatchRecords.filter((record) => record.candidate_id === candidateId)
+        : mockMatchRecords,
+    ),
+    preview,
   );
 }
 
