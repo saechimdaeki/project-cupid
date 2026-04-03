@@ -13,7 +13,7 @@ import { getStatusLabel } from "@/lib/status-ui";
 const CLOSURE_SELECT_VALUE = "__match_closure__";
 
 // '졸업(graduated)' 제거
-const STATUS_OPTIONS: CandidateStatus[] = ["active", "matched", "couple", "archived"];
+const STATUS_OPTIONS: CandidateStatus[] = ["active", "matched", "couple"];
 
 type OperatorDeskControlsProps = {
   candidateId: string;
@@ -46,6 +46,22 @@ export function OperatorDeskControls({
     return null;
   }
 
+  // 커플완성 상태에서는 상태 변경 전체 잠금 — 데이터 정합성 보호
+  if (currentStatus === "couple") {
+    return (
+      <div className="mt-5 rounded-2xl border border-orange-200/70 bg-orange-50/60 p-4 backdrop-blur-sm">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-orange-500/90">
+          Couple Locked
+        </p>
+        <p className="mt-2 text-sm leading-6 text-orange-800">
+          커플완성 상태에서는 상태 변경이 잠깁니다.
+          <br />
+          변경이 필요하면 대시보드에서 카드를 직접 이동해 주세요.
+        </p>
+      </div>
+    );
+  }
+
   const showCouplePanel = selectValue === "couple" && !closureMode;
   const showClosurePanel = closureMode && selectValue === CLOSURE_SELECT_VALUE;
   const showDefaultButton = !showCouplePanel && !showClosurePanel;
@@ -63,14 +79,20 @@ export function OperatorDeskControls({
     });
   };
 
-  // 커플 확정: isPending으로 더블클릭 방지 (form action 직접 호출 → redirect 포함)
+  // 커플 확정: non-redirecting 방식 → router.push로 이동 (303 버그 완전 제거)
   const handleCoupleConfirm = () => {
     if (isPending) return;
+    setInlineError(null);
     const formData = new FormData();
     formData.set("candidateId", candidateId);
     formData.set("counterpartId", pairedCandidateId ?? "");
     startTransition(async () => {
-      await promoteToCoupleFromDesk(formData);
+      const result = await promoteToCoupleFromDesk(formData);
+      if (result.ok) {
+        router.push(`/profiles/${candidateId}?message=couple-confirmed`);
+      } else {
+        setInlineError(result.error ?? "커플 확정에 실패했습니다.");
+      }
     });
   };
 

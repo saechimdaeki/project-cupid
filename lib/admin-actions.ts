@@ -1045,8 +1045,8 @@ export async function closeMatchWithRecord(formData: FormData) {
 
 /**
  * 운영 데스크 상태 변경 전용 (non-redirecting).
- * - "active" 전환 시 기존 페어의 진행 중 MatchRecord를 closed로 이동 → 칸반 동기화
- * - redirect() 없이 결과를 반환 → 클라이언트가 router.push로 직접 이동 (303 이중클릭 버그 제거)
+ * - "active" 전환 시 ONGOING + couple 레코드 모두 closed로 → 칸반 동기화
+ * - "matched" 전환 시 couple 레코드를 dating으로 되돌림 → 칸반 커플완성→진행중 동기화
  */
 export async function setStatusFromDesk(
   candidateId: string,
@@ -1075,12 +1075,17 @@ export async function setStatusFromDesk(
 
   const { data: candidate, error: fetchError } = await supabase
     .from("cupid_candidates")
-    .select("id, paired_candidate_id")
+    .select("id, status, paired_candidate_id")
     .eq("id", candidateId)
     .maybeSingle();
 
   if (fetchError || !candidate) {
     return { ok: false, error: fetchError?.message ?? "후보 정보를 찾지 못했습니다." };
+  }
+
+  // 커플완성 상태에서는 운영 데스크 상태 변경 차단 (대시보드 카드 이동만 허용)
+  if (candidate.status === "couple") {
+    return { ok: false, error: "커플완성 상태는 대시보드에서만 변경할 수 있습니다." };
   }
 
   const pairIds = candidate.paired_candidate_id
@@ -1099,41 +1104,50 @@ export async function setStatusFromDesk(
 
   if (updateError) return { ok: false, error: updateError.message };
 
-  // Bug 1 fix: "active"로 복귀 시 해당 페어의 진행 중 매칭 기록을 closed로 이동
-  // → 칸반 "진행 중" 컬럼에서 카드가 즉시 사라지고 "종료" 컬럼으로 이동
-  if (normalizedStatus === "active" && candidate.paired_candidate_id) {
+  if (candidate.paired_candidate_id) {
     const pairOr = buildPairMatchRecordsOrFilter(candidateId, candidate.paired_candidate_id);
-    await supabase
-      .from("cupid_match_records")
-      .update({
-        outcome: "closed",
-        summary: "상태 변경(적극검토 복귀)으로 인한 매칭 흐름 종료",
-      })
-      .or(pairOr)
-      .in("outcome", ONGOING_MATCH_OUTCOMES);
+
+    if (normalizedStatus === "active") {
+      // 적극검토 복귀: ONGOING + couple 레코드 전부 closed 처리
+      await supabase
+        .from("cupid_match_records")
+        .update({ outcome: "closed", summary: "상태 변경(적극검토 복귀)으로 인한 매칭 흐름 종료" })
+        .or(pairOr)
+        .in("outcome", [...ONGOING_MATCH_OUTCOMES, "couple"]);
+    } else if (normalizedStatus === "matched") {
+      // 커플완성 → 매칭진행중: couple 레코드를 dating으로 되돌려 칸반 "진행 중"으로 복귀
+      await supabase
+        .from("cupid_match_records")
+        .update({ outcome: "dating", summary: "커플완성 취소 - 매칭 재진행" })
+        .or(pairOr)
+        .eq("outcome", "couple");
+    }
   }
 
   return { ok: true };
 }
 
 /**
- * 운영 데스크에서 커플완성을 확정합니다.
- * 양측 후보 status를 couple로, 진행 중 MatchRecord outcome을 couple로 갱신합니다.
+ * 운영 데스크에서 커플완성을 확정합니다 (non-redirecting).
+ * redirect() 대신 결과를 반환 → 클라이언트가 router.push로 이동 (303 버그 제거)
  */
-export async function promoteToCoupleFromDesk(formData: FormData) {
+export async function promoteToCoupleFromDesk(
+  formData: FormData,
+): Promise<{ ok: boolean; error?: string }> {
   const membership = await requireMembership();
 
   if (!canEditCandidates(membership.role)) {
-    redirect("/dashboard?message=forbidden");
+    return { ok: false, error: "권한이 없습니다." };
   }
 
-  const supabase = await requireSupabaseClient("/dashboard");
+  const supabase = await createClient();
+  if (!supabase) return { ok: false, error: "Supabase 환경변수가 없습니다." };
 
   const candidateId = cleanText(formData.get("candidateId"));
   const counterpartId = cleanText(formData.get("counterpartId"));
 
   if (!candidateId || !counterpartId) {
-    redirect(`/profiles/${candidateId || ""}?message=${encodeURIComponent("커플 확정에 필요한 정보가 없습니다.")}`);
+    return { ok: false, error: "커플 확정에 필요한 정보가 없습니다." };
   }
 
   const { data: candidates, error: fetchError } = await supabase
@@ -1142,9 +1156,7 @@ export async function promoteToCoupleFromDesk(formData: FormData) {
     .in("id", [candidateId, counterpartId]);
 
   if (fetchError || !candidates || candidates.length !== 2) {
-    redirect(
-      `/profiles/${candidateId}?message=${encodeURIComponent(fetchError?.message ?? "후보 정보를 찾지 못했습니다.")}`,
-    );
+    return { ok: false, error: fetchError?.message ?? "후보 정보를 찾지 못했습니다." };
   }
 
   const source = candidates.find((c) => c.id === candidateId)!;
@@ -1156,13 +1168,17 @@ export async function promoteToCoupleFromDesk(formData: FormData) {
     .eq("id", source.id);
 
   if (sourceStatusError) {
-    redirect(`/profiles/${candidateId}?message=${encodeURIComponent(sourceStatusError.message)}`);
+    return { ok: false, error: sourceStatusError.message };
   }
 
-  await supabase
+  const { error: counterpartStatusError } = await supabase
     .from("cupid_candidates")
     .update({ status: "couple", paired_candidate_id: source.id })
     .eq("id", counterpart.id);
+
+  if (counterpartStatusError) {
+    return { ok: false, error: counterpartStatusError.message };
+  }
 
   const happenedOn = new Date().toISOString().slice(0, 10);
   const summary = `${source.full_name}와 ${counterpart.full_name}을 커플완성으로 확정했습니다.`;
@@ -1176,7 +1192,6 @@ export async function promoteToCoupleFromDesk(formData: FormData) {
     .select("id");
 
   if (!updatedRows?.length) {
-    // 이미 couple 레코드가 있으면 중복 삽입 방지
     const { data: existingCoupleRows } = await supabase
       .from("cupid_match_records")
       .select("id")
@@ -1209,5 +1224,5 @@ export async function promoteToCoupleFromDesk(formData: FormData) {
     }
   }
 
-  redirect(`/profiles/${candidateId}?message=couple-confirmed`);
+  return { ok: true };
 }

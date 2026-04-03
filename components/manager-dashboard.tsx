@@ -226,7 +226,7 @@ export function ManagerDashboard({
   const deferredSearch = useDeferredValue(search);
   const role: AppRole = membership.role;
 
-  const statusOptions = ["active", "matched", "couple", "archived"];
+  const statusOptions = ["active", "matched", "couple"];
   const genderOptions = useMemo(
     () => Array.from(new Set(candidates.map((candidate) => candidate.gender).filter(Boolean))).sort(),
     [candidates],

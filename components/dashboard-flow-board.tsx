@@ -63,11 +63,6 @@ const PRIMARY_LANES = [
     title: "커플완성",
     description: "상호 호감과 후속 확인이 안정적으로 이어지는 단계",
   },
-  {
-    key: "archived",
-    title: "보류함",
-    description: "지금은 멈췄지만 다시 꺼내 검토할 수 있는 후보",
-  },
 ] as const satisfies Array<{
   key: CandidateStatus;
   title: string;
@@ -334,17 +329,26 @@ export function DashboardFlowBoard({
               : `${getRoleLabel(role)} 권한은 목록만 확인`}
           </span>
           {canOperate ? (
-            <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-rose-300">
-              drag
-            </span>
+            candidate.status === "couple" ? (
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-orange-400">
+                🔒 locked
+              </span>
+            ) : (
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-rose-300">
+                drag
+              </span>
+            )
           ) : null}
         </div>
       </article>
     );
 
+    // 커플완성 상태 카드는 드래그 불가 (잠금)
+    const isCoupleLocked = candidate.status === "couple";
     const wrapperProps = {
-      draggable: canOperate,
+      draggable: canOperate && !isCoupleLocked,
       onDragStart: (event: DragEvent<HTMLDivElement>) => {
+        if (isCoupleLocked) { event.preventDefault(); return; }
         event.dataTransfer.setData("text/plain", candidate.id);
         event.dataTransfer.effectAllowed = "move";
         setDraggingId(candidate.id);
@@ -379,6 +383,48 @@ export function DashboardFlowBoard({
     compact = false,
   ) => {
     const laneItems = groupCandidatesByStatus(items, status);
+    const males = laneItems.filter((c) => c.gender === "남");
+    const females = laneItems.filter((c) => c.gender === "여");
+
+    const dropHandlers = {
+      onDragOver: (event: React.DragEvent<HTMLElement>) => {
+        if (!canOperate) return;
+        event.preventDefault();
+        setDropTarget(status);
+      },
+      onDragLeave: () => {
+        if (dropTarget === status) setDropTarget(null);
+      },
+      onDrop: (event: React.DragEvent<HTMLElement>) => {
+        if (!canOperate) return;
+        event.preventDefault();
+        const droppedCandidateId = event.dataTransfer.getData("text/plain") || draggingId;
+        const candidate = droppedCandidateId ? candidateDirectory.get(droppedCandidateId) : null;
+        if (!candidate) return;
+        // 커플완성 카드는 드롭 이동 불가
+        if (candidate.status === "couple") return;
+
+        if (status === "matched" || status === "couple") {
+          const options = getEligiblePairOptions(candidate, allCandidates, status);
+          const defaultCounterpartId =
+            candidate.paired_candidate_id &&
+            options.some((option) => option.id === candidate.paired_candidate_id)
+              ? candidate.paired_candidate_id
+              : "";
+          setPairComposer({ candidateId: candidate.id, targetStatus: status, counterpartId: defaultCounterpartId });
+          setDraggingId(null);
+          setDropTarget(null);
+          return;
+        }
+        moveSingleItem(candidate.id, status);
+      },
+    };
+
+    const emptySlot = (gender: "남" | "여") => (
+      <div className="rounded-2xl border border-dashed border-rose-200/60 bg-white/50 px-3 py-8 text-center text-xs text-slate-400">
+        {gender === "남" ? "남성 후보 없음" : "여성 후보 없음"}
+      </div>
+    );
 
     return (
       <article
@@ -386,64 +432,41 @@ export function DashboardFlowBoard({
         className={`min-h-0 rounded-[26px] border border-white/70 p-5 shadow-[0_10px_40px_rgb(244,114,182,0.08)] backdrop-blur-sm ${getLaneSurfaceClass(status)} ${
           dropTarget === status ? "ring-2 ring-rose-400/60 ring-offset-2 ring-offset-rose-50/80" : ""
         }`}
-        onDragOver={(event) => {
-          if (!canOperate) return;
-          event.preventDefault();
-          setDropTarget(status);
-        }}
-        onDragLeave={() => {
-          if (dropTarget === status) setDropTarget(null);
-        }}
-        onDrop={(event) => {
-          if (!canOperate) return;
-
-          event.preventDefault();
-          const droppedCandidateId = event.dataTransfer.getData("text/plain") || draggingId;
-          const candidate = droppedCandidateId ? candidateDirectory.get(droppedCandidateId) : null;
-
-          if (!candidate) return;
-
-          if (status === "matched" || status === "couple") {
-            const options = getEligiblePairOptions(candidate, allCandidates, status);
-            const defaultCounterpartId =
-              candidate.paired_candidate_id &&
-              options.some((option) => option.id === candidate.paired_candidate_id)
-                ? candidate.paired_candidate_id
-                : "";
-
-            setPairComposer({
-              candidateId: candidate.id,
-              targetStatus: status,
-              counterpartId: defaultCounterpartId,
-            });
-            setDraggingId(null);
-            setDropTarget(null);
-            return;
-          }
-
-          moveSingleItem(candidate.id, status);
-        }}
+        {...dropHandlers}
       >
+        {/* 헤더 */}
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h3 className="text-sm font-semibold text-slate-800">{title}</h3>
-            <p className={`mt-1 text-sm leading-relaxed text-slate-600 ${compact ? "max-w-none" : "max-w-none xl:max-w-md"}`}>
-              {description}
-            </p>
+            {!compact ? (
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">{description}</p>
+            ) : null}
           </div>
           <div className="rounded-full border border-rose-100/60 bg-white/90 px-3.5 py-1 text-sm font-semibold text-rose-600 shadow-sm">
             {laneItems.length}
           </div>
         </div>
 
-        <div className="mt-5 grid gap-4">
-          {laneItems.length ? (
-            laneItems.map(renderCandidateCard)
-          ) : (
-            <div className="rounded-2xl border border-dashed border-rose-200/60 bg-white/60 px-4 py-10 text-center text-sm text-slate-500">
-              현재 이 단계에 후보가 없습니다.
+        {/* 남(좌) / 여(우) 2-column */}
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          {/* 남성 컬럼 */}
+          <div>
+            <p className="mb-2 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-400/80">
+              <span>🤵</span> 남성
+            </p>
+            <div className="grid gap-3">
+              {males.length ? males.map(renderCandidateCard) : emptySlot("남")}
             </div>
-          )}
+          </div>
+          {/* 여성 컬럼 */}
+          <div>
+            <p className="mb-2 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-rose-400/80">
+              <span>👰</span> 여성
+            </p>
+            <div className="grid gap-3">
+              {females.length ? females.map(renderCandidateCard) : emptySlot("여")}
+            </div>
+          </div>
         </div>
       </article>
     );
@@ -490,7 +513,7 @@ export function DashboardFlowBoard({
         )}
       </div>
 
-      <div className="hidden gap-5 lg:grid lg:grid-cols-2 xl:grid-cols-4 xl:gap-6">
+      <div className="hidden gap-5 lg:grid lg:grid-cols-3 xl:gap-6">
         {PRIMARY_LANES.map((lane) => renderLane(lane.key, lane.title, lane.description))}
       </div>
 
