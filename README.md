@@ -27,6 +27,15 @@
 
 <img width="1495" height="752" alt="image" src="https://github.com/user-attachments/assets/45f890d1-2e86-4e00-b73b-c5825a5fa769" />
 
+5. 타임라밋 디테일도 볼 수 있습니다.
+
+<img width="1140" height="655" alt="image" src="https://github.com/user-attachments/assets/0464cd42-feb6-4fb3-a029-ae5bd951cca6" />
+
+6. 주선자의 실수를 방지합니다.(잘 안된 사이 또 물어보기 가능성제거) 과거 이력을 볼 수 있고 왜 안되었는지를 남깁니다
+
+<img width="1026" height="722" alt="image" src="https://github.com/user-attachments/assets/b6ee97e4-7778-43ce-b4df-8bbfd4738f67" />
+
+
 
 ## 주요 화면
 
