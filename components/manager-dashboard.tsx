@@ -6,6 +6,7 @@ import {
   DashboardFlowBoard,
   type DashboardBoardCandidate,
 } from "@/components/dashboard-flow-board";
+import { DashboardStatBar } from "@/components/dashboard-stat-bar";
 import { MatchDetailModal } from "@/components/match-detail-modal";
 import { MatchHistoryListModal } from "@/components/match-history-list-modal";
 import { SakuraRain } from "@/components/sakura-rain";
@@ -305,28 +306,6 @@ export function ManagerDashboard({
     setSelectedTimelineEvent(event);
   };
 
-  const stats = useMemo(
-    () => [
-      {
-        label: "적극검토",
-        value: candidates.filter((candidate) => candidate.status === "active").length,
-      },
-      {
-        label: "매칭진행중",
-        value: candidates.filter((candidate) => candidate.status === "matched").length,
-      },
-      {
-        label: "커플완성",
-        value: candidates.filter((candidate) => candidate.status === "couple").length,
-      },
-      {
-        label: "최근 기록",
-        value: timelineEvents.length,
-      },
-    ],
-    [candidates, timelineEvents.length],
-  );
-
   const resetFilters = () => {
     setSearch("");
     setStatus("");
@@ -341,19 +320,7 @@ export function ManagerDashboard({
       <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(ellipse_at_22%_0%,rgba(255,228,230,0.6),transparent_46%),radial-gradient(ellipse_at_82%_28%,rgba(255,237,213,0.48),transparent_42%),radial-gradient(circle_at_50%_100%,rgba(255,241,242,0.52),transparent_55%)]" />
 
       <main className="relative z-10 mx-auto flex w-full max-w-[1440px] flex-col gap-8 overflow-x-hidden px-4 pb-32 pt-24 md:pb-20 md:px-8 lg:px-12">
-        <section className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-5">
-          {stats.map((stat) => (
-            <article
-              key={stat.label}
-              className="rounded-3xl border border-white/60 bg-white/80 p-6 shadow-xl shadow-rose-200/15 backdrop-blur-md transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_50px_rgb(244,114,182,0.18)]"
-            >
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-rose-400/90">{stat.label}</p>
-              <strong className="mt-3 block text-[clamp(1.75rem,4vw,2.35rem)] font-semibold tracking-[-0.04em] text-slate-800">
-                {stat.value}
-              </strong>
-            </article>
-          ))}
-        </section>
+        <DashboardStatBar candidates={candidates} timelineEvents={timelineEvents} />
 
         <section className="rounded-3xl border border-white/60 bg-white/80 p-5 shadow-xl shadow-rose-200/20 backdrop-blur-md sm:p-7">
           <div className="flex flex-col items-stretch gap-6 lg:flex-row lg:items-center lg:justify-between lg:gap-10">
