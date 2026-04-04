@@ -119,12 +119,6 @@ export function PendingInviteView({
               </p>
               <div className="flex gap-2">
                 <Button
-                  className="h-11 rounded-full px-6 shadow-xl transition hover:-translate-y-0.5"
-                  render={<Link href="/" />}
-                >
-                  홈으로 돌아가기
-                </Button>
-                <Button
                   variant="outline"
                   type="button"
                   onClick={handleLogout}
