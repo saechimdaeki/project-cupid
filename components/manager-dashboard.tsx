@@ -504,7 +504,7 @@ export function ManagerDashboard({
                 <button
                   type="button"
                   aria-label="닫기"
-                  className="absolute inset-0"
+                  className="absolute inset-0 cursor-pointer"
                   onClick={() => setTimelineOpen(false)}
                 />
                 <div className="relative w-full rounded-t-[32px] border border-white/60 bg-gradient-to-b from-rose-50/95 to-pink-50/90 p-5 shadow-2xl">

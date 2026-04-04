@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/cn";
 
 type ProfileInteractiveGalleryProps = {
   images: string[];
@@ -170,11 +171,12 @@ export function ProfileInteractiveGallery({ images, sizes }: ProfileInteractiveG
                 key={`${src}-${index}`}
                 type="button"
                 onClick={() => setCurrentImageIndex(index)}
-                className={`relative h-16 w-14 shrink-0 overflow-hidden rounded-xl border-2 transition ${
+                className={cn(
+                  "relative h-16 w-14 shrink-0 cursor-pointer overflow-hidden rounded-xl border-2 transition focus-visible:ring-2 focus-visible:ring-rose-300 focus-visible:ring-offset-2",
                   index === safeIndex
                     ? "border-rose-500 ring-2 ring-rose-200/60"
-                    : "cursor-pointer border-transparent hover:border-rose-400"
-                }`}
+                    : "border-transparent hover:border-rose-400",
+                )}
                 aria-label={`사진 ${index + 1} 선택`}
                 aria-current={index === safeIndex}
               >

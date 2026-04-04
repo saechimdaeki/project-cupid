@@ -2,6 +2,7 @@
 
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/cn";
 import { getOutcomeDotClass } from "@/lib/status-ui";
 import type { TimelineEvent } from "@/lib/types";
 
@@ -46,11 +47,11 @@ export function MatchHistoryListModal({ open, events, onClose, onPick }: MatchHi
                   key={event.id}
                   type="button"
                   onClick={() => onPick(event)}
-                  className="w-full rounded-2xl border border-rose-100/50 bg-rose-50/35 p-4 text-left shadow-sm transition hover:border-rose-200 hover:bg-rose-50/55"
+                  className="w-full cursor-pointer rounded-2xl border border-rose-100/50 bg-rose-50/35 p-4 text-left shadow-sm transition hover:border-rose-200 hover:bg-rose-50/55"
                 >
                   <div className="flex items-start gap-3">
                     <span
-                      className={`mt-1 h-3 w-3 shrink-0 rounded-full border-2 border-white shadow-sm ${getOutcomeDotClass(event.outcome)}`}
+                      className={cn("mt-1 h-3 w-3 shrink-0 rounded-full border-2 border-white shadow-sm", getOutcomeDotClass(event.outcome))}
                     />
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-start justify-between gap-2">
