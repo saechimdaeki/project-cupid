@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
-export function LandingFooterCta() {
+type LandingFooterCtaProps = {
+  isLoggedIn?: boolean;
+};
+
+export function LandingFooterCta({ isLoggedIn }: LandingFooterCtaProps) {
   return (
     <section className="flex flex-col items-center gap-6 rounded-[28px] border border-border/40 bg-card/60 p-8 text-center shadow-xl backdrop-blur-lg sm:p-12">
       <h2 className="text-foreground">
@@ -14,13 +18,15 @@ export function LandingFooterCta() {
       </p>
       <Button
         className="h-12 rounded-full px-8 shadow-xl transition hover:-translate-y-0.5"
-        render={<Link href="/signup" />}
+        render={<Link href={isLoggedIn ? "/dashboard" : "/signup"} />}
       >
-        무료로 시작하기
+        {isLoggedIn ? "대시보드로 이동" : "무료로 시작하기"}
       </Button>
-      <p className="text-[13px] leading-5 text-muted-foreground">
-        별도 결제 없이, 승인만으로 바로 이용 가능합니다
-      </p>
+      {isLoggedIn ? null : (
+        <p className="text-[13px] leading-5 text-muted-foreground">
+          별도 결제 없이, 승인만으로 바로 이용 가능합니다
+        </p>
+      )}
     </section>
   );
 }

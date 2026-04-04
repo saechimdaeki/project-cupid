@@ -1,6 +1,6 @@
 "use client";
 
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import { getOutcomeDotClass } from "@/lib/status-ui";
@@ -33,11 +33,13 @@ export function MatchHistoryListModal({ open, events, onClose, onPick }: MatchHi
           닫기
         </Button>
 
-        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-rose-400/90">Matching History</p>
-        <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-slate-800">
-          전체 매칭 기록
-        </h2>
-        <p className="mt-2 text-sm text-slate-500">항목을 눌러 두 사람의 디테일을 확인할 수 있어요.</p>
+        <DialogHeader>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-rose-400/90">Matching History</p>
+          <DialogTitle className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-slate-800">
+            전체 매칭 기록
+          </DialogTitle>
+          <p className="mt-2 text-sm text-slate-500">항목을 눌러 두 사람의 디테일을 확인할 수 있어요.</p>
+        </DialogHeader>
 
         <div className="mt-8 max-h-[min(70vh,52rem)] overflow-y-auto pr-1">
           <div className="grid gap-4">

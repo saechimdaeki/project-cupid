@@ -340,7 +340,7 @@ export function ManagerDashboard({
       <SakuraRain petalCount={62} />
       <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(ellipse_at_22%_0%,rgba(255,228,230,0.6),transparent_46%),radial-gradient(ellipse_at_82%_28%,rgba(255,237,213,0.48),transparent_42%),radial-gradient(circle_at_50%_100%,rgba(255,241,242,0.52),transparent_55%)]" />
 
-      <main className="relative z-10 mx-auto flex w-full max-w-[1440px] flex-col gap-8 overflow-x-hidden px-4 pb-20 pt-24 md:px-8 lg:px-12">
+      <main className="relative z-10 mx-auto flex w-full max-w-[1440px] flex-col gap-8 overflow-x-hidden px-4 pb-32 pt-24 md:pb-20 md:px-8 lg:px-12">
         <section className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-5">
           {stats.map((stat) => (
             <article
@@ -493,7 +493,7 @@ export function ManagerDashboard({
           <>
             <Button
               onClick={() => setTimelineOpen(true)}
-              className="fixed bottom-6 right-6 z-30 h-14 w-14 rounded-full bg-gradient-to-br from-rose-500 to-pink-500 text-white shadow-[0_12px_40px_rgb(244,114,182,0.45)] transition hover:scale-[1.03] xl:hidden"
+              className="fixed bottom-24 right-6 z-30 h-14 w-14 rounded-full bg-gradient-to-br from-rose-500 to-pink-500 text-white shadow-[0_12px_40px_rgb(244,114,182,0.45)] transition hover:scale-[1.03] md:bottom-6 xl:hidden"
               aria-label="최근 매칭 기록 열기"
             >
               <TimelineIcon />
