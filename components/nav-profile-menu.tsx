@@ -57,7 +57,7 @@ export function NavProfileMenu({ fullName, username, role }: NavProfileMenuProps
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex cursor-pointer items-center gap-2 rounded-full border border-border/40 bg-secondary/60 py-1 pl-1 pr-2 transition hover:bg-secondary md:gap-2.5 md:pr-3">
+      <DropdownMenuTrigger className="flex cursor-pointer items-center gap-2 rounded-full border border-white/60 bg-white/70 py-1 pl-1 pr-2 shadow-sm backdrop-blur-sm transition hover:bg-white/90 md:gap-2.5 md:pr-3">
         <div className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-rose-100 to-orange-100 text-sm font-semibold text-foreground">
           {initial}
         </div>

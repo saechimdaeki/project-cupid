@@ -41,25 +41,26 @@ export function GlobalNav({ membership, active = "dashboard" }: GlobalNavProps) 
   const isEditor = isLoggedIn && canEditCandidates(membership.role);
 
   return (
-    <header className="fixed inset-x-0 top-0 z-40 border-b border-border/50 bg-card/90 backdrop-blur-md">
+    <header className="fixed inset-x-0 top-0 z-40 border-b border-white/50 bg-white/40 backdrop-blur-lg">
       <div className="mx-auto flex w-full max-w-[1440px] items-center justify-between px-4 py-2.5 md:px-8 lg:px-12">
         {/* LEFT: Logo */}
         <Link
           href="/"
-          className="flex items-center gap-2.5 transition-opacity hover:opacity-80"
+          className="flex items-center gap-2.5 rounded-full border border-white/60 bg-white/70 py-1.5 pl-1.5 pr-4 shadow-sm backdrop-blur-sm transition hover:bg-white/90"
         >
-          <span className="flex size-9 items-center justify-center rounded-xl border border-border/60 bg-secondary text-primary">
-            <CupidLogo size={18} />
+          <span className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-rose-50 to-orange-50 text-primary">
+            <CupidLogo size={16} />
           </span>
-          <span className="text-sm font-semibold text-foreground sm:text-base">
-            Project Cupid
+          <span className="text-sm font-semibold text-foreground">
+            <span className="sm:hidden">Cupid</span>
+            <span className="hidden sm:inline">Project Cupid</span>
           </span>
         </Link>
 
         {/* CENTER: Navigation (md+, super_admin only) */}
         {isSuper ? (
           <nav
-            className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-1 md:flex"
+            className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-1 rounded-full border border-white/60 bg-white/70 px-1.5 py-1 shadow-sm backdrop-blur-sm md:flex"
             aria-label="관리 메뉴"
           >
             <NavLink
@@ -81,7 +82,7 @@ export function GlobalNav({ membership, active = "dashboard" }: GlobalNavProps) 
             {isEditor ? (
               <Link
                 href="/candidates/new"
-                className="hidden items-center gap-1.5 rounded-full border border-border/60 bg-secondary px-4 py-1.5 text-sm font-medium text-foreground transition hover:bg-secondary/80 md:inline-flex"
+                className="hidden items-center gap-1.5 rounded-full border border-white/60 bg-white/70 px-4 py-1.5 text-sm font-medium text-foreground shadow-sm backdrop-blur-sm transition hover:bg-white/90 md:inline-flex"
               >
                 <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.75" className="size-3.5" strokeLinecap="round">
                   <path d="M8 3v10M3 8h10" />
@@ -99,7 +100,7 @@ export function GlobalNav({ membership, active = "dashboard" }: GlobalNavProps) 
         ) : (
           <Button
             variant="outline"
-            className="h-9 rounded-full border-border px-5 text-sm font-medium text-foreground transition hover:bg-secondary"
+            className="h-9 rounded-full border-white/60 bg-white/70 px-5 text-sm font-medium text-foreground shadow-sm backdrop-blur-sm transition hover:bg-white/90"
             render={<Link href="/login" />}
           >
             로그인
