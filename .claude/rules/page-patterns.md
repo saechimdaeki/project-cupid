@@ -145,14 +145,35 @@ const candidate = await getCandidateById(id);
 if (!candidate) notFound(); // not-found.tsx를 렌더링
 ```
 
-## 인증 보호
+## 인증/인가 보호 (2계층)
 
-페이지 컴포넌트에서 직접 인증 체크 금지. 미들웨어(`middleware.ts`)에서 처리한다.
+| 레이어 | 책임 | 위치 |
+|--------|------|------|
+| **인증(Authentication)** | 세션 리프레시 + 미인증 사용자 리다이렉트 | `middleware.ts` |
+| **인가(Authorization)** | 역할 기반 권한 체크 (`admin`, `viewer` 등) | 페이지/레이아웃 |
+
+미들웨어는 Edge Runtime에서 실행되므로 쿠키 기반 세션 갱신과 라우트 게이트에 적합하다.
+역할/승인 상태 등 DB 조회가 필요한 권한 체크는 페이지에서 처리한다.
 
 ```typescript
-// middleware.ts
-// 보호된 경로는 미들웨어에서 일괄 처리
-// 페이지 컴포넌트는 이미 인증된 상태라고 가정
+// middleware.ts — 인증 게이트
+// 세션 리프레시 + 미인증 사용자를 /login으로 리다이렉트
+
+// app/admin/page.tsx — 인가 (역할 체크)
+import { requireMembershipRole } from "@/lib/permissions";
+
+export default async function AdminPage() {
+  await requireMembershipRole(["super_admin", "admin"]);
+  // ...
+}
+
+// app/dashboard/page.tsx — 인가 (승인 상태 체크)
+import { requireApprovedMembership } from "@/lib/permissions";
+
+export default async function DashboardPage() {
+  await requireApprovedMembership();
+  // ...
+}
 ```
 
 ## 규칙
@@ -164,4 +185,4 @@ if (!candidate) notFound(); // not-found.tsx를 렌더링
 5. 주요 경로에 `loading.tsx`, `error.tsx` 배치
 6. `loading.tsx`는 Skeleton으로 실제 레이아웃 모방
 7. 데이터 없음은 `notFound()` 호출 + `not-found.tsx`로 처리
-8. 인증 체크는 미들웨어에서 — 페이지에서 직접 체크 금지
+8. **인증**은 `middleware.ts`에서, **인가**(역할/권한)는 페이지에서 처리

@@ -42,22 +42,23 @@ supabase/      # 스키마, 마이그레이션
 - **쓰기**: `lib/*-actions.ts`의 Server Actions (`"use server"`)
 - **Supabase 연결 실패 시**: `lib/mock-data.ts`의 목 데이터로 폴백 (앱이 죽지 않음)
 
-## 인증
+## 인증/인가
 
-- `lib/auth.ts`의 `getViewer()`, `requireApprovedViewer()`, `requireRole()` 사용
+- **인증(Authentication)**: `middleware.ts`에서 세션 리프레시 + 미인증 사용자 리다이렉트
+- **인가(Authorization)**: `lib/permissions.ts`의 `getCurrentMembership()`, `requireApprovedMembership()`, `requireMembershipRole()` — 페이지/레이아웃에서 호출
 - `cache()` (React)로 동일 요청 내 중복 호출 방지
-- 현재 미들웨어(`middleware.ts`) 없음 — 각 페이지/레이아웃에서 직접 호출
 
 ## 타입 시스템
 
-타입 파일이 두 곳이다:
+타입 파일이 세 곳이다:
 
-| 파일 | 용도 |
-|------|------|
-| `types/domain.ts` | 앱 도메인 타입 (camelCase 필드) |
-| `lib/types.ts` | 구 타입 (snake_case 필드, 레거시) |
+| 파일 | 용도 | 상태 |
+|------|------|------|
+| `types/domain.ts` | 앱 도메인 타입 (camelCase 필드) | **정본** |
+| `types/supabase.ts` | Supabase CLI 생성 DB row 타입 | 자동 생성 |
+| `lib/types.ts` | 구 타입 (snake_case 필드) | **레거시 → 점진적 이관** |
 
-새 코드는 `types/domain.ts`를 우선 사용한다. `lib/types.ts`는 `lib/data.ts`와 연결된 레거시.
+새 코드는 `types/domain.ts`를 사용한다. `lib/types.ts`는 레거시이며 `types/domain.ts`로 이관 예정.
 
 ## 개발 명령어
 
@@ -81,6 +82,6 @@ npm run lint       # ESLint
 - `api-patterns.md` — Supabase 쿼리 & Server Actions
 - `common-conventions.md` — TypeScript, 네이밍
 - `feature-architecture.md` — 디렉토리 구조, 의존성 방향
-- `form-patterns.md` — useActionState, useFormStatus
+- `form-patterns.md` — React Hook Form, Zod, Server Actions
 - `page-patterns.md` — App Router 페이지 패턴
 - `ui-components.md` — 컴포넌트 작성, 색상 시스템

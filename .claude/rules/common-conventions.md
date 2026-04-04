@@ -1,7 +1,9 @@
 ---
 paths:
-  - "**/*.ts"
-  - "**/*.tsx"
+  - "app/**/*.{ts,tsx}"
+  - "components/**/*.{ts,tsx}"
+  - "lib/**/*.{ts,tsx}"
+  - "types/**/*.ts"
 ---
 
 # 공통 컨벤션
@@ -25,23 +27,9 @@ type CandidateStatus = "active" | "matched" | "couple";
 interface CandidateCardProps { ... }  // interface 사용 금지
 ```
 
-### `any` 금지 — Supabase 생성 타입 사용
+### `any` 금지
 
-`mapCandidate(row: any)` 패턴은 금지. Supabase CLI로 타입을 생성해서 사용한다.
-
-```bash
-# DB 스키마 변경 시 재실행
-npx supabase gen types typescript --project-id <project-id> > types/supabase.ts
-```
-
-```typescript
-// 금지
-function mapCandidate(row: any): Candidate { ... }
-
-// 올바른 예
-import type { Tables } from "@/types/supabase";
-function mapCandidate(row: Tables<"cupid_candidates">): Candidate { ... }
-```
+`any` 타입 사용 금지. Supabase row 타입은 `api-patterns.md`의 Supabase 생성 타입 규칙을 따른다.
 
 ### Null 처리
 
@@ -91,7 +79,7 @@ import { CandidateCard } from "@/components/candidate-card";
 import { getCandidates } from "@/lib/data";
 
 // 4. 타입 (type-only import)
-import type { Candidate } from "@/lib/types";
+import type { Candidate } from "@/types/domain";
 
 // 5. 상대 경로
 import { FlowColumn } from "./flow-column";
@@ -99,11 +87,12 @@ import { FlowColumn } from "./flow-column";
 
 ## 계층 분리 원칙
 
-- **UI 컴포넌트** (`components/*.tsx`): 렌더링만. 비즈니스 로직 금지.
-- **페이지** (`app/**/page.tsx`): 데이터 패칭 + 배치. UI 로직 금지.
-- **Server Actions** (`lib/*-actions.ts`): 뮤테이션만. UI 관심사 금지.
-- **데이터 함수** (`lib/data.ts`): Supabase 쿼리 + 변환. 서버 전용.
-- **설정/상수** (`lib/*.ts`): 하드코딩 대신 상수/유틸로 관리.
+`feature-architecture.md` 참조. 요약:
+
+- `app/` → 데이터 패칭 + 배치만
+- `components/` → 렌더링만
+- `lib/` → 로직, Server Actions, 유틸
+- `types/` → 타입 정의
 
 ## 주석
 

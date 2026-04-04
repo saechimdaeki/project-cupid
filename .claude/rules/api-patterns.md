@@ -44,7 +44,7 @@ function mapCandidate(row: Tables<"cupid_candidates">): Candidate {
 ```typescript
 import { createClient } from "@/lib/supabase/server";
 import type { Tables } from "@/types/supabase";
-import type { Candidate } from "@/lib/types";
+import type { Candidate } from "@/types/domain";
 
 export async function getCandidates(): Promise<Candidate[]> {
   const supabase = await createClient();

@@ -113,7 +113,7 @@ export const CandidateCard = ({ candidate }: CandidateCardProps) => { ... };
 "use client"; // 필요한 경우만
 
 import { cn } from "@/lib/cn";
-import type { Candidate } from "@/lib/types";
+import type { Candidate } from "@/types/domain";
 
 type CandidateCardProps = {
   candidate: Candidate;
