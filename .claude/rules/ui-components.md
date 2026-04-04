@@ -9,7 +9,10 @@ paths:
 
 - **Tailwind CSS v4** (`@import "tailwindcss"`) — 스타일링
 - **`cn()` 유틸** (`lib/cn.ts`) — className 병합
-- shadcn/ui 없음 — 모든 컴포넌트 직접 구현
+- **shadcn/ui** (`components/ui/`) — 기본 UI 컴포넌트 (base-nova 스타일, @base-ui/react 기반)
+  - Button, Input, Label, Badge, Card, Dialog, Select, Textarea 등 전체 설치
+  - shadcn의 `render` prop으로 다형성 구현 (`asChild` 대신)
+  - 색상은 CSS 변수 기반 (`--primary`, `--border` 등 globals.css에 정의)
 
 ## className 병합: `cn()` 사용
 
@@ -75,17 +78,19 @@ return "border-rose-100 bg-rose-50";
 `app-shell.tsx`, `global-nav.tsx` 등 **앱 프레임 컴포넌트**에서는 `globals.css` CSS 변수를 사용한다.
 
 ```
---bg, --bg-elevated    배경
---panel, --panel-soft  패널 표면
---line, --line-strong  구분선
---text, --muted        텍스트
---gold, --rose         브랜드 액센트
+--shell-bg, --shell-bg-elevated    셸 배경
+--shell-panel, --shell-panel-soft  셸 패널 표면
+--shell-line, --shell-line-strong  셸 구분선
+--shell-text, --shell-muted        셸 텍스트
+--shell-gold, --shell-rose         셸 브랜드 액센트
 ```
 
 ```tsx
 // 앱 셸/네비게이션에서만
-<nav className="bg-[var(--panel)] border-b border-[var(--line)]">
+<nav className="bg-[var(--shell-panel)] border-b border-[var(--shell-line)]">
 ```
+
+> 일반 컴포넌트는 shadcn CSS 변수(`--primary`, `--border`, `--muted-foreground` 등)를 사용한다.
 
 ## 컴포넌트 작성 규칙
 
