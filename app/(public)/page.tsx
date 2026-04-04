@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { BottomNav } from "@/components/bottom-nav";
 import { Button } from "@/components/ui/button";
 import { CupidLogo } from "@/components/cupid-logo";
 import { SakuraRain } from "@/components/sakura-rain";
@@ -14,10 +14,7 @@ import { getCurrentMembership } from "@/lib/permissions";
 
 export default async function HomePage() {
   const membership = await getCurrentMembership();
-
-  if (membership?.status === "approved") {
-    redirect("/dashboard");
-  }
+  const isLoggedIn = membership?.status === "approved";
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-gradient-to-br from-rose-50 via-pink-50/30 to-orange-50/50">
@@ -39,25 +36,40 @@ export default async function HomePage() {
               </span>
             </div>
           </div>
-          <Button
-            variant="outline"
-            className="h-10 rounded-full border-border px-5 text-sm font-medium text-foreground transition hover:bg-secondary"
-            render={<Link href="/login" />}
-          >
-            로그인
-          </Button>
+          {isLoggedIn ? (
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-2.5 rounded-full border border-border/40 bg-card/60 py-1.5 pl-1.5 pr-4 shadow-sm backdrop-blur-md transition hover:bg-card/80"
+            >
+              <span className="flex size-9 items-center justify-center rounded-full bg-gradient-to-br from-rose-100 to-orange-100 text-sm font-semibold text-slate-700">
+                {membership?.full_name?.trim().slice(0, 1) ?? "?"}
+              </span>
+              <span className="text-sm font-medium text-foreground">
+                {membership?.full_name ?? "내 프로필"}
+              </span>
+            </Link>
+          ) : (
+            <Button
+              variant="outline"
+              className="h-10 rounded-full border-border px-5 text-sm font-medium text-foreground transition hover:bg-secondary"
+              render={<Link href="/login" />}
+            >
+              로그인
+            </Button>
+          )}
         </div>
       </header>
 
       <div className="relative z-[1] mx-auto flex w-full max-w-[1440px] flex-col gap-16 px-4 pb-20 pt-24 sm:gap-20 sm:px-8 lg:px-16">
-        <LandingHero />
+        <LandingHero isLoggedIn={isLoggedIn} />
         <LandingTrust />
         <LandingPreview />
         <LandingFeatures />
         <LandingHowItWorks />
         <LandingInventory />
-        <LandingFooterCta />
+        <LandingFooterCta isLoggedIn={isLoggedIn} />
       </div>
+      {isLoggedIn && membership ? <BottomNav role={membership.role} /> : null}
     </main>
   );
 }

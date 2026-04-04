@@ -51,7 +51,7 @@ export default async function NewCandidatePage({ searchParams }: NewCandidatePag
     <>
       <GlobalNav membership={membership} active="candidates" />
       <main className="min-h-screen overflow-x-hidden bg-gradient-to-b from-background to-secondary text-foreground">
-      <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 px-4 pb-10 pt-24 md:px-8 lg:px-12">
+      <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 px-4 pb-32 pt-24 md:pb-10 md:px-8 lg:px-12">
         <Card className="flex flex-col gap-4 rounded-[34px] border-border bg-gradient-to-br from-card to-secondary p-6 shadow-[0_24px_70px_rgba(143,95,89,0.12)] sm:flex-row sm:items-end sm:justify-between sm:p-8">
           <CardContent className="p-0">
             <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-primary">Candidate Studio</p>

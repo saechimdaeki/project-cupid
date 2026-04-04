@@ -55,11 +55,11 @@ export function GlobalNav({ membership, active = "dashboard" }: GlobalNavProps) 
           </Link>
           <Link
             href="/"
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/70 bg-white/55 px-2 py-1.5 text-xs font-semibold text-rose-600 shadow-sm backdrop-blur-sm transition hover:border-rose-200 hover:bg-white/85 md:px-3 md:py-2 md:text-sm"
+            className="hidden shrink-0 items-center gap-1.5 rounded-full border border-white/70 bg-white/55 px-2 py-1.5 text-xs font-semibold text-rose-600 shadow-sm backdrop-blur-sm transition hover:border-rose-200 hover:bg-white/85 md:inline-flex md:px-3 md:py-2 md:text-sm"
             aria-label="홈으로 이동"
           >
             <HomeIcon />
-            <span className="hidden sm:inline">홈</span>
+            <span>홈</span>
           </Link>
         </div>
 
@@ -81,7 +81,7 @@ export function GlobalNav({ membership, active = "dashboard" }: GlobalNavProps) 
           {canEditCandidates(membership.role) ? (
             <Link
               href="/candidates/new"
-              className="inline-flex shrink-0 items-center rounded-full border border-rose-200/80 bg-white/70 px-3 py-1.5 text-xs font-semibold text-rose-600 shadow-sm transition hover:border-rose-300 hover:bg-white sm:px-4 sm:py-2 sm:text-sm"
+              className="hidden shrink-0 items-center rounded-full border border-rose-200/80 bg-white/70 px-3 py-1.5 text-xs font-semibold text-rose-600 shadow-sm transition hover:border-rose-300 hover:bg-white md:inline-flex md:px-4 md:py-2 md:text-sm"
             >
               매물 등록
             </Link>

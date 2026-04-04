@@ -171,7 +171,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     <>
       <GlobalNav membership={currentMembership} active="admin" />
 
-      <main className="min-h-screen overflow-x-hidden bg-slate-50 py-24 text-slate-800">
+      <main className="min-h-screen overflow-x-hidden bg-slate-50 pb-32 pt-24 text-slate-800 md:pb-24">
         <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 px-4 md:px-8 lg:px-12">
           <Card className="p-6 sm:p-7">
             <CardContent className="p-0">
