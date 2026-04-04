@@ -4,6 +4,8 @@ import { deleteMatchRecord } from "@/lib/admin-actions";
 import { filterMatchRecordsForColumn } from "@/lib/match-flow-columns";
 import type { Candidate, MatchRecord } from "@/lib/types";
 import { useMatchRecords } from "@/components/match-records-provider";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 function formatPastCounterpartLine(
   record: MatchRecord,
@@ -49,20 +51,22 @@ export function ProfilePastMatchRecords({
               {record.summary || "종료 사유 메모가 없습니다."}
             </p>
             <div className="flex shrink-0 flex-col items-end gap-2 sm:items-end">
-              <span className="rounded-full bg-slate-200 px-3 py-1 text-xs text-slate-600">
+              <Badge variant="secondary" className="rounded-full bg-slate-200 text-slate-600">
                 종료됨
-              </span>
+              </Badge>
               <span className="text-xs font-medium text-slate-500">{record.happened_on}</span>
               {canOperate ? (
                 <form action={deleteMatchRecord}>
                   <input type="hidden" name="candidateId" value={candidateId} />
                   <input type="hidden" name="recordId" value={record.id} />
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     type="submit"
-                    className="text-[11px] font-medium text-slate-400 hover:text-slate-700"
+                    className="h-auto px-1 py-0 text-[11px] font-medium text-slate-400 hover:text-slate-700"
                   >
                     기록 삭제
-                  </button>
+                  </Button>
                 </form>
               ) : null}
             </div>

@@ -2,6 +2,7 @@
 
 import { useTransition } from "react";
 import { signOut } from "@/lib/auth-actions";
+import { Button } from "@/components/ui/button";
 
 function LogOutIcon({ className }: { className?: string }) {
   return (
@@ -30,7 +31,8 @@ export function DashboardLogoutButton({ className }: DashboardLogoutButtonProps)
   const [pending, startTransition] = useTransition();
 
   return (
-    <button
+    <Button
+      variant="ghost"
       type="button"
       disabled={pending}
       aria-label="로그아웃"
@@ -49,6 +51,6 @@ export function DashboardLogoutButton({ className }: DashboardLogoutButtonProps)
     >
       <LogOutIcon className="mx-auto h-5 w-5 md:hidden" />
       <span className="hidden md:inline">로그아웃</span>
-    </button>
+    </Button>
   );
 }

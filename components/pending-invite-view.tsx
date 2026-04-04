@@ -4,6 +4,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { PendingStatusGuard } from "@/components/pending-status-guard";
 import { SakuraRain } from "@/components/sakura-rain";
+import { Button } from "@/components/ui/button";
 import type { Membership } from "@/lib/types";
 
 type PendingInviteViewProps = {
@@ -82,13 +83,15 @@ export function PendingInviteView({
             <p className="hidden text-sm font-medium text-slate-600 md:block">
               <span className="text-slate-800">{displayName}</span>님, 곧 만나요 💌
             </p>
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               type="button"
               onClick={handleLogout}
-              className="shrink-0 px-2 text-sm font-medium text-slate-500 transition hover:text-rose-500"
+              className="shrink-0 px-2 text-sm font-medium text-slate-500 hover:text-rose-500"
             >
               로그아웃
-            </button>
+            </Button>
           </div>
         </div>
       </header>
@@ -132,12 +135,12 @@ export function PendingInviteView({
           </ol>
 
           <div className="mt-10 flex justify-center">
-            <Link
-              href="/"
-              className="inline-flex items-center justify-center rounded-full bg-rose-500 px-8 py-3 text-sm font-semibold text-white shadow-[0_8px_28px_rgb(244,114,182,0.35)] transition hover:bg-rose-600"
+            <Button
+              className="rounded-full bg-rose-500 px-8 py-3 text-sm font-semibold text-white shadow-[0_8px_28px_rgb(244,114,182,0.35)] hover:bg-rose-600"
+              render={<Link href="/" />}
             >
               홈으로 돌아가기
-            </Link>
+            </Button>
           </div>
         </div>
       </div>

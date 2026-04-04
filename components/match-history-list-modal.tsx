@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { getOutcomeDotClass } from "@/lib/status-ui";
 import type { TimelineEvent } from "@/lib/types";
 
@@ -12,49 +13,27 @@ type MatchHistoryListModalProps = {
 };
 
 export function MatchHistoryListModal({ open, events, onClose, onPick }: MatchHistoryListModalProps) {
-  useEffect(() => {
-    if (!open) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
-
-  if (!open) return null;
-
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-4 pt-10 backdrop-blur-md sm:pt-16"
-      onClick={onClose}
-      role="presentation"
+    <Dialog
+      open={open}
+      onOpenChange={(isOpen) => {
+        if (!isOpen) onClose();
+      }}
     >
-      <div
-        className="relative mb-10 w-full max-w-[1440px] rounded-3xl border border-white/60 bg-white/90 p-6 shadow-2xl backdrop-blur-md sm:p-8"
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="match-history-all-title"
+      <DialogContent
+        showCloseButton={false}
+        className="max-w-[1440px] rounded-3xl border border-white/60 bg-white/90 p-6 shadow-2xl backdrop-blur-md sm:max-w-[1440px] sm:p-8"
       >
-        <button
-          type="button"
+        <Button
+          variant="ghost"
           className="absolute right-5 top-5 rounded-full px-3 py-1 text-sm font-medium text-slate-500 transition hover:bg-rose-50 hover:text-rose-600"
           onClick={onClose}
         >
           닫기
-        </button>
+        </Button>
 
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-rose-400/90">Matching History</p>
-        <h2 id="match-history-all-title" className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-slate-800">
+        <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-slate-800">
           전체 매칭 기록
         </h2>
         <p className="mt-2 text-sm text-slate-500">항목을 눌러 두 사람의 디테일을 확인할 수 있어요.</p>
@@ -90,7 +69,7 @@ export function MatchHistoryListModal({ open, events, onClose, onPick }: MatchHi
             )}
           </div>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

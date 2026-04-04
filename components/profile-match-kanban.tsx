@@ -7,6 +7,8 @@ import {
 } from "@/lib/match-flow-columns";
 import type { MatchOutcome, MatchRecord } from "@/lib/types";
 import { useMatchRecords } from "@/components/match-records-provider";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 const FLOW_COLUMNS: Array<{
   key: MatchFlowColumnKey;
@@ -70,9 +72,9 @@ export function ProfileMatchKanban({ candidateId, canOperate }: ProfileMatchKanb
           >
             <div className="flex items-center justify-between gap-3">
               <h3 className="text-sm font-semibold text-slate-800">{col.label}</h3>
-              <span className="rounded-full bg-rose-100/80 px-3 py-1 text-xs font-semibold text-rose-600">
+              <Badge variant="secondary" className="rounded-full bg-rose-100/80 text-rose-600">
                 {group.length}
-              </span>
+              </Badge>
             </div>
 
             <div className="mt-4 grid gap-3">
@@ -90,21 +92,24 @@ export function ProfileMatchKanban({ candidateId, canOperate }: ProfileMatchKanb
                         <p className="mt-1 text-xs text-slate-400">{record.happened_on}</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span
-                          className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-medium ${getOutcomeBadgeClass(record.outcome)}`}
+                        <Badge
+                          variant="outline"
+                          className={`rounded-full ${getOutcomeBadgeClass(record.outcome)}`}
                         >
                           {getOutcomeLabel(record.outcome)}
-                        </span>
+                        </Badge>
                         {canOperate ? (
                           <form action={deleteMatchRecord}>
                             <input type="hidden" name="candidateId" value={candidateId} />
                             <input type="hidden" name="recordId" value={record.id} />
-                            <button
+                            <Button
+                              variant="ghost"
+                              size="sm"
                               type="submit"
-                              className="text-[11px] font-medium text-slate-400 hover:text-slate-700"
+                              className="h-auto px-1 py-0 text-[11px] font-medium text-slate-400 hover:text-slate-700"
                             >
                               삭제
-                            </button>
+                            </Button>
                           </form>
                         ) : null}
                       </div>

@@ -9,6 +9,8 @@ import {
 } from "@/lib/admin-actions";
 import type { CandidateStatus } from "@/lib/types";
 import { getStatusLabel } from "@/lib/status-ui";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 
 const CLOSURE_SELECT_VALUE = "__match_closure__";
 
@@ -139,14 +141,15 @@ export function OperatorDeskControls({
         </select>
 
         {showDefaultButton ? (
-          <button
+          <Button
             type="button"
+            variant="outline"
             onClick={handleStatusChange}
             disabled={isPending || selectValue === currentStatus}
-            className="inline-flex h-11 w-full items-center justify-center rounded-full border border-rose-200/80 bg-white/90 px-4 text-sm font-medium text-rose-700 shadow-sm transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:min-w-[7.5rem]"
+            className="h-11 w-full rounded-full border-rose-200/80 bg-white/90 px-4 text-sm font-medium text-rose-700 shadow-sm hover:bg-rose-50 sm:w-auto sm:min-w-[7.5rem]"
           >
             {isPending ? "처리 중…" : "상태 변경"}
-          </button>
+          </Button>
         ) : null}
       </div>
 
@@ -170,22 +173,23 @@ export function OperatorDeskControls({
                 현재 연결된 상대와의 매칭을 커플완성으로 확정합니다.
               </p>
               <div className="flex flex-wrap gap-2">
-                <button
+                <Button
                   type="button"
                   onClick={handleCoupleConfirm}
                   disabled={isPending}
-                  className="inline-flex h-11 items-center justify-center rounded-full bg-orange-500 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="h-11 rounded-full bg-orange-500 px-5 text-sm font-semibold text-white shadow-sm hover:bg-orange-600"
                 >
                   {isPending ? "처리 중…" : "커플 확정"}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="outline"
                   disabled={isPending}
-                  className="inline-flex h-11 items-center justify-center rounded-full border border-rose-200/80 bg-white/90 px-5 text-sm font-medium text-slate-600 transition hover:bg-white disabled:opacity-60"
+                  className="h-11 rounded-full border-rose-200/80 bg-white/90 px-5 text-sm font-medium text-slate-600 hover:bg-white"
                   onClick={() => setSelectValue(currentStatus)}
                 >
                   취소
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -206,35 +210,36 @@ export function OperatorDeskControls({
                 <span className="text-xs font-semibold text-rose-600/90">
                   종료 사유 (예: 성향 차이, 연락 두절 등)
                 </span>
-                <textarea
+                <Textarea
                   name="closureReason"
                   required
                   rows={4}
                   disabled={isPending}
                   placeholder="주선자 비공개 메모로 PAST RECORDS에 저장됩니다."
-                  className="min-h-[6rem] rounded-xl border border-rose-100/80 bg-white/95 px-3 py-2 text-sm text-slate-700 shadow-sm outline-none focus:border-rose-200 focus:ring-2 focus:ring-rose-100 disabled:opacity-60"
+                  className="min-h-[6rem] rounded-xl border-rose-100/80 bg-white/95 px-3 py-2 text-sm text-slate-700 shadow-sm focus:border-rose-200 focus:ring-2 focus:ring-rose-100"
                 />
               </label>
               <div className="flex flex-wrap gap-2">
-                <button
+                <Button
                   type="button"
                   onClick={handleCloseMatch}
                   disabled={isPending}
-                  className="inline-flex h-11 items-center justify-center rounded-full bg-slate-700 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="h-11 rounded-full bg-slate-700 px-5 text-sm font-semibold text-white shadow-sm hover:bg-slate-800"
                 >
                   {isPending ? "처리 중…" : "종료 확정"}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="outline"
                   disabled={isPending}
-                  className="inline-flex h-11 items-center justify-center rounded-full border border-rose-200/80 bg-white/90 px-5 text-sm font-medium text-slate-600 transition hover:bg-white disabled:opacity-60"
+                  className="h-11 rounded-full border-rose-200/80 bg-white/90 px-5 text-sm font-medium text-slate-600 hover:bg-white"
                   onClick={() => {
                     setClosureMode(false);
                     setSelectValue(currentStatus);
                   }}
                 >
                   취소
-                </button>
+                </Button>
               </div>
             </form>
           )}

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { Button } from "@/components/ui/button";
 
 type ProfileInteractiveGalleryProps = {
   images: string[];
@@ -79,7 +80,8 @@ export function ProfileInteractiveGallery({ images, sizes }: ProfileInteractiveG
         onClick={() => setIsLightboxOpen(false)}
         role="presentation"
       >
-        <button
+        <Button
+          variant="ghost"
           type="button"
           aria-label="닫기"
           className="absolute right-6 top-6 z-[100000] cursor-pointer text-5xl text-white hover:text-rose-500"
@@ -89,32 +91,34 @@ export function ProfileInteractiveGallery({ images, sizes }: ProfileInteractiveG
           }}
         >
           ×
-        </button>
+        </Button>
 
         {showNav ? (
           <>
-            <button
+            <Button
+              variant="ghost"
               type="button"
               aria-label="이전 사진"
-              className="absolute left-4 top-1/2 z-[99998] -translate-y-1/2 rounded-full bg-white/20 p-4 text-2xl font-light text-white transition hover:bg-white/40 sm:left-8"
+              className="absolute left-4 top-1/2 z-[99998] -translate-y-1/2 rounded-full bg-white/20 p-4 text-2xl font-light text-white hover:bg-white/40 sm:left-8"
               onClick={(e) => {
                 e.stopPropagation();
                 goPrev();
               }}
             >
               ‹
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="ghost"
               type="button"
               aria-label="다음 사진"
-              className="absolute right-4 top-1/2 z-[99998] -translate-y-1/2 rounded-full bg-white/20 p-4 text-2xl font-light text-white transition hover:bg-white/40 sm:right-8"
+              className="absolute right-4 top-1/2 z-[99998] -translate-y-1/2 rounded-full bg-white/20 p-4 text-2xl font-light text-white hover:bg-white/40 sm:right-8"
               onClick={(e) => {
                 e.stopPropagation();
                 goNext();
               }}
             >
               ›
-            </button>
+            </Button>
           </>
         ) : null}
 

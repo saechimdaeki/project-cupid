@@ -1,3 +1,6 @@
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { GlobalNav } from "@/components/global-nav";
 import { rejectMembership, updateMembershipRole } from "@/lib/admin-actions";
 import { getApprovedMemberships, getPendingMemberships } from "@/lib/data";
@@ -29,74 +32,70 @@ function OverviewCard({
   description: string;
 }) {
   return (
-    <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <p className="text-sm font-medium text-slate-500">{label}</p>
-      <strong className="mt-2 block text-3xl font-semibold tracking-[-0.04em] text-slate-800">
-        {value}
-      </strong>
-      <p className="mt-2 text-sm text-slate-500">{description}</p>
-    </article>
+    <Card className="p-5">
+      <CardContent className="p-0">
+        <p className="text-sm font-medium text-slate-500">{label}</p>
+        <strong className="mt-2 block text-3xl font-semibold tracking-[-0.04em] text-slate-800">
+          {value}
+        </strong>
+        <p className="mt-2 text-sm text-slate-500">{description}</p>
+      </CardContent>
+    </Card>
   );
 }
 
 function PendingMemberCard({ member }: { member: Membership }) {
   return (
-    <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex min-w-0 items-center gap-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-700">
-            {member.full_name.slice(0, 1)}
+    <Card className="p-4">
+      <CardContent className="p-0">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-700">
+              {member.full_name.slice(0, 1)}
+            </div>
+            <div className="min-w-0">
+              <strong className="block truncate text-base font-semibold text-slate-800">
+                {member.full_name}
+              </strong>
+              <p className="truncate text-sm text-slate-500">@{member.username}</p>
+            </div>
           </div>
-          <div className="min-w-0">
-            <strong className="block truncate text-base font-semibold text-slate-800">
-              {member.full_name}
-            </strong>
-            <p className="truncate text-sm text-slate-500">@{member.username}</p>
-          </div>
+          <Badge variant="outline" className={getRoleBadgeClass(member.role)}>
+            {member.role}
+          </Badge>
         </div>
-        <span
-          className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${getRoleBadgeClass(member.role)}`}
-        >
-          {member.role}
-        </span>
-      </div>
 
-      <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-500">
-        <span className="rounded-full bg-slate-100 px-3 py-1">{member.created_at.slice(0, 10)} 등록</span>
-        <span className="rounded-full bg-slate-100 px-3 py-1">요청 권한 {member.role}</span>
-      </div>
+        <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-500">
+          <span className="rounded-full bg-slate-100 px-3 py-1">{member.created_at.slice(0, 10)} 등록</span>
+          <span className="rounded-full bg-slate-100 px-3 py-1">요청 권한 {member.role}</span>
+        </div>
 
-      <div className="mt-4 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
-        <form action={updateMembershipRole} className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
-          <input type="hidden" name="userId" value={member.user_id} />
-          <input type="hidden" name="status" value="approved" />
-          <select
-            name="role"
-            defaultValue={member.role}
-            className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-700 outline-none"
-          >
-            <option value="viewer">viewer</option>
-            <option value="admin">admin</option>
-            <option value="super_admin">super_admin</option>
-          </select>
-          <button
-            type="submit"
-            className="inline-flex h-11 items-center justify-center rounded-full bg-rose-500 px-4 text-sm font-semibold text-white"
-          >
-            승인
-          </button>
-        </form>
-        <form action={rejectMembership}>
-          <input type="hidden" name="userId" value={member.user_id} />
-          <button
-            type="submit"
-            className="inline-flex h-11 items-center justify-center rounded-full border border-slate-200 px-4 text-sm font-medium text-slate-600"
-          >
-            거절
-          </button>
-        </form>
-      </div>
-    </article>
+        <div className="mt-4 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+          <form action={updateMembershipRole} className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+            <input type="hidden" name="userId" value={member.user_id} />
+            <input type="hidden" name="status" value="approved" />
+            <select
+              name="role"
+              defaultValue={member.role}
+              className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-700 outline-none"
+            >
+              <option value="viewer">viewer</option>
+              <option value="admin">admin</option>
+              <option value="super_admin">super_admin</option>
+            </select>
+            <Button type="submit" className="h-11 rounded-full bg-rose-500 px-4 font-semibold text-white">
+              승인
+            </Button>
+          </form>
+          <form action={rejectMembership}>
+            <input type="hidden" name="userId" value={member.user_id} />
+            <Button type="submit" variant="outline" className="h-11 rounded-full px-4">
+              거절
+            </Button>
+          </form>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -110,7 +109,7 @@ function DirectoryRow({
   const isCurrentUser = member.user_id === currentUserId;
 
   return (
-    <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm md:rounded-none md:border-0 md:border-b md:shadow-none">
+    <Card className="p-4 md:rounded-none md:border-0 md:border-b md:shadow-none md:ring-0">
       <div className="grid gap-4 md:grid-cols-[minmax(0,1.4fr)_minmax(120px,0.5fr)_minmax(140px,0.6fr)_minmax(200px,0.8fr)] md:items-center">
         <div className="flex min-w-0 items-center gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-700">
@@ -125,11 +124,9 @@ function DirectoryRow({
         </div>
 
         <div>
-          <span
-            className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${getRoleBadgeClass(member.role)}`}
-          >
+          <Badge variant="outline" className={getRoleBadgeClass(member.role)}>
             {member.role}
-          </span>
+          </Badge>
         </div>
 
         <div className="text-sm text-slate-500">{member.created_at.slice(0, 10)}</div>
@@ -150,17 +147,14 @@ function DirectoryRow({
                 <option value="admin">admin</option>
                 <option value="super_admin">super_admin</option>
               </select>
-              <button
-                type="submit"
-                className="inline-flex h-10 shrink-0 items-center justify-center rounded-full border border-slate-200 px-4 text-sm font-medium text-slate-600"
-              >
+              <Button type="submit" variant="outline" className="h-10 shrink-0 rounded-full px-4">
                 저장
-              </button>
+              </Button>
             </form>
           )}
         </div>
       </div>
-    </article>
+    </Card>
   );
 }
 
@@ -179,19 +173,21 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
       <main className="min-h-screen overflow-x-hidden bg-slate-50 py-24 text-slate-800">
         <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 px-4 md:px-8 lg:px-12">
-          <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:p-7">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-500">Super Admin Control</p>
-                <h1 className="mt-2 text-3xl font-semibold tracking-[-0.05em] text-slate-800 sm:text-4xl">
-                  회원 승인 및 권한 관리
-                </h1>
-                <p className="mt-3 text-sm text-slate-500">
-                  승인 대기 인원과 운영 권한을 한 화면에서 빠르게 정리할 수 있도록 단순한 데이터 뷰로 재구성했습니다.
-                </p>
+          <Card className="p-6 sm:p-7">
+            <CardContent className="p-0">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                  <p className="text-sm font-medium text-slate-500">Super Admin Control</p>
+                  <h1 className="mt-2 text-3xl font-semibold tracking-[-0.05em] text-slate-800 sm:text-4xl">
+                    회원 승인 및 권한 관리
+                  </h1>
+                  <p className="mt-3 text-sm text-slate-500">
+                    승인 대기 인원과 운영 권한을 한 화면에서 빠르게 정리할 수 있도록 단순한 데이터 뷰로 재구성했습니다.
+                  </p>
+                </div>
               </div>
-            </div>
-          </section>
+            </CardContent>
+          </Card>
 
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <OverviewCard
@@ -222,61 +218,65 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             </div>
           ) : null}
 
-          <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-            <div className="flex items-end justify-between gap-4">
-              <div>
-                <p className="text-sm font-medium text-slate-500">Pending Queue</p>
-                <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-slate-800">
-                  승인 대기 인원
-                </h2>
+          <Card className="p-5 sm:p-6">
+            <CardContent className="p-0">
+              <div className="flex items-end justify-between gap-4">
+                <div>
+                  <p className="text-sm font-medium text-slate-500">Pending Queue</p>
+                  <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-slate-800">
+                    승인 대기 인원
+                  </h2>
+                </div>
               </div>
-            </div>
 
-            <div className="mt-5 grid gap-4">
-              {pendingUsers.length ? (
-                pendingUsers.map((member) => <PendingMemberCard key={member.user_id} member={member} />)
+              <div className="mt-5 grid gap-4">
+                {pendingUsers.length ? (
+                  pendingUsers.map((member) => <PendingMemberCard key={member.user_id} member={member} />)
+                ) : (
+                  <div className="rounded-xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
+                    현재 승인 대기 중인 계정이 없습니다.
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="p-5 sm:p-6">
+            <CardContent className="p-0">
+              <div className="flex items-end justify-between gap-4">
+                <div>
+                  <p className="text-sm font-medium text-slate-500">Role Directory</p>
+                  <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-slate-800">
+                    현재 승인된 운영 인원
+                  </h2>
+                </div>
+              </div>
+
+              {managedMembers.length ? (
+                <div className="mt-5">
+                  <div className="hidden grid-cols-[minmax(0,1.4fr)_minmax(120px,0.5fr)_minmax(140px,0.6fr)_minmax(200px,0.8fr)] gap-4 border-b border-slate-200 px-4 pb-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400 md:grid">
+                    <div>사용자</div>
+                    <div>권한</div>
+                    <div>등록일</div>
+                    <div>권한 변경</div>
+                  </div>
+                  <div className="grid gap-3 md:gap-0">
+                    {managedMembers.map((member) => (
+                      <DirectoryRow
+                        key={member.user_id}
+                        member={member}
+                        currentUserId={currentMembership.user_id}
+                      />
+                    ))}
+                  </div>
+                </div>
               ) : (
-                <div className="rounded-xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
-                  현재 승인 대기 중인 계정이 없습니다.
+                <div className="mt-5 rounded-xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
+                  아직 승인된 운영 계정이 없습니다.
                 </div>
               )}
-            </div>
-          </section>
-
-          <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-            <div className="flex items-end justify-between gap-4">
-              <div>
-                <p className="text-sm font-medium text-slate-500">Role Directory</p>
-                <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-slate-800">
-                  현재 승인된 운영 인원
-                </h2>
-              </div>
-            </div>
-
-            {managedMembers.length ? (
-              <div className="mt-5">
-                <div className="hidden grid-cols-[minmax(0,1.4fr)_minmax(120px,0.5fr)_minmax(140px,0.6fr)_minmax(200px,0.8fr)] gap-4 border-b border-slate-200 px-4 pb-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400 md:grid">
-                  <div>사용자</div>
-                  <div>권한</div>
-                  <div>등록일</div>
-                  <div>권한 변경</div>
-                </div>
-                <div className="grid gap-3 md:gap-0">
-                  {managedMembers.map((member) => (
-                    <DirectoryRow
-                      key={member.user_id}
-                      member={member}
-                      currentUserId={currentMembership.user_id}
-                    />
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="mt-5 rounded-xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
-                아직 승인된 운영 계정이 없습니다.
-              </div>
-            )}
-          </section>
+            </CardContent>
+          </Card>
         </div>
       </main>
     </>
