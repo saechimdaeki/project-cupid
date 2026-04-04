@@ -26,16 +26,30 @@ export default async function CandidatesPage() {
 
 ## 라우팅 구조
 
+권한 수준별 Route Group으로 분리. Route Group은 URL에 영향 없음.
+
 ```
 app/
-├── page.tsx              # 랜딩 (공개)
-├── login/page.tsx        # 로그인
-├── pending/page.tsx      # 승인 대기
-├── dashboard/page.tsx    # 대시보드 (인증 필요)
-├── candidates/page.tsx   # 후보 목록
-├── profiles/[id]/page.tsx
-├── timeline/page.tsx
-└── admin/page.tsx
+├── layout.tsx, globals.css
+│
+├── (public)/                           # 인증 불필요
+│   ├── page.tsx                        # / 랜딩
+│   ├── login/page.tsx                  # /login
+│   ├── auth/continue/page.tsx          # /auth/continue
+│   └── pending/page.tsx                # /pending
+│
+├── (member)/                           # 승인된 멤버 (viewer 이상)
+│   ├── dashboard/page.tsx              # /dashboard
+│   └── timeline/page.tsx               # /timeline
+│
+├── (admin)/                            # 관리자 (admin, super_admin)
+│   ├── candidates/new/page.tsx         # /candidates/new
+│   └── profiles/[id]/
+│       ├── page.tsx                    # /profiles/:id
+│       └── edit/page.tsx               # /profiles/:id/edit
+│
+└── (super-admin)/                      # 최고 관리자 (super_admin)
+    └── admin/page.tsx                  # /admin
 ```
 
 ## 서버 컴포넌트 페이지 (기본)
@@ -159,15 +173,15 @@ if (!candidate) notFound(); // not-found.tsx를 렌더링
 // middleware.ts — 인증 게이트
 // 세션 리프레시 + 미인증 사용자를 /login으로 리다이렉트
 
-// app/admin/page.tsx — 인가 (역할 체크)
+// app/(super-admin)/admin/page.tsx — 인가 (역할 체크)
 import { requireMembershipRole } from "@/lib/permissions";
 
 export default async function AdminPage() {
-  await requireMembershipRole(["super_admin", "admin"]);
+  await requireMembershipRole(["super_admin"]);
   // ...
 }
 
-// app/dashboard/page.tsx — 인가 (승인 상태 체크)
+// app/(member)/dashboard/page.tsx — 인가 (승인 상태 체크)
 import { requireApprovedMembership } from "@/lib/permissions";
 
 export default async function DashboardPage() {
