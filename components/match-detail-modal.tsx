@@ -1,9 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import { resolveProfileImages } from "@/lib/candidate-image-actions";
 import type { Candidate, MatchOutcome, TimelineEvent } from "@/lib/types";
+import { cn } from "@/lib/cn";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 function matchOutcomeLabel(outcome: MatchOutcome) {
   switch (outcome) {
@@ -25,7 +32,7 @@ function outcomeBadgeClass(outcome: MatchOutcome) {
     case "couple":
       return "border-orange-200/80 bg-orange-50 text-orange-700";
     case "closed":
-      return "border-slate-200 bg-slate-100 text-slate-600";
+      return "border-border bg-muted text-muted-foreground";
     default:
       return "border-rose-200/80 bg-rose-50 text-rose-600";
   }
@@ -61,9 +68,9 @@ function ProfileChips({ person }: { person: Candidate }) {
   return (
     <div className="mt-3 flex flex-wrap justify-center gap-1.5">
       {chips.map((label) => (
-        <span key={label} className="rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-600">
+        <Badge key={label} variant="secondary" className="rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-600">
           {label}
-        </span>
+        </Badge>
       ))}
     </div>
   );
@@ -158,13 +165,8 @@ type MatchDetailModalProps = {
 };
 
 export function MatchDetailModal({ event, candidateById, onClose }: MatchDetailModalProps) {
-  const [mounted, setMounted] = useState(false);
   const [resolvedImages, setResolvedImages] = useState<Record<string, string | null | undefined>>({});
   const pendingKeyRef = useRef<string>("");
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     if (!event) return;
@@ -175,7 +177,6 @@ export function MatchDetailModal({ event, candidateById, onClose }: MatchDetailM
     if (pendingKeyRef.current === key) return;
     pendingKeyRef.current = key;
 
-    // 로딩 중임을 undefined로 표시 (null = 사진 없음, string = URL)
     setResolvedImages((prev) => {
       const next = { ...prev };
       for (const id of ids) {
@@ -197,76 +198,31 @@ export function MatchDetailModal({ event, candidateById, onClose }: MatchDetailM
       });
   }, [event]);
 
-  useEffect(() => {
-    if (!event) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [event]);
-
-  useEffect(() => {
-    if (!event) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [event, onClose]);
-
-  if (!event || !mounted) return null;
+  if (!event) return null;
 
   const [userA, userB] = orderPair(event.candidate_ids, candidateById);
 
-  const modal = (
-    <div
-      className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm"
-      onClick={onClose}
-      role="presentation"
-    >
-      {/* 닫기 버튼 */}
-      <button
-        type="button"
-        aria-label="닫기"
-        className="absolute right-6 top-6 z-[100000] flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-white/20 text-2xl font-light text-white backdrop-blur-sm transition hover:bg-white/30 hover:text-rose-300"
-        onClick={(e) => {
-          e.stopPropagation();
-          onClose();
-        }}
-      >
-        ×
-      </button>
-
-      <div
-        className="relative mx-4 flex max-h-[90vh] w-full max-w-5xl flex-col items-center overflow-y-auto rounded-[2.5rem] bg-white/90 p-8 shadow-2xl backdrop-blur-md sm:p-12"
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="match-detail-title"
-      >
-        {/* 헤더 */}
-        <div className="mb-8 w-full text-center">
+  return (
+    <Dialog open={Boolean(event)} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="max-w-5xl rounded-[2.5rem] bg-card/90 p-8 backdrop-blur-md sm:p-12">
+        <DialogHeader className="mb-8 w-full text-center">
           <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-rose-400/90">
             Match Detail · 매칭 상세
           </p>
-          <h2
-            id="match-detail-title"
-            className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-slate-800 sm:text-3xl"
-          >
+          <DialogTitle className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-foreground sm:text-3xl">
             {event.title}
-          </h2>
+          </DialogTitle>
           <div className="mt-3 flex flex-wrap items-center justify-center gap-3">
-            <span className="text-sm font-medium text-slate-400">{event.happened_on}</span>
-            <span
-              className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${outcomeBadgeClass(event.outcome)}`}
+            <span className="text-sm font-medium text-muted-foreground">{event.happened_on}</span>
+            <Badge
+              variant="outline"
+              className={cn("rounded-full px-3 py-1 text-xs font-semibold", outcomeBadgeClass(event.outcome))}
             >
               {matchOutcomeLabel(event.outcome)}
-            </span>
+            </Badge>
           </div>
-        </div>
+        </DialogHeader>
 
-        {/* 두 사람 + 하트 */}
         <div className="flex w-full flex-col items-center gap-8 md:flex-row md:items-start md:justify-center">
           <PersonBlock
             person={userA}
@@ -275,7 +231,7 @@ export function MatchDetailModal({ event, candidateById, onClose }: MatchDetailM
           />
 
           <div className="flex shrink-0 items-center justify-center py-4 text-6xl text-rose-500 md:mt-28 md:py-0" aria-hidden>
-            <span className="animate-pulse">❤️</span>
+            <span className="animate-pulse">&#10084;&#65039;</span>
           </div>
 
           <PersonBlock
@@ -285,18 +241,15 @@ export function MatchDetailModal({ event, candidateById, onClose }: MatchDetailM
           />
         </div>
 
-        {/* 요약 */}
         {event.summary ? (
           <div className="mt-8 w-full rounded-2xl border border-rose-100/60 bg-rose-50/50 p-5 backdrop-blur-sm">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-rose-400/90">
               매칭 요약
             </p>
-            <p className="mt-2 text-sm leading-7 text-slate-600">{event.summary}</p>
+            <p className="mt-2 text-sm leading-7 text-muted-foreground">{event.summary}</p>
           </div>
         ) : null}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
-
-  return createPortal(modal, document.body);
 }

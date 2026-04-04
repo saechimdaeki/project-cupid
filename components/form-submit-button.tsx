@@ -1,6 +1,8 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
+import { cn } from "@/lib/cn";
+import { Button } from "@/components/ui/button";
 
 type FormSubmitButtonProps = {
   idleLabel: string;
@@ -16,13 +18,13 @@ export function FormSubmitButton({
   const { pending } = useFormStatus();
 
   return (
-    <button
-      className={className}
+    <Button
+      className={cn("h-12 rounded-full px-5 text-sm font-semibold", className)}
       type="submit"
       disabled={pending}
       aria-disabled={pending}
     >
       {pending ? pendingLabel : idleLabel}
-    </button>
+    </Button>
   );
 }
