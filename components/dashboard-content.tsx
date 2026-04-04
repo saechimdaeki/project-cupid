@@ -1,7 +1,9 @@
 "use client";
 
-import { type DashboardBoardCandidate } from "@/components/dashboard-flow-board";
-import { DashboardFlowView } from "@/components/dashboard-flow-view";
+import {
+  DashboardFlowBoard,
+  type DashboardBoardCandidate,
+} from "@/components/dashboard-flow-board";
 import { DashboardInventoryView } from "@/components/dashboard-inventory-view";
 import { canEditCandidates } from "@/lib/role-utils";
 import { DashboardViewMode } from "@/lib/types";
@@ -27,11 +29,13 @@ export function DashboardContent({
   return (
     <>
       {view === DashboardViewMode.FLOW ? (
-        <DashboardFlowView
-          visibleCandidates={visibleBoardCandidates}
-          allCandidates={boardCandidates}
-          role={role}
-        />
+        <section className="rounded-[28px] border border-white/50 bg-transparent p-1">
+          <DashboardFlowBoard
+            candidates={visibleBoardCandidates}
+            allCandidates={boardCandidates}
+            role={role}
+          />
+        </section>
       ) : null}
 
       {view === DashboardViewMode.INVENTORY ? (
