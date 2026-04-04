@@ -14,7 +14,7 @@ export function LandingFooterCta() {
       </p>
       <Button
         className="h-12 rounded-full px-8 shadow-xl transition hover:-translate-y-0.5"
-        render={<Link href="/login" />}
+        render={<Link href="/signup" />}
       >
         무료로 시작하기
       </Button>

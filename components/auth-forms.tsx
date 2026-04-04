@@ -32,7 +32,7 @@ export function AuthForms({ initialMessage }: AuthFormsProps) {
   const message = initialMessage ?? "";
 
   return (
-    <Card className="rounded-[28px] border-border p-5 shadow-lg sm:p-6">
+    <Card className="w-full rounded-[28px] border-border/50 bg-card/80 p-5 shadow-xl backdrop-blur-lg sm:p-6">
       <CardContent className="p-0">
         <Tabs defaultValue="signin">
           <TabsList className="rounded-full bg-secondary p-1">
@@ -46,12 +46,12 @@ export function AuthForms({ initialMessage }: AuthFormsProps) {
 
           <TabsContent value="signin">
             <div className="mt-5">
-              <p className="text-sm font-medium text-muted-foreground">Sign In</p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-foreground">
-                승인된 계정으로 보드에 입장하세요
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Sign In</p>
+              <h2 className="mt-2 text-foreground">
+                다시 오셨군요
               </h2>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                승인된 계정만 대시보드와 매칭 운영 화면에 접근할 수 있습니다.
+                승인된 계정으로 매칭 보드에 입장하세요.
               </p>
             </div>
 
@@ -62,9 +62,9 @@ export function AuthForms({ initialMessage }: AuthFormsProps) {
             ) : null}
 
             <form className="mt-6 grid gap-4" action={signInWithPassword}>
-              <FieldShell label="id">
+              <FieldShell label="아이디">
                 <Input
-                  className="h-12 rounded-xl"
+                  className="h-12 rounded-xl border-border/50 bg-card/60"
                   name="username"
                   placeholder="junseong"
                   required
@@ -73,9 +73,9 @@ export function AuthForms({ initialMessage }: AuthFormsProps) {
                   pattern="[a-z0-9._-]{4,20}"
                 />
               </FieldShell>
-              <FieldShell label="password">
+              <FieldShell label="비밀번호">
                 <Input
-                  className="h-12 rounded-xl"
+                  className="h-12 rounded-xl border-border/50 bg-card/60"
                   name="password"
                   type="password"
                   placeholder="비밀번호 입력"
@@ -83,7 +83,7 @@ export function AuthForms({ initialMessage }: AuthFormsProps) {
                 />
               </FieldShell>
 
-              <Button className="mt-2 h-12 rounded-full text-sm font-semibold" type="submit">
+              <Button className="mt-2 h-12 rounded-full" type="submit">
                 로그인
               </Button>
             </form>
@@ -91,12 +91,12 @@ export function AuthForms({ initialMessage }: AuthFormsProps) {
 
           <TabsContent value="signup">
             <div className="mt-5">
-              <p className="text-sm font-medium text-muted-foreground">Sign Up</p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-foreground">
-                가입 요청을 보내고 승인 대기열에 등록하세요
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Sign Up</p>
+              <h2 className="mt-2 text-foreground">
+                함께할 준비가 되셨나요
               </h2>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                id, 이름, 비밀번호만 입력하면 슈퍼어드민 검토를 위한 가입 요청이 생성됩니다.
+                가입 요청을 보내면 관리자 승인 후 매칭 보드에 입장할 수 있습니다.
               </p>
             </div>
 
@@ -107,9 +107,9 @@ export function AuthForms({ initialMessage }: AuthFormsProps) {
             ) : null}
 
             <form className="mt-6 grid gap-4" action={signUpWithPassword}>
-              <FieldShell label="id">
+              <FieldShell label="아이디">
                 <Input
-                  className="h-12 rounded-xl"
+                  className="h-12 rounded-xl border-border/50 bg-card/60"
                   name="username"
                   placeholder="junseong"
                   required
@@ -119,11 +119,17 @@ export function AuthForms({ initialMessage }: AuthFormsProps) {
                 />
               </FieldShell>
               <FieldShell label="이름">
-                <Input className="h-12 rounded-xl" name="fullName" placeholder="김준성" required minLength={2} />
-              </FieldShell>
-              <FieldShell label="password">
                 <Input
-                  className="h-12 rounded-xl"
+                  className="h-12 rounded-xl border-border/50 bg-card/60"
+                  name="fullName"
+                  placeholder="김준성"
+                  required
+                  minLength={2}
+                />
+              </FieldShell>
+              <FieldShell label="비밀번호">
+                <Input
+                  className="h-12 rounded-xl border-border/50 bg-card/60"
                   name="password"
                   type="password"
                   placeholder="6자 이상"
@@ -132,28 +138,18 @@ export function AuthForms({ initialMessage }: AuthFormsProps) {
                 />
               </FieldShell>
 
-              <Button className="mt-2 h-12 rounded-full text-sm font-semibold" type="submit">
+              <Button className="mt-2 h-12 rounded-full" type="submit">
                 가입 요청하기
               </Button>
             </form>
           </TabsContent>
         </Tabs>
 
-        <div className="mt-6 flex flex-wrap gap-2">
-          <Button variant="outline" className="h-10 rounded-full" render={<Link href="/" />}>
-            랜딩으로 돌아가기
-          </Button>
-          <Button variant="outline" className="h-10 rounded-full" render={<Link href="/pending" />}>
-            승인 대기 페이지
+        <div className="mt-6 text-center">
+          <Button variant="ghost" className="rounded-full text-sm text-muted-foreground" render={<Link href="/" />}>
+            홈으로 돌아가기
           </Button>
         </div>
-
-        <Alert className="mt-6 rounded-2xl">
-          <AlertDescription>
-            가입 후 `cupid_memberships`에 `username + full_name + pending`으로 등록되고, 슈퍼어드민이
-            `viewer` 또는 `admin` 권한을 승인하면 보드 접근이 열립니다.
-          </AlertDescription>
-        </Alert>
       </CardContent>
     </Card>
   );

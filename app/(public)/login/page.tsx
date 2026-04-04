@@ -1,74 +1,36 @@
 import Link from "next/link";
-import { AuthForms } from "@/components/auth-forms";
+import { CupidLogo } from "@/components/cupid-logo";
+import { SakuraRain } from "@/components/sakura-rain";
+import { LoginForm } from "@/components/login-form";
 
 type LoginPageProps = {
   searchParams: Promise<{ message?: string }>;
 };
 
-function StepCard({
-  step,
-  title,
-  body,
-}: {
-  step: string;
-  title: string;
-  body: string;
-}) {
-  return (
-    <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">{step}</p>
-      <strong className="mt-2 block text-base font-semibold text-slate-800">{title}</strong>
-      <p className="mt-1 text-sm leading-6 text-slate-500">{body}</p>
-    </article>
-  );
-}
-
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const { message } = await searchParams;
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-slate-50 py-10 text-slate-800">
-      <div className="mx-auto flex min-h-[calc(100vh-5rem)] w-full max-w-[1440px] flex-col justify-center px-4 md:px-8 lg:px-12">
-        <div className="mb-6 flex items-center justify-between">
-          <Link href="/" className="text-sm font-medium text-slate-500 transition hover:text-slate-800">
-            Project Cupid
-          </Link>
-        </div>
+    <main className="flex min-h-screen flex-col items-center justify-center overflow-x-hidden bg-gradient-to-br from-rose-50 via-pink-50/30 to-orange-50/50 px-4 py-10">
+      <SakuraRain petalCount={40} />
+      <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_top,rgba(255,242,245,0.84),rgba(255,247,243,0.68),rgba(255,255,255,0.38))]" />
 
-        <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(380px,0.92fr)] lg:items-center">
-          <article className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm sm:p-8 lg:p-10">
-            <p className="text-sm font-medium text-rose-500">Trusted Match Network</p>
-            <h1 className="mt-3 text-[clamp(2.4rem,7vw,4.5rem)] font-semibold leading-[0.94] tracking-[-0.06em] text-slate-800">
-              신뢰하는 사람만
-              <br />
-              승인받고 입장합니다
-            </h1>
-            <p className="mt-5 max-w-[56ch] text-sm leading-7 text-slate-500 sm:text-base">
-              가입부터 승인, 보드 입장까지 하나의 흐름으로 정리했습니다. 감성은 유지하되
-              인증 경험은 훨씬 더 가볍고 편안하게 느껴지도록 재설계했습니다.
-            </p>
+      <div className="relative z-[1] flex w-full max-w-md flex-col items-center gap-8">
+        <Link href="/" className="flex items-center gap-3 transition hover:opacity-80">
+          <div className="flex size-11 items-center justify-center rounded-[20px] border border-border/40 bg-card/70 text-primary shadow-sm">
+            <CupidLogo size={24} />
+          </div>
+          <div>
+            <strong className="block text-sm font-semibold text-foreground sm:text-base">
+              Project Cupid
+            </strong>
+            <span className="block text-[13px] leading-5 text-muted-foreground">
+              사랑이 피어나는 스튜디오
+            </span>
+          </div>
+        </Link>
 
-            <div className="mt-8 grid gap-3 sm:grid-cols-3">
-              <StepCard
-                step="Step 1"
-                title="아이디 가입"
-                body="아이디, 이름, 비밀번호만 입력"
-              />
-              <StepCard
-                step="Step 2"
-                title="승인 대기"
-                body="pending 상태로 승인 큐에 등록"
-              />
-              <StepCard
-                step="Step 3"
-                title="보드 입장"
-                body="승인 후 대시보드 접근 가능"
-              />
-            </div>
-          </article>
-
-          <AuthForms initialMessage={message} />
-        </section>
+        <LoginForm initialMessage={message} />
       </div>
     </main>
   );
