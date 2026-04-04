@@ -1,3 +1,6 @@
+import { cn } from "@/lib/cn";
+import { Badge } from "@/components/ui/badge";
+
 type GenderToggleFieldProps = {
   name: string;
   label?: string;
@@ -16,17 +19,19 @@ export function GenderToggleField({
 
   return (
     <fieldset className="grid gap-2">
-      <legend className="flex flex-wrap items-center gap-2 text-[0.96rem] font-bold text-[#725761]">
+      <legend className="flex flex-wrap items-center gap-2 text-[0.96rem] font-bold text-secondary-foreground">
         <span>{label}</span>
-        <span
-          className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+        <Badge
+          variant="secondary"
+          className={cn(
+            "rounded-full px-2 py-0.5 text-[11px] font-semibold",
             required
-              ? "bg-[#fff1e6] text-[#b46d59]"
-              : "bg-[#f7f0eb] text-[#8b6a63]"
-          }`}
+              ? "bg-secondary text-primary"
+              : "bg-muted text-muted-foreground",
+          )}
         >
           {required ? "[필수]" : "[선택]"}
-        </span>
+        </Badge>
       </legend>
       <div className="grid grid-cols-2 gap-3">
         <label className="group">
@@ -38,7 +43,7 @@ export function GenderToggleField({
             defaultChecked={normalizedValue === "남"}
             required={required}
           />
-          <span className="flex min-h-12 items-center justify-center rounded-2xl border border-[#e8d8cf] bg-white/90 px-4 text-sm font-semibold text-[#725861] transition peer-checked:border-[#d8b28a] peer-checked:bg-gradient-to-r peer-checked:from-[#f2c98d] peer-checked:to-[#c78662] peer-checked:text-[#2b1b11] group-hover:-translate-y-0.5">
+          <span className="flex min-h-12 items-center justify-center rounded-2xl border border-border bg-card/90 px-4 text-sm font-semibold text-secondary-foreground transition peer-checked:border-accent peer-checked:bg-gradient-to-r peer-checked:from-accent peer-checked:to-primary peer-checked:text-foreground group-hover:-translate-y-0.5">
             남
           </span>
         </label>
@@ -51,7 +56,7 @@ export function GenderToggleField({
             defaultChecked={normalizedValue === "여"}
             required={required}
           />
-          <span className="flex min-h-12 items-center justify-center rounded-2xl border border-[#e8d8cf] bg-white/90 px-4 text-sm font-semibold text-[#725861] transition peer-checked:border-[#d8b28a] peer-checked:bg-gradient-to-r peer-checked:from-[#f2c98d] peer-checked:to-[#c78662] peer-checked:text-[#2b1b11] group-hover:-translate-y-0.5">
+          <span className="flex min-h-12 items-center justify-center rounded-2xl border border-border bg-card/90 px-4 text-sm font-semibold text-secondary-foreground transition peer-checked:border-accent peer-checked:bg-gradient-to-r peer-checked:from-accent peer-checked:to-primary peer-checked:text-foreground group-hover:-translate-y-0.5">
             여
           </span>
         </label>

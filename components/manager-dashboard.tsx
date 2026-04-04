@@ -9,6 +9,10 @@ import {
 import { MatchDetailModal } from "@/components/match-detail-modal";
 import { MatchHistoryListModal } from "@/components/match-history-list-modal";
 import { SakuraRain } from "@/components/sakura-rain";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/cn";
 import { canEditCandidates } from "@/lib/role-utils";
 import { getOutcomeDotClass } from "@/lib/status-ui";
 import type { AppRole, Candidate, Membership, TimelineEvent } from "@/lib/types";
@@ -32,29 +36,32 @@ function ViewSegmentControl({
   return (
     <div className="relative flex w-full max-w-xl rounded-full border border-white/60 bg-white/75 p-1.5 shadow-[0_12px_40px_rgba(244,114,182,0.15),inset_0_2px_16px_rgba(244,114,182,0.12)] backdrop-blur-md">
       <span
-        className={`pointer-events-none absolute bottom-1.5 top-1.5 w-[calc(50%-6px)] rounded-full bg-gradient-to-r from-rose-500 to-pink-500 shadow-[0_8px_28px_rgba(244,114,182,0.45)] transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-          view === "flow" ? "left-1.5" : "left-[calc(50%+3px)]"
-        }`}
+        className={cn(
+          "pointer-events-none absolute bottom-1.5 top-1.5 w-[calc(50%-6px)] rounded-full bg-gradient-to-r from-rose-500 to-pink-500 shadow-[0_8px_28px_rgba(244,114,182,0.45)] transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
+          view === "flow" ? "left-1.5" : "left-[calc(50%+3px)]",
+        )}
         aria-hidden
       />
-      <button
-        type="button"
+      <Button
+        variant="ghost"
         onClick={() => onChange("flow")}
-        className={`relative z-10 flex-1 rounded-full px-4 py-3 text-sm font-semibold tracking-[-0.02em] transition-colors duration-500 ease-out sm:px-6 ${
-          view === "flow" ? "text-white" : "text-rose-400 hover:text-rose-600"
-        }`}
+        className={cn(
+          "relative z-10 flex-1 rounded-full px-4 py-3 text-sm font-semibold tracking-[-0.02em] transition-colors duration-500 ease-out sm:px-6",
+          view === "flow" ? "text-white hover:bg-transparent hover:text-white" : "text-rose-400 hover:bg-transparent hover:text-rose-600",
+        )}
       >
         플로우 보드
-      </button>
-      <button
-        type="button"
+      </Button>
+      <Button
+        variant="ghost"
         onClick={() => onChange("inventory")}
-        className={`relative z-10 flex-1 rounded-full px-4 py-3 text-sm font-semibold tracking-[-0.02em] transition-colors duration-500 ease-out sm:px-6 ${
-          view === "inventory" ? "text-white" : "text-rose-400 hover:text-rose-600"
-        }`}
+        className={cn(
+          "relative z-10 flex-1 rounded-full px-4 py-3 text-sm font-semibold tracking-[-0.02em] transition-colors duration-500 ease-out sm:px-6",
+          view === "inventory" ? "text-white hover:bg-transparent hover:text-white" : "text-rose-400 hover:bg-transparent hover:text-rose-600",
+        )}
       >
         전체 매물
-      </button>
+      </Button>
     </div>
   );
 }
@@ -144,7 +151,7 @@ function TimelinePanel({
               <span className="absolute left-[7px] top-7 h-[calc(100%-0.25rem)] w-px bg-gradient-to-b from-rose-200/80 to-orange-100/50" />
             ) : null}
             <span
-              className={`absolute left-0 top-1.5 h-4 w-4 rounded-full border-[3px] border-white shadow-[0_2px_8px_rgb(244,114,182,0.2)] ${getOutcomeDotClass(event.outcome)}`}
+              className={cn("absolute left-0 top-1.5 h-4 w-4 rounded-full border-[3px] border-white shadow-[0_2px_8px_rgb(244,114,182,0.2)]", getOutcomeDotClass(event.outcome))}
             />
             <div className="rounded-2xl border border-rose-100/40 bg-rose-50/35 p-3.5">
               <div className="flex items-start justify-between gap-3">
@@ -177,13 +184,13 @@ function TimelinePanel({
         </div>
       </div>
       {showViewAll ? (
-        <button
-          type="button"
+        <Button
+          variant="ghost"
           onClick={onViewAll}
-          className="shrink-0 cursor-pointer text-sm text-rose-400 transition hover:text-rose-600"
+          className="shrink-0 text-sm text-rose-400 hover:bg-transparent hover:text-rose-600"
         >
           전체보기
-        </button>
+        </Button>
       ) : null}
     </div>
   );
@@ -199,7 +206,7 @@ function TimelinePanel({
 
   return (
     <aside
-      className={`w-full rounded-[28px] border border-white/60 bg-white/75 p-6 shadow-[0_12px_40px_rgb(244,114,182,0.1)] backdrop-blur-md ${className}`}
+      className={cn("w-full rounded-[28px] border border-white/60 bg-white/75 p-6 shadow-[0_12px_40px_rgb(244,114,182,0.1)] backdrop-blur-md", className)}
     >
       {headerRow}
       {list}
@@ -370,7 +377,7 @@ export function ManagerDashboard({
               </span>
               <div className="flex h-11 items-center gap-2 rounded-xl border border-rose-100/80 bg-white/90 px-3 shadow-[0_4px_20px_rgb(244,114,182,0.06)]">
                 <SearchIcon />
-                <input
+                <Input
                   value={search}
                   onChange={(event) =>
                     startTransition(() => {
@@ -378,29 +385,29 @@ export function ManagerDashboard({
                     })
                   }
                   placeholder="이름, 직업, 지역, 태그 검색"
-                  className="h-full w-full bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
+                  className="h-full w-full border-0 bg-transparent text-sm text-slate-700 shadow-none ring-0 placeholder:text-slate-400 focus-visible:border-0 focus-visible:ring-0"
                 />
               </div>
             </label>
 
             <div className="flex items-end gap-2 lg:hidden">
-              <button
-                type="button"
+              <Button
+                variant="outline"
                 onClick={() => setFiltersOpen((current) => !current)}
-                className="inline-flex h-11 flex-1 items-center justify-center rounded-xl border border-rose-100/80 bg-white/80 px-4 text-sm font-medium text-rose-600 shadow-sm"
+                className="h-11 flex-1 rounded-xl border-rose-100/80 bg-white/80 px-4 text-sm font-medium text-rose-600 shadow-sm"
               >
                 {filtersOpen ? "필터 닫기" : "필터 열기"}
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                variant="outline"
                 onClick={resetFilters}
-                className="inline-flex h-11 flex-1 items-center justify-center rounded-xl border border-rose-100/80 bg-white/80 px-4 text-sm font-medium text-slate-600"
+                className="h-11 flex-1 rounded-xl border-rose-100/80 bg-white/80 px-4 text-sm font-medium text-slate-600"
               >
                 초기화
-              </button>
+              </Button>
             </div>
 
-            <div className={`${filtersOpen ? "grid" : "hidden"} gap-3 lg:contents`}>
+            <div className={cn(filtersOpen ? "grid" : "hidden", "gap-3 lg:contents")}>
               <FilterSelect label="상태" value={status} options={statusOptions} onChange={setStatus} />
               <FilterSelect label="성별" value={gender} options={genderOptions} onChange={setGender} />
               <FilterSelect
@@ -411,41 +418,41 @@ export function ManagerDashboard({
               />
 
               <div className="hidden items-end gap-2 lg:flex">
-                <button
-                  type="button"
+                <Button
+                  variant="outline"
                   onClick={resetFilters}
-                  className="inline-flex h-11 items-center justify-center rounded-xl border border-rose-100/80 bg-white/80 px-4 text-sm font-medium text-slate-600 transition hover:border-rose-200"
+                  className="h-11 rounded-xl border-rose-100/80 bg-white/80 px-4 text-sm font-medium text-slate-600 hover:border-rose-200"
                 >
                   초기화
-                </button>
+                </Button>
               </div>
             </div>
           </div>
 
           <div className="mt-5 flex flex-wrap gap-2">
             {status ? (
-              <span className="rounded-full bg-rose-100/80 px-3 py-1 text-xs font-medium text-rose-600">
+              <Badge className="rounded-full bg-rose-100/80 px-3 py-1 text-xs font-medium text-rose-600">
                 상태 {status}
-              </span>
+              </Badge>
             ) : null}
             {gender ? (
-              <span className="rounded-full bg-orange-100/80 px-3 py-1 text-xs font-medium text-orange-700">
+              <Badge className="rounded-full bg-orange-100/80 px-3 py-1 text-xs font-medium text-orange-700">
                 성별 {gender}
-              </span>
+              </Badge>
             ) : null}
             {religion ? (
-              <span className="rounded-full bg-rose-50 px-3 py-1 text-xs font-medium text-rose-500">
+              <Badge className="rounded-full bg-rose-50 px-3 py-1 text-xs font-medium text-rose-500">
                 종교 {religion}
-              </span>
+              </Badge>
             ) : null}
             {deferredSearch ? (
-              <span className="rounded-full bg-rose-500/15 px-3 py-1 text-xs font-semibold text-rose-600">
+              <Badge className="rounded-full bg-rose-500/15 px-3 py-1 text-xs font-semibold text-rose-600">
                 검색 {deferredSearch}
-              </span>
+              </Badge>
             ) : null}
-            <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-slate-600 shadow-sm ring-1 ring-rose-100/60">
+            <Badge variant="outline" className="rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-slate-600 shadow-sm ring-1 ring-rose-100/60">
               {isFiltering ? "필터 적용 중" : `${filteredCandidates.length}명 표시`}
-            </span>
+            </Badge>
           </div>
         </section>
 
@@ -484,33 +491,32 @@ export function ManagerDashboard({
 
         {view === "inventory" ? (
           <>
-            <button
-              type="button"
+            <Button
               onClick={() => setTimelineOpen(true)}
-              className="fixed bottom-6 right-6 z-30 inline-flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-rose-500 to-pink-500 text-white shadow-[0_12px_40px_rgb(244,114,182,0.45)] transition hover:scale-[1.03] xl:hidden"
+              className="fixed bottom-6 right-6 z-30 h-14 w-14 rounded-full bg-gradient-to-br from-rose-500 to-pink-500 text-white shadow-[0_12px_40px_rgb(244,114,182,0.45)] transition hover:scale-[1.03] xl:hidden"
               aria-label="최근 매칭 기록 열기"
             >
               <TimelineIcon />
-            </button>
+            </Button>
 
             {timelineOpen ? (
               <div className="fixed inset-0 z-50 flex items-end bg-slate-900/30 backdrop-blur-[2px] xl:hidden">
                 <button
                   type="button"
                   aria-label="닫기"
-                  className="absolute inset-0"
+                  className="absolute inset-0 cursor-pointer"
                   onClick={() => setTimelineOpen(false)}
                 />
                 <div className="relative w-full rounded-t-[32px] border border-white/60 bg-gradient-to-b from-rose-50/95 to-pink-50/90 p-5 shadow-2xl">
                   <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-rose-200/80" />
                   <div className="mb-4 flex justify-end">
-                    <button
-                      type="button"
+                    <Button
+                      variant="ghost"
                       onClick={() => setTimelineOpen(false)}
-                      className="text-sm font-medium text-rose-500"
+                      className="text-sm font-medium text-rose-500 hover:bg-transparent hover:text-rose-700"
                     >
                       닫기
-                    </button>
+                    </Button>
                   </div>
                   <TimelinePanel
                     embedInSheet

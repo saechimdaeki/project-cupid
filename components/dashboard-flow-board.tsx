@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { moveCandidatePairStatus, moveCandidateStatus } from "@/lib/admin-actions";
+import { cn } from "@/lib/cn";
 import {
   canAccessCandidateDetail,
   canEditCandidates,
@@ -16,6 +17,16 @@ import {
   getStatusTopBorderClass,
 } from "@/lib/status-ui";
 import type { AppRole, Candidate, CandidateStatus } from "@/lib/types";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export type DashboardBoardCandidate = Pick<
   Candidate,
@@ -241,9 +252,12 @@ export function DashboardFlowBoard({
 
     const body = (
       <article
-        className={`group overflow-hidden rounded-2xl border border-rose-100/50 border-t-4 bg-white/90 p-4 shadow-[0_8px_32px_rgb(244,114,182,0.08)] backdrop-blur-sm transition ${getStatusTopBorderClass(candidate.status)} ${
-          draggingId === candidate.id ? "scale-[0.99] opacity-70" : ""
-        } ${isPending ? "opacity-70" : "hover:-translate-y-1 hover:shadow-[0_14px_44px_rgb(244,114,182,0.12)]"}`}
+        className={cn(
+          "group overflow-hidden rounded-2xl border border-rose-100/50 border-t-4 bg-white/90 p-4 shadow-[0_8px_32px_rgb(244,114,182,0.08)] backdrop-blur-sm transition",
+          getStatusTopBorderClass(candidate.status),
+          draggingId === candidate.id && "scale-[0.99] opacity-70",
+          isPending ? "opacity-70" : "hover:-translate-y-1 hover:shadow-[0_14px_44px_rgb(244,114,182,0.12)]",
+        )}
       >
         <div className="flex items-start gap-3">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-50 to-orange-50 text-2xl shadow-inner">
@@ -264,39 +278,40 @@ export function DashboardFlowBoard({
 
         <div className="mt-4 flex flex-wrap gap-2">
           {ageLabel ? (
-            <span className="inline-flex items-center rounded-full bg-rose-100 px-2.5 py-1 text-xs font-semibold text-rose-600">
+            <Badge className="rounded-full bg-rose-100 px-2.5 py-1 font-semibold text-rose-600">
               {ageLabel}
-            </span>
+            </Badge>
           ) : null}
           {candidate.occupation ? (
-            <span className="inline-flex items-center rounded-full bg-orange-100 px-2.5 py-1 text-xs font-semibold text-orange-600">
+            <Badge className="rounded-full bg-orange-100 px-2.5 py-1 font-semibold text-orange-600">
               {candidate.occupation}
-            </span>
+            </Badge>
           ) : null}
           {candidate.region ? (
-            <span className="inline-flex items-center rounded-full bg-rose-100 px-2.5 py-1 text-xs font-semibold text-rose-600">
+            <Badge className="rounded-full bg-rose-100 px-2.5 py-1 font-semibold text-rose-600">
               {candidate.region}
-            </span>
+            </Badge>
           ) : null}
           {extraMeta.map((item, i) => (
-            <span
+            <Badge
               key={`${candidate.id}-${item}`}
-              className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${
+              className={cn(
+                "rounded-full px-2.5 py-1",
                 i % 2 === 0
                   ? "bg-orange-100 text-orange-600"
-                  : "bg-rose-100 text-rose-600"
-              }`}
+                  : "bg-rose-100 text-rose-600",
+              )}
             >
               {item}
-            </span>
+            </Badge>
           ))}
           {candidate.highlight_tags.slice(0, 2).map((tag) => (
-            <span
+            <Badge
               key={`${candidate.id}-${tag}`}
-              className="inline-flex items-center rounded-full border border-rose-200/60 bg-white/80 px-2.5 py-1 text-xs font-semibold text-rose-600"
+              className="rounded-full border border-rose-200/60 bg-white/80 px-2.5 py-1 font-semibold text-rose-600"
             >
               {tag}
-            </span>
+            </Badge>
           ))}
         </div>
 
@@ -429,9 +444,11 @@ export function DashboardFlowBoard({
     return (
       <article
         key={status}
-        className={`min-h-0 rounded-[26px] border border-white/70 p-5 shadow-[0_10px_40px_rgb(244,114,182,0.08)] backdrop-blur-sm ${getLaneSurfaceClass(status)} ${
-          dropTarget === status ? "ring-2 ring-rose-400/60 ring-offset-2 ring-offset-rose-50/80" : ""
-        }`}
+        className={cn(
+          "min-h-0 rounded-[26px] border border-white/70 p-5 shadow-[0_10px_40px_rgb(244,114,182,0.08)] backdrop-blur-sm",
+          getLaneSurfaceClass(status),
+          dropTarget === status && "ring-2 ring-rose-400/60 ring-offset-2 ring-offset-rose-50/80",
+        )}
         {...dropHandlers}
       >
         {/* 헤더 */}
@@ -442,9 +459,9 @@ export function DashboardFlowBoard({
               <p className="mt-1 text-sm leading-relaxed text-slate-600">{description}</p>
             ) : null}
           </div>
-          <div className="rounded-full border border-rose-100/60 bg-white/90 px-3.5 py-1 text-sm font-semibold text-rose-600 shadow-sm">
+          <Badge className="rounded-full border border-rose-100/60 bg-white/90 px-3.5 py-1 text-sm font-semibold text-rose-600 shadow-sm">
             {laneItems.length}
-          </div>
+          </Badge>
         </div>
 
         {/* 남(좌) / 여(우) 2-column */}
@@ -485,21 +502,22 @@ export function DashboardFlowBoard({
           const count = groupCandidatesByStatus(items, lane.key).length;
 
           return (
-            <button
+            <Button
               key={lane.key}
-              type="button"
+              variant="outline"
               onClick={() => setMobileLane(lane.key)}
-              className={`inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition ${
+              className={cn(
+                "shrink-0 gap-2 rounded-full px-4 py-2 text-sm font-medium transition",
                 mobileLane === lane.key
-                  ? `${getStatusBadgeClass(lane.key)} border`
-                  : "border border-slate-200 bg-white text-slate-600"
-              }`}
+                  ? cn(getStatusBadgeClass(lane.key), "border")
+                  : "border border-slate-200 bg-white text-slate-600",
+              )}
             >
               <span>{lane.title}</span>
-              <span className={`rounded-full px-2 py-0.5 text-xs ${mobileLane === lane.key ? "bg-white/15" : "bg-slate-100"}`}>
+              <span className={cn("rounded-full px-2 py-0.5 text-xs", mobileLane === lane.key ? "bg-white/15" : "bg-slate-100")}>
                 {count}
               </span>
-            </button>
+            </Button>
           );
         })}
       </div>
@@ -517,71 +535,84 @@ export function DashboardFlowBoard({
         {PRIMARY_LANES.map((lane) => renderLane(lane.key, lane.title, lane.description))}
       </div>
 
-      {pairComposer ? (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/35 px-4 py-4 backdrop-blur-[2px] sm:items-center">
-          <div className="w-full max-w-xl rounded-[28px] bg-white p-5 shadow-2xl sm:p-6">
-            <p className={`text-xs font-semibold uppercase tracking-[0.24em] ${
-              pairComposer.targetStatus === "matched" ? "text-blue-500" : "text-emerald-500"
-            }`}>
-              {pairComposer.targetStatus === "matched" ? "Pair Match" : "Couple Confirm"}
-            </p>
-            <h3 className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-slate-800">
-              {candidateDirectory.get(pairComposer.candidateId)?.full_name}와 연결할 후보를 선택하세요
-            </h3>
-            <p className="mt-2 text-sm leading-6 text-slate-500">
-              상대 후보를 선택하면 두 후보의 상태가 함께 이동합니다.
-            </p>
+      <Dialog
+        open={Boolean(pairComposer)}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) {
+            setPairComposer(null);
+            setDraggingId(null);
+            setDropTarget(null);
+          }
+        }}
+      >
+        <DialogContent className="max-w-xl rounded-[28px] p-5 sm:p-6" showCloseButton={false}>
+          {pairComposer ? (
+            <>
+              <DialogHeader>
+                <p className={cn(
+                  "text-xs font-semibold uppercase tracking-[0.24em]",
+                  pairComposer.targetStatus === "matched" ? "text-blue-500" : "text-emerald-500",
+                )}>
+                  {pairComposer.targetStatus === "matched" ? "Pair Match" : "Couple Confirm"}
+                </p>
+                <DialogTitle className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-slate-800">
+                  {candidateDirectory.get(pairComposer.candidateId)?.full_name}와 연결할 후보를 선택하세요
+                </DialogTitle>
+                <DialogDescription className="mt-2 text-sm leading-6 text-slate-500">
+                  상대 후보를 선택하면 두 후보의 상태가 함께 이동합니다.
+                </DialogDescription>
+              </DialogHeader>
 
-            <label className="mt-5 grid gap-2">
-              <span className="text-sm font-medium text-slate-700">상대 후보</span>
-              <select
-                value={pairComposer.counterpartId}
-                onChange={(event) =>
-                  setPairComposer((current) =>
-                    current ? { ...current, counterpartId: event.target.value } : current,
-                  )
-                }
-                className="h-12 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-700 outline-none"
-              >
-                <option value="">후보를 선택하세요</option>
-                {pairOptions.map((candidate) => (
-                  <option key={candidate.id} value={candidate.id}>
-                    {candidate.full_name} · {candidate.gender} · {getHeadline(candidate)}
-                  </option>
-                ))}
-              </select>
-            </label>
+              <label className="mt-5 grid gap-2">
+                <span className="text-sm font-medium text-slate-700">상대 후보</span>
+                <select
+                  value={pairComposer.counterpartId}
+                  onChange={(event) =>
+                    setPairComposer((current) =>
+                      current ? { ...current, counterpartId: event.target.value } : current,
+                    )
+                  }
+                  className="h-12 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-700 outline-none"
+                >
+                  <option value="">후보를 선택하세요</option>
+                  {pairOptions.map((candidate) => (
+                    <option key={candidate.id} value={candidate.id}>
+                      {candidate.full_name} · {candidate.gender} · {getHeadline(candidate)}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-            {!pairOptions.length ? (
-              <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
-                현재 연결 가능한 반대 성별 후보가 없습니다.
-              </div>
-            ) : null}
+              {!pairOptions.length ? (
+                <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+                  현재 연결 가능한 반대 성별 후보가 없습니다.
+                </div>
+              ) : null}
 
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
-              <button
-                type="button"
-                onClick={() => {
-                  setPairComposer(null);
-                  setDraggingId(null);
-                  setDropTarget(null);
-                }}
-                className="inline-flex h-11 items-center justify-center rounded-full border border-slate-200 px-4 text-sm font-medium text-slate-600"
-              >
-                취소
-              </button>
-              <button
-                type="button"
-                disabled={isPending || !pairComposer.counterpartId}
-                onClick={confirmPairMove}
-                className="inline-flex h-11 items-center justify-center rounded-full bg-rose-500 px-5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {pairComposer.targetStatus === "matched" ? "매칭진행중으로 이동" : "커플완성으로 확정"}
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+              <DialogFooter className="mt-6 flex flex-col gap-3 rounded-b-[28px] border-t-0 bg-transparent p-0 sm:flex-row sm:justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setPairComposer(null);
+                    setDraggingId(null);
+                    setDropTarget(null);
+                  }}
+                  className="h-11 rounded-full border border-slate-200 px-4 text-sm font-medium text-slate-600"
+                >
+                  취소
+                </Button>
+                <Button
+                  disabled={isPending || !pairComposer.counterpartId}
+                  onClick={confirmPairMove}
+                  className="h-11 rounded-full bg-rose-500 px-5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {pairComposer.targetStatus === "matched" ? "매칭진행중으로 이동" : "커플완성으로 확정"}
+                </Button>
+              </DialogFooter>
+            </>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

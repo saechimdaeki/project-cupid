@@ -1,5 +1,14 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import localFont from "next/font/local";
+import { cn } from "@/lib/utils";
+
+const pretendard = localFont({
+  src: "../node_modules/pretendard/dist/web/variable/woff2/PretendardVariable.woff2",
+  display: "swap",
+  weight: "45 920",
+  variable: "--font-body",
+});
 
 export const metadata: Metadata = {
   title: "Project Cupid",
@@ -18,7 +27,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko">
+    <html lang="ko" className={cn("font-sans", pretendard.variable)}>
       <body className="overflow-x-hidden">{children}</body>
     </html>
   );

@@ -9,7 +9,10 @@ paths:
 
 - **Tailwind CSS v4** (`@import "tailwindcss"`) — 스타일링
 - **`cn()` 유틸** (`lib/cn.ts`) — className 병합
-- shadcn/ui 없음 — 모든 컴포넌트 직접 구현
+- **shadcn/ui** (`components/ui/`) — 기본 UI 컴포넌트 (base-nova 스타일, @base-ui/react 기반)
+  - Button, Input, Label, Badge, Card, Dialog, Select, Textarea 등 전체 설치
+  - shadcn의 `render` prop으로 다형성 구현 (`asChild` 대신)
+  - 색상은 CSS 변수 기반 (`--primary`, `--border` 등 globals.css에 정의)
 
 ## className 병합: `cn()` 사용
 
@@ -75,17 +78,19 @@ return "border-rose-100 bg-rose-50";
 `app-shell.tsx`, `global-nav.tsx` 등 **앱 프레임 컴포넌트**에서는 `globals.css` CSS 변수를 사용한다.
 
 ```
---bg, --bg-elevated    배경
---panel, --panel-soft  패널 표면
---line, --line-strong  구분선
---text, --muted        텍스트
---gold, --rose         브랜드 액센트
+--shell-bg, --shell-bg-elevated    셸 배경
+--shell-panel, --shell-panel-soft  셸 패널 표면
+--shell-line, --shell-line-strong  셸 구분선
+--shell-text, --shell-muted        셸 텍스트
+--shell-gold, --shell-rose         셸 브랜드 액센트
 ```
 
 ```tsx
 // 앱 셸/네비게이션에서만
-<nav className="bg-[var(--panel)] border-b border-[var(--line)]">
+<nav className="bg-[var(--shell-panel)] border-b border-[var(--shell-line)]">
 ```
+
+> 일반 컴포넌트는 shadcn CSS 변수(`--primary`, `--border`, `--muted-foreground` 등)를 사용한다.
 
 ## 컴포넌트 작성 규칙
 
@@ -168,15 +173,184 @@ components/
 <div className="grid grid-cols-3 gap-4">
 ```
 
+## shadcn/ui 우선 사용 원칙
+
+**UI 요소 구현 시 shadcn/ui 컴포넌트를 우선 사용한다.** 직접 `<button>`, `<input>`, `<div>`로 만들기 전에 `components/ui/`에 해당 컴포넌트가 있는지 먼저 확인한다.
+
+```tsx
+// 올바른 예: shadcn Button 사용
+import { Button } from "@/components/ui/button";
+<Button variant="outline" className="rounded-full">확인</Button>
+
+// 금지: 직접 button 스타일링
+<button className="inline-flex items-center justify-center rounded-full border ...">확인</button>
+```
+
+shadcn에 없는 커스텀 컴포넌트만 직접 구현한다. 다형성은 `render` prop 사용 (`asChild` 아님):
+
+```tsx
+// 올바른 예: Link를 Button으로 렌더링
+<Button render={<Link href="/dashboard" />}>대시보드</Button>
+```
+
+색상은 hex 하드코딩 대신 CSS 변수 또는 Tailwind 시맨틱 클래스를 사용한다:
+
+```tsx
+// 올바른 예
+<p className="text-foreground">...</p>
+<p className="text-muted-foreground">...</p>
+<div className="border-border bg-card">...</div>
+
+// 금지: hex 하드코딩
+<p className="text-[#2a1b21]">...</p>
+<div className="border-[#ead8cf]">...</div>
+```
+
+## 타이포그래피
+
+> 상세: `docs/typography.md`
+
+### 헤딩 — 태그에 스타일 내장 (globals.css 오버라이딩)
+
+`h1`~`h4` 태그에 크기/행간/자간/굵기가 이미 적용됨. **헤딩에 크기/행간/자간 클래스를 직접 지정하지 않는다.**
+
+| 태그 | 크기 | 행간 | 자간 |
+|------|------|------|------|
+| `h1` | `clamp(2.4rem, 8vw, 4.2rem)` | 0.92 | -0.06em |
+| `h2` | `clamp(1.6rem, 5vw, 2.4rem)` | 1.1 | -0.04em |
+| `h3` | 20px | 1.3 | -0.03em |
+| `h4` | 16px | 1.4 | -0.02em |
+
+```tsx
+// 올바른 예: 태그만 쓰면 됨, 색상만 추가
+<h2 className="text-foreground">섹션 제목</h2>
+
+// 금지: 크기/행간/자간 직접 지정
+<h2 className="text-2xl font-semibold tracking-[-0.04em] leading-tight">
+```
+
+### 본문 스케일
+
+| 용도 | Tailwind |
+|------|----------|
+| 긴 설명 | `text-[15px] leading-7` |
+| 일반 본문 | `text-sm leading-6` |
+| 보조/힌트 | `text-[13px] leading-5` |
+| 타임스탬프 | `text-xs` |
+| 라벨/뱃지 | `text-[11px] font-semibold tracking-[0.2em] uppercase` |
+
+### font-weight
+
+- **400** `font-normal` — 본문, 설명
+- **500** `font-medium` — 버튼, 캡션, 라벨
+- **600** `font-semibold` — 헤딩, 카드 이름, 수치
+- **700** `font-bold` — **사용 금지**
+
+### 텍스트 색상
+
+| 요소 | 클래스 |
+|------|--------|
+| 헤딩 | `text-foreground` |
+| 본문 | `text-foreground` 또는 `text-muted-foreground` |
+| 보조/힌트/캡션 | `text-muted-foreground` |
+| 링크 | `text-primary hover:text-primary/80` |
+| 에러 | `text-destructive` |
+
+### 폰트 크기 제한
+
+- **최소 12px** (`text-xs` 이상)
+- 유일한 예외: `text-[11px]`은 `uppercase` + `tracking-[0.2em]`과 반드시 함께
+- `text-[10px]` 이하 절대 금지
+
+### 말줄임
+
+- 한 줄: `truncate` (`overflow-hidden text-ellipsis whitespace-nowrap` 직접 조합 금지)
+- 여러 줄: `line-clamp-2` / `line-clamp-3`
+
+## UI 토큰
+
+> 상세: `docs/ui-tokens.md`
+
+### Spacing
+
+- 컴포넌트 패딩: `p-2`(소) / `p-4`(일반) / `p-5~p-6`(대형)
+- 요소 간 gap: `gap-1.5`(인라인) / `gap-4`(폼/그리드) / `gap-6~gap-8`(섹션)
+- 임의 값(`gap-[18px]`) 금지 — Tailwind 4px 단위 스케일 사용
+
+### Border Radius
+
+| 용도 | Tailwind |
+|------|----------|
+| 뱃지, 버튼(pill) | `rounded-full` |
+| 인풋, 썸네일 | `rounded-xl` |
+| 일반 카드 | `rounded-2xl` |
+| 대형 카드, 모달 | `rounded-[28px]` |
+
+### Shadow
+
+- 호버 부양: `shadow-sm`
+- 일반 카드: `shadow-md`
+- 모달/드롭다운: `shadow-lg`
+- 히어로/플로팅: `shadow-xl`
+- 커스텀 `box-shadow` 인라인 금지
+
+### Z-Index
+
+| 레이어 | Tailwind | 용도 |
+|--------|----------|------|
+| 10 | `z-10` | 스티키 헤더 |
+| 20 | `z-20` | 드롭다운, 팝오버 |
+| 30 | `z-30` | 사이드 패널 |
+| 40 | `z-40` | 모달 배경 |
+| 50 | `z-50` | 모달 콘텐츠, 토스트 |
+
+`z-[999]` 등 임의 값 금지.
+
+### Transition
+
+- 기본: `transition` (hover/focus용)
+- 색상만: `transition-colors`
+- transform 포함: `transition-all`
+- duration 커스텀: `duration-200` / `duration-300` (임의 값 금지)
+- 인라인 `style={{ transition }}` 금지
+
+### 아이콘
+
+- Button 내부: 자동 `size-4`
+- 독립 아이콘: `size-4`(소) / `size-5`(기본) / `size-6`(대)
+- `w-4 h-4` 대신 **`size-4`** 사용
+- 임의 크기(`w-[18px]`) 금지
+
+## 리뷰 체크리스트
+
+코드 리뷰 시 아래 항목을 확인한다:
+
+- [ ] shadcn/ui에 해당 컴포넌트가 있는데 직접 구현하지 않았는가?
+- [ ] hex 하드코딩 대신 CSS 변수(`text-foreground`, `border-border` 등)를 사용했는가?
+- [ ] `cn()` 대신 template literal로 className을 합치지 않았는가?
+- [ ] 새로운 색상 값을 추가할 때 `globals.css` CSS 변수로 등록했는가?
+- [ ] 헤딩에 크기/행간/자간을 직접 지정하지 않았는가? (태그에 내장)
+- [ ] 폰트 12px 미만을 사용하지 않았는가? (라벨 11px 예외)
+- [ ] `font-bold` 대신 `font-semibold`를 사용했는가?
+- [ ] `w-4 h-4` 대신 `size-4`를 사용했는가?
+- [ ] 임의 spacing/radius/z-index 값을 사용하지 않았는가?
+- [ ] `cursor-pointer`가 클릭 가능한 요소에 적용되었는가?
+
 ## 규칙 요약
 
-1. 컴포넌트는 **반드시** `function` 선언 사용
-2. className 병합은 **반드시** `cn()` 사용 (template literal 금지)
-3. 상태별 색상은 **`lib/status-ui.ts`에만** 정의 (컴포넌트에서 직접 switch 금지)
-4. 동적 Tailwind 클래스 조합 금지 (`bg-${color}-500` 형태)
-5. 비즈니스 로직은 컴포넌트에서 분리
-6. 이벤트 핸들러 props는 `on` 접두사
-7. boolean props는 `is`/`has` 접두사
-8. 리스트 `key`는 고유값 사용 (index 금지)
-9. **모든 UI는 모바일 대응**
-10. **폰트 최소 12px** (`text-xs` 이상)
+1. **shadcn/ui 컴포넌트 우선 사용** — 직접 구현 전에 `components/ui/` 확인
+2. 컴포넌트는 **반드시** `function` 선언 사용
+3. className 병합은 **반드시** `cn()` 사용 (template literal 금지)
+4. **색상은 CSS 변수/Tailwind 시맨틱 클래스 사용** — hex 하드코딩 금지
+5. 상태별 색상은 **`lib/status-ui.ts`에만** 정의 (컴포넌트에서 직접 switch 금지)
+6. 동적 Tailwind 클래스 조합 금지 (`bg-${color}-500` 형태)
+7. 비즈니스 로직은 컴포넌트에서 분리
+8. 이벤트 핸들러 props는 `on` 접두사
+9. boolean props는 `is`/`has` 접두사
+10. 리스트 `key`는 고유값 사용 (index 금지)
+11. **모든 UI는 모바일 대응**
+12. **폰트 최소 12px** (`text-xs` 이상), `font-bold` 금지
+13. **헤딩은 태그에 스타일 내장** — 크기/행간/자간 직접 지정 금지
+14. **spacing/radius/z-index는 정해진 스케일만** — 임의 값 금지
+15. **아이콘은 `size-*`** — `w-* h-*` 금지
+16. **클릭 가능한 요소에 `cursor-pointer`** 필수

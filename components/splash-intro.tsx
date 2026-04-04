@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 
 export function SplashIntro() {
   const [visible, setVisible] = useState(false);
@@ -41,7 +42,8 @@ export function SplashIntro() {
       className={`splashOverlay ${leaving ? "leave" : ""}`}
       aria-hidden="true"
     >
-      <button
+      <Button
+        variant="ghost"
         type="button"
         className="splashSkip"
         onClick={() => {
@@ -51,7 +53,7 @@ export function SplashIntro() {
         }}
       >
         건너뛰기
-      </button>
+      </Button>
 
       <div className="splashScene">
         <div className="splashAura" />
@@ -77,7 +79,7 @@ export function SplashIntro() {
         </div>
 
         <div className="splashCopy">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#b46d59]">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-primary">
             Project Cupid
           </p>
           <h1>좋은 인연을 잇습니다</h1>

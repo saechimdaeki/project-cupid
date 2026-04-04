@@ -3,6 +3,10 @@
 import type { ChangeEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/cn";
 
 const CANDIDATE_PHOTOS_BUCKET = "sogaeting";
 const MAX_TOTAL_UPLOAD_BYTES = 45 * 1024 * 1024;
@@ -303,17 +307,15 @@ export function PhotoUploadField({
 
   return (
     <div className="grid gap-4">
-      <label className="grid cursor-pointer gap-2 rounded-[26px] border border-dashed border-[#dcb79e] bg-gradient-to-br from-[#fffaf7] to-[#fff3eb] p-5 transition hover:border-[#c98a6b]">
-        <span className="flex flex-wrap items-center gap-2 text-sm font-semibold text-[#7b626a]">
+      <label className="grid cursor-pointer gap-2 rounded-[26px] border border-dashed border-border bg-gradient-to-br from-background to-secondary p-5 transition hover:border-primary">
+        <span className="flex flex-wrap items-center gap-2 text-sm font-semibold text-secondary-foreground">
           <span>사진 첨부</span>
-          <span className="inline-flex items-center rounded-full bg-[#f7f0eb] px-2 py-0.5 text-[11px] font-semibold text-[#8b6a63]">
-            [선택]
-          </span>
+          <Badge variant="secondary">[선택]</Badge>
         </span>
-        <span className="text-sm leading-7 text-[#8b6a63]">
+        <span className="text-sm leading-7 text-muted-foreground">
           선택 사항입니다. 사진은 브라우저에서 바로 안전하게 업로드됩니다. 모바일에서는 원본 업로드를 우선 사용합니다.
         </span>
-        <span className="inline-flex min-h-11 w-full items-center justify-center rounded-full border border-[#d8b28a] bg-white px-4 text-sm font-semibold text-[#7b6049] sm:w-fit">
+        <span className="inline-flex min-h-11 w-full items-center justify-center rounded-full border border-border bg-card px-4 text-sm font-semibold text-secondary-foreground sm:w-fit">
           사진 선택하기
         </span>
         <input
@@ -331,35 +333,37 @@ export function PhotoUploadField({
         <input key={preview.id} type="hidden" name={inputName} value={preview.path} />
       ))}
 
-      <div className="flex flex-col gap-2 rounded-[22px] border border-[#ead8cf] bg-white/88 px-4 py-3 text-sm text-[#6d5961] sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-2 rounded-[22px] border border-border bg-card/88 px-4 py-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
         <span>{message}</span>
-        {isUploading ? <span className="font-semibold text-[#b46d59]">사진 업로드 중...</span> : null}
+        {isUploading ? <span className="font-semibold text-primary">사진 업로드 중...</span> : null}
       </div>
 
       {previews.length ? (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {previews.map((preview, index) => (
-            <article
+            <Card
               key={preview.id}
-              className="overflow-hidden rounded-[24px] border border-[#ead8cf] bg-white shadow-[0_14px_32px_rgba(143,95,89,0.08)]"
+              className="overflow-hidden rounded-[24px] gap-0 py-0 shadow-[0_14px_32px_rgba(143,95,89,0.08)]"
             >
               <div
-                className="aspect-[4/5] bg-[#fff5ef] bg-cover bg-center"
+                className="aspect-[4/5] bg-secondary bg-cover bg-center"
                 style={{ backgroundImage: `url(${preview.url})` }}
               />
               <div className="grid gap-3 p-4">
                 <div>
-                  <strong className="block break-all text-sm font-semibold text-[#24161c]">
+                  <strong className="block break-all text-sm font-semibold text-foreground">
                     {preview.name}
                   </strong>
-                  <span className="mt-2 block text-xs leading-6 text-[#8b6a63]">
+                  <span className="mt-2 block text-xs leading-6 text-muted-foreground">
                     {index === 0 ? `${preview.helperText} · 대표 사진` : preview.helperText}
                   </span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs font-semibold text-[#b46d59]">{preview.sizeText}</span>
-                  <button
-                    className="inline-flex min-h-9 items-center rounded-full border border-[#ead8cf] bg-white px-3 text-xs font-semibold text-[#5e4850] disabled:cursor-not-allowed disabled:opacity-50"
+                  <span className="text-xs font-semibold text-primary">{preview.sizeText}</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-full"
                     type="button"
                     disabled={isUploading}
                     onClick={() => {
@@ -367,10 +371,10 @@ export function PhotoUploadField({
                     }}
                   >
                     제거
-                  </button>
+                  </Button>
                 </div>
               </div>
-            </article>
+            </Card>
           ))}
         </div>
       ) : null}

@@ -3,8 +3,11 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { PersonPreview } from "@/components/person-preview";
 import { SakuraRain } from "@/components/sakura-rain";
+import { cn } from "@/lib/cn";
 import { homePreviewCandidates } from "@/lib/preview-scene";
 import { createClient } from "@/lib/supabase/client";
 import type { AppRole } from "@/lib/types";
@@ -57,18 +60,20 @@ function Header({
               className="hidden items-center gap-1 rounded-full border border-white/60 bg-white/50 px-2 py-1 shadow-[inset_0_1px_8px_rgba(244,114,182,0.08)] backdrop-blur-sm lg:flex"
               aria-label="최고 관리자 메뉴"
             >
-              <Link
-                href="/dashboard"
+              <Button
+                variant="ghost"
                 className="rounded-full px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-white/70 hover:text-rose-600"
+                render={<Link href="/dashboard" />}
               >
                 대시보드
-              </Link>
-              <Link
-                href="/admin"
+              </Button>
+              <Button
+                variant="ghost"
                 className="rounded-full px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-white/70 hover:text-rose-600"
+                render={<Link href="/admin" />}
               >
                 승인·권한 관리
-              </Link>
+              </Button>
             </nav>
           ) : null}
         </div>
@@ -81,22 +86,23 @@ function Header({
             <p className="hidden text-sm font-medium text-slate-600 md:block">
               환영합니다, <span className="text-slate-800">{auth.userName}님</span> ❤️
             </p>
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={onLogout}
               className="px-2 text-sm font-medium text-slate-500 transition hover:text-rose-500"
             >
               로그아웃
-            </button>
+            </Button>
           </div>
         ) : (
-          <button
-            type="button"
+          <Button
+            variant="outline"
             onClick={onLogin}
             className="soft-pulse inline-flex h-11 items-center justify-center rounded-full border border-white/60 bg-white/65 px-5 text-sm font-semibold text-slate-700 shadow-[0_8px_30px_rgb(244,114,182,0.1)] backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/80"
           >
             회원가입 / 로그인
-          </button>
+          </Button>
         )}
       </div>
     </header>
@@ -113,15 +119,17 @@ function StatCard({
   description: string;
 }) {
   return (
-    <article className="rounded-3xl border border-white/50 bg-white/60 p-5 shadow-[0_8px_30px_rgb(244,114,182,0.1)] backdrop-blur-md">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
-        {label}
-      </p>
-      <strong className="mt-3 block text-2xl font-semibold tracking-[-0.04em] text-slate-800">
-        {value}
-      </strong>
-      <p className="mt-2 text-sm leading-6 text-slate-500">{description}</p>
-    </article>
+    <Card className="rounded-3xl border border-white/50 bg-white/60 p-0 shadow-[0_8px_30px_rgb(244,114,182,0.1)] backdrop-blur-md">
+      <CardContent className="p-5">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+          {label}
+        </p>
+        <strong className="mt-3 block text-2xl font-semibold tracking-[-0.04em] text-slate-800">
+          {value}
+        </strong>
+        <p className="mt-2 text-sm leading-6 text-slate-500">{description}</p>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -137,27 +145,30 @@ function PreviewCard({
   align: "left" | "right";
 }) {
   return (
-    <article
-      className={`absolute top-16 w-[13.8rem] rounded-[32px] border border-white/60 bg-white/70 p-3 shadow-[0_8px_30px_rgb(244,114,182,0.12)] backdrop-blur-lg ${
+    <Card
+      className={cn(
+        "absolute top-16 w-[13.8rem] rounded-[32px] border border-white/60 bg-white/70 p-0 shadow-[0_8px_30px_rgb(244,114,182,0.12)] backdrop-blur-lg",
         align === "left" ? "left-4 rotate-[-13deg] sm:left-8" : "right-4 rotate-[12deg] sm:right-8"
-      }`}
+      )}
     >
-      <div className="overflow-hidden rounded-[24px] border border-white/70 bg-rose-50/40">
-        <PersonPreview
-          imageUrl={imageUrl}
-          size="sm"
-          fit="cover"
-          position="top"
-          className="h-44 bg-rose-50/40"
-        />
-      </div>
-      <div className="px-1 pb-1 pt-4">
-        <strong className="block text-sm font-semibold tracking-[-0.03em] text-slate-800">
-          {title}
-        </strong>
-        <p className="mt-1 text-xs leading-5 text-slate-500">{subtitle}</p>
-      </div>
-    </article>
+      <CardContent className="p-3">
+        <div className="overflow-hidden rounded-[24px] border border-white/70 bg-rose-50/40">
+          <PersonPreview
+            imageUrl={imageUrl}
+            size="sm"
+            fit="cover"
+            position="top"
+            className="h-44 bg-rose-50/40"
+          />
+        </div>
+        <div className="px-1 pb-1 pt-4">
+          <strong className="block text-sm font-semibold tracking-[-0.03em] text-slate-800">
+            {title}
+          </strong>
+          <p className="mt-1 text-xs leading-5 text-slate-500">{subtitle}</p>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -249,21 +260,23 @@ function InventoryCard({
   imageUrl: string | null;
 }) {
   return (
-    <article className="flex h-full w-full flex-col overflow-hidden rounded-[32px] border border-white/50 bg-white/60 p-5 shadow-[0_8px_30px_rgb(244,114,182,0.1)] backdrop-blur-md sm:p-6">
-      <div className="overflow-hidden rounded-[26px] border border-white/60 bg-rose-50/35">
-        <PersonPreview
-          imageUrl={imageUrl}
-          size="sm"
-          fit="cover"
-          position="top"
-          className="h-72 min-h-[16rem] bg-rose-50/35 sm:h-80"
-        />
-      </div>
-      <div className="px-1 pb-1 pt-5">
-        <h3 className="text-xl font-semibold tracking-[-0.03em] text-slate-800">{title}</h3>
-        <p className="mt-2 text-sm leading-6 text-slate-500">{subtitle}</p>
-      </div>
-    </article>
+    <Card className="flex h-full w-full flex-col overflow-hidden rounded-[32px] border border-white/50 bg-white/60 p-0 shadow-[0_8px_30px_rgb(244,114,182,0.1)] backdrop-blur-md">
+      <CardContent className="flex flex-1 flex-col p-5 sm:p-6">
+        <div className="overflow-hidden rounded-[26px] border border-white/60 bg-rose-50/35">
+          <PersonPreview
+            imageUrl={imageUrl}
+            size="sm"
+            fit="cover"
+            position="top"
+            className="h-72 min-h-[16rem] bg-rose-50/35 sm:h-80"
+          />
+        </div>
+        <div className="px-1 pb-1 pt-5">
+          <h3 className="text-xl font-semibold tracking-[-0.03em] text-slate-800">{title}</h3>
+          <p className="mt-2 text-sm leading-6 text-slate-500">{subtitle}</p>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -418,19 +431,20 @@ export default function HomePage() {
             </div>
 
             <div className="mt-6 flex flex-col flex-wrap items-start justify-start gap-3 sm:flex-row sm:items-center">
-              <Link
-                href="/dashboard"
+              <Button
                 className="soft-pulse inline-flex h-12 items-center justify-center rounded-full bg-rose-500 px-6 text-sm font-semibold text-white shadow-[0_8px_30px_rgb(244,114,182,0.22)] transition hover:-translate-y-0.5 hover:bg-rose-600"
+                render={<Link href="/dashboard" />}
               >
                 대시보드 이동
-              </Link>
+              </Button>
               {auth.isLoggedIn && auth.userRole === "super_admin" ? (
-                <Link
-                  href="/admin"
+                <Button
+                  variant="outline"
                   className="inline-flex h-12 items-center justify-center rounded-full border border-rose-500 bg-white px-6 text-sm font-semibold text-rose-500 shadow-sm transition hover:bg-rose-50"
+                  render={<Link href="/admin" />}
                 >
                   권한 관리 페이지
-                </Link>
+                </Button>
               ) : null}
             </div>
 
