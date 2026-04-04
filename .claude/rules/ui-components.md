@@ -173,15 +173,59 @@ components/
 <div className="grid grid-cols-3 gap-4">
 ```
 
+## shadcn/ui 우선 사용 원칙
+
+**UI 요소 구현 시 shadcn/ui 컴포넌트를 우선 사용한다.** 직접 `<button>`, `<input>`, `<div>`로 만들기 전에 `components/ui/`에 해당 컴포넌트가 있는지 먼저 확인한다.
+
+```tsx
+// 올바른 예: shadcn Button 사용
+import { Button } from "@/components/ui/button";
+<Button variant="outline" className="rounded-full">확인</Button>
+
+// 금지: 직접 button 스타일링
+<button className="inline-flex items-center justify-center rounded-full border ...">확인</button>
+```
+
+shadcn에 없는 커스텀 컴포넌트만 직접 구현한다. 다형성은 `render` prop 사용 (`asChild` 아님):
+
+```tsx
+// 올바른 예: Link를 Button으로 렌더링
+<Button render={<Link href="/dashboard" />}>대시보드</Button>
+```
+
+색상은 hex 하드코딩 대신 CSS 변수 또는 Tailwind 시맨틱 클래스를 사용한다:
+
+```tsx
+// 올바른 예
+<p className="text-foreground">...</p>
+<p className="text-muted-foreground">...</p>
+<div className="border-border bg-card">...</div>
+
+// 금지: hex 하드코딩
+<p className="text-[#2a1b21]">...</p>
+<div className="border-[#ead8cf]">...</div>
+```
+
+## 리뷰 체크리스트
+
+코드 리뷰 시 아래 항목을 확인한다:
+
+- [ ] shadcn/ui에 해당 컴포넌트가 있는데 직접 구현하지 않았는가?
+- [ ] hex 하드코딩 대신 CSS 변수(`text-foreground`, `border-border` 등)를 사용했는가?
+- [ ] `cn()` 대신 template literal로 className을 합치지 않았는가?
+- [ ] 새로운 색상 값을 추가할 때 `globals.css` CSS 변수로 등록했는가?
+
 ## 규칙 요약
 
-1. 컴포넌트는 **반드시** `function` 선언 사용
-2. className 병합은 **반드시** `cn()` 사용 (template literal 금지)
-3. 상태별 색상은 **`lib/status-ui.ts`에만** 정의 (컴포넌트에서 직접 switch 금지)
-4. 동적 Tailwind 클래스 조합 금지 (`bg-${color}-500` 형태)
-5. 비즈니스 로직은 컴포넌트에서 분리
-6. 이벤트 핸들러 props는 `on` 접두사
-7. boolean props는 `is`/`has` 접두사
-8. 리스트 `key`는 고유값 사용 (index 금지)
-9. **모든 UI는 모바일 대응**
-10. **폰트 최소 12px** (`text-xs` 이상)
+1. **shadcn/ui 컴포넌트 우선 사용** — 직접 구현 전에 `components/ui/` 확인
+2. 컴포넌트는 **반드시** `function` 선언 사용
+3. className 병합은 **반드시** `cn()` 사용 (template literal 금지)
+4. **색상은 CSS 변수/Tailwind 시맨틱 클래스 사용** — hex 하드코딩 금지
+5. 상태별 색상은 **`lib/status-ui.ts`에만** 정의 (컴포넌트에서 직접 switch 금지)
+6. 동적 Tailwind 클래스 조합 금지 (`bg-${color}-500` 형태)
+7. 비즈니스 로직은 컴포넌트에서 분리
+8. 이벤트 핸들러 props는 `on` 접두사
+9. boolean props는 `is`/`has` 접두사
+10. 리스트 `key`는 고유값 사용 (index 금지)
+11. **모든 UI는 모바일 대응**
+12. **폰트 최소 12px** (`text-xs` 이상)
