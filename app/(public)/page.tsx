@@ -15,11 +15,8 @@ import { getCurrentMembership } from "@/lib/permissions";
 export default async function HomePage() {
   const membership = await getCurrentMembership();
 
-  if (membership) {
-    if (membership.status === "approved") {
-      redirect("/dashboard");
-    }
-    redirect("/pending");
+  if (membership?.status === "approved") {
+    redirect("/dashboard");
   }
 
   return (
