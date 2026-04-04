@@ -12,6 +12,10 @@ export type MatchOutcome =
   | "dating"
   | "couple"
   | "closed";
+export enum DashboardViewMode {
+  FLOW = "flow",
+  INVENTORY = "inventory",
+}
 
 export type Candidate = {
   id: string;

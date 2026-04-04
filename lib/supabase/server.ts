@@ -21,9 +21,13 @@ export const createClient = cache(async function createClient() {
         setAll(
           cookiesToSet: Array<{ name: string; value: string; options: any }>,
         ) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            cookieStore.set(name, value, options);
-          });
+          try {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options);
+            });
+          } catch {
+            // Server Component에서 호출 시 쿠키 수정 불가 — 무시해도 안전
+          }
         },
       },
     },

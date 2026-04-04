@@ -7,6 +7,7 @@ import {
 } from "@/lib/data";
 import { dashboardPreviewMatchRecords, homePreviewCandidates } from "@/lib/preview-scene";
 import { requireApprovedMembership } from "@/lib/permissions";
+import { DashboardViewMode } from "@/lib/types";
 
 type DashboardTestPageProps = {
   searchParams: Promise<{ view?: string }>;
@@ -30,12 +31,12 @@ export default async function DashboardTestPage({ searchParams }: DashboardTestP
 
   return (
     <>
-      <GlobalNav membership={membership} active={view === "inventory" ? "candidates" : "dashboard"} />
+      <GlobalNav membership={membership} active={view === DashboardViewMode.INVENTORY ? "candidates" : "dashboard"} />
       <DashboardV2
         candidates={candidates}
         timelineEvents={timelineEvents}
         membership={membership}
-        initialView={view === "inventory" ? "inventory" : "flow"}
+        initialView={view === DashboardViewMode.INVENTORY ? DashboardViewMode.INVENTORY : DashboardViewMode.FLOW}
       />
     </>
   );

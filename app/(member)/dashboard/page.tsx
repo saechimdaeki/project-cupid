@@ -1,5 +1,6 @@
 import { GlobalNav } from "@/components/global-nav";
 import { ManagerDashboard } from "@/components/manager-dashboard";
+import { DashboardViewMode } from "@/lib/types";
 import {
   buildTimelineEvents,
   getDashboardCandidates,
@@ -36,7 +37,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   return (
     <>
-      <GlobalNav membership={membership} active={view === "inventory" ? "candidates" : "dashboard"} />
+      <GlobalNav membership={membership} active={view === DashboardViewMode.INVENTORY ? "candidates" : "dashboard"} />
       {bannerText ? (
         <div
           className="fixed inset-x-0 top-[4.25rem] z-30 flex justify-center px-4 sm:top-[4.5rem]"
@@ -51,7 +52,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         candidates={candidates}
         timelineEvents={timelineEvents}
         membership={membership}
-        initialView={view === "inventory" ? "inventory" : "flow"}
+        initialView={view === DashboardViewMode.INVENTORY ? DashboardViewMode.INVENTORY : DashboardViewMode.FLOW}
       />
     </>
   );
