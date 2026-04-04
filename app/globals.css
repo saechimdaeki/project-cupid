@@ -30,6 +30,7 @@
   --popover-foreground: #2a1b21;
   --primary: #f43f5e;
   --primary-foreground: #ffffff;
+  --color-primary-foreground: #ffffff;
   --secondary: #f8efea;
   --secondary-foreground: #5c3d45;
   --muted: #f3ebe6;
@@ -68,6 +69,7 @@ body {
   margin: 0;
   color: #2a1b21;
   font-family: var(--body);
+  word-break: keep-all;
   background:
     radial-gradient(circle at top, rgba(255, 230, 212, 0.7), transparent 20%),
     radial-gradient(circle at 18% 12%, rgba(248, 198, 195, 0.34), transparent 22%),
@@ -274,9 +276,11 @@ canvas {
   height: auto;
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
+@layer base {
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
 }
 
 button,
@@ -4658,8 +4662,8 @@ button {
   --color-muted: var(--muted);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
+  --color-primary-foreground: #ffffff;
+  --color-primary: #f43f5e;
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
