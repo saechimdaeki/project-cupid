@@ -1,21 +1,50 @@
 ---
 paths:
-  - "components/**/*Form*.tsx"
-  - "components/**/*Dialog*.tsx"
-  - "components/**/*Modal*.tsx"
+  - "components/**/*form*.tsx"
+  - "components/**/*dialog*.tsx"
+  - "components/**/*modal*.tsx"
   - "lib/**/*-actions.ts"
+  - "lib/schemas/**/*"
 ---
 
 # 폼 패턴
 
 ## 기술 스택
 
+- **React Hook Form** — 폼 상태 관리
+- **Zod** — 스키마 검증 (서버/클라이언트 공유)
 - **Server Actions** — 뮤테이션 처리
-- **`useActionState`** (React 19) — 폼 상태 관리
-- **`useFormStatus`** (React 19) — 제출 pending 상태
-- react-hook-form, zod 없음
+- **`useFormStatus`** (React 19) — HTML form action 기반 pending 상태 (단순 폼용)
+
+## Zod 스키마 (`lib/schemas/`)
+
+검증 스키마는 `lib/schemas/`에 도메인별로 분리한다. 서버와 클라이언트에서 동일한 스키마를 공유한다.
+
+```typescript
+// lib/schemas/candidate.ts
+import { z } from "zod";
+
+export const createCandidateSchema = z.object({
+  fullName: z.string().min(1, "이름을 입력해주세요").max(50),
+  gender: z.enum(["male", "female"]),
+  birthYear: z.number().int().min(1960).max(2010),
+  occupation: z.string().optional(),
+});
+
+export type CreateCandidateInput = z.infer<typeof createCandidateSchema>;
+```
+
+### 스키마 네이밍
+
+| 파일 | 내용 |
+|------|------|
+| `lib/schemas/candidate.ts` | 후보자 관련 스키마 |
+| `lib/schemas/match.ts` | 매칭 관련 스키마 |
+| `lib/schemas/admin.ts` | 관리자 관련 스키마 |
 
 ## Server Action 작성
+
+Server Action에서 Zod로 서버 검증한다. `formData`가 아닌 **파싱된 객체**를 받는다.
 
 ```typescript
 // lib/candidate-actions.ts
@@ -23,22 +52,27 @@ paths:
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { createCandidateSchema, type CreateCandidateInput } from "@/lib/schemas/candidate";
 
 type ActionResult = { error: string } | { success: true };
 
 export async function createCandidate(
-  _prev: ActionResult | null,
-  formData: FormData,
+  input: CreateCandidateInput,
 ): Promise<ActionResult> {
+  const parsed = createCandidateSchema.safeParse(input);
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
   const supabase = await createClient();
   if (!supabase) return { error: "연결 실패" };
 
-  const fullName = formData.get("full_name") as string;
-  if (!fullName?.trim()) return { error: "이름을 입력해주세요" };
-
   const { error } = await supabase
     .from("cupid_candidates")
-    .insert({ full_name: fullName });
+    .insert({
+      full_name: parsed.data.fullName,
+      gender: parsed.data.gender,
+      birth_year: parsed.data.birthYear,
+      occupation: parsed.data.occupation ?? null,
+    });
 
   if (error) return { error: error.message };
 
@@ -47,64 +81,132 @@ export async function createCandidate(
 }
 ```
 
-`useActionState`를 쓰려면 Server Action 시그니처가 `(prevState, formData)` 형태여야 한다.
+> 클라이언트에서 이미 Zod 검증을 했더라도, **서버에서 반드시 재검증**한다.
 
-## `useActionState` 기반 폼 (HTML form + action)
-
-React 19의 `useActionState`를 사용한다. `useState` + 수동 핸들러 패턴 금지.
+## React Hook Form + Server Action 연동
 
 ```tsx
 // components/candidate-create-form.tsx
 "use client";
 
-import { useActionState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useTransition } from "react";
+import { createCandidateSchema, type CreateCandidateInput } from "@/lib/schemas/candidate";
 import { createCandidate } from "@/lib/candidate-actions";
-import { SubmitButton } from "./submit-button";
 
 export function CandidateCreateForm() {
-  const [state, action] = useActionState(createCandidate, null);
+  const [isPending, startTransition] = useTransition();
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors },
+  } = useForm<CreateCandidateInput>({
+    resolver: zodResolver(createCandidateSchema),
+  });
+
+  function onSubmit(data: CreateCandidateInput) {
+    startTransition(async () => {
+      const result = await createCandidate(data);
+      if ("error" in result) {
+        setError("root", { message: result.error });
+      }
+    });
+  }
 
   return (
-    <form action={action} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div>
-        <label htmlFor="full_name" className="text-sm font-medium text-slate-700">
+        <label htmlFor="fullName" className="text-sm font-medium text-slate-700">
           이름
         </label>
         <input
-          id="full_name"
-          name="full_name"
-          type="text"
-          required
+          id="fullName"
+          {...register("fullName")}
           className="mt-1 w-full rounded-lg border border-rose-100 bg-white px-3 py-2 text-sm text-slate-800"
         />
+        {errors.fullName && (
+          <p className="mt-1 text-sm text-red-500">{errors.fullName.message}</p>
+        )}
       </div>
 
-      {state && "error" in state && (
-        <p className="text-sm text-red-500">{state.error}</p>
+      {errors.root && (
+        <p className="text-sm text-red-500">{errors.root.message}</p>
       )}
 
-      <SubmitButton>저장</SubmitButton>
+      <button
+        type="submit"
+        disabled={isPending}
+        className="rounded-lg px-4 py-2 text-sm font-medium"
+      >
+        {isPending ? "저장 중..." : "저장"}
+      </button>
     </form>
   );
 }
 ```
 
-## `useFormStatus` — SubmitButton 분리
+### 핵심 흐름
 
-pending 상태를 prop으로 내려보내지 않는다. `useFormStatus`를 쓰는 별도 컴포넌트로 분리한다.
+```
+사용자 입력 → RHF + Zod (클라이언트 검증) → Server Action + Zod (서버 재검증) → Supabase
+```
+
+## 에러 처리
+
+### 서버 에러 → `setError("root", ...)`로 폼에 인라인 표시
+
+```typescript
+// 금지: 에러를 redirect query param으로 처리
+if (!valid) redirect("/login?message=에러");
+
+// 올바른 예: 반환값으로 전달 → 폼에서 setError로 표시
+const result = await createCandidate(data);
+if ("error" in result) {
+  setError("root", { message: result.error });
+}
+```
+
+> 예외: `signOut`, 로그인 성공 후 페이지 이동 등 **탐색이 목적**인 경우는 `redirect()` 사용.
+
+### 필드별 서버 에러
+
+서버에서 특정 필드 에��를 반환하려면:
+
+```typescript
+// Server Action
+type ActionResult =
+  | { error: string; field?: string }
+  | { success: true };
+
+// 클라이언트
+if ("error" in result) {
+  if (result.field) {
+    setError(result.field as keyof CreateCandidateInput, { message: result.error });
+  } else {
+    setError("root", { message: result.error });
+  }
+}
+```
+
+## 단순 폼 (HTML form action + `useFormStatus`)
+
+필드 1~2개의 단순한 폼(검색, 로그인 등)은 RHF 없이 HTML form action을 사용해도 된다.
 
 ```tsx
-// components/submit-button.tsx
+// components/form-submit-button.tsx
 "use client";
 
 import { useFormStatus } from "react-dom";
+import { cn } from "@/lib/cn";
 
-type SubmitButtonProps = {
+type FormSubmitButtonProps = {
   children: React.ReactNode;
   className?: string;
 };
 
-export function SubmitButton({ children, className }: SubmitButtonProps) {
+export function FormSubmitButton({ children, className }: FormSubmitButtonProps) {
   const { pending } = useFormStatus();
 
   return (
@@ -113,29 +215,15 @@ export function SubmitButton({ children, className }: SubmitButtonProps) {
       disabled={pending}
       className={cn("rounded-lg px-4 py-2 text-sm font-medium", className)}
     >
-      {pending ? "저장 중..." : children}
+      {pending ? "처리 중..." : children}
     </button>
   );
 }
 ```
 
-## 에러 처리: redirect 금지
+## 비-form 뮤테이션 (버튼 클릭)
 
-Server Action 에서 에러를 `redirect()`로 처리하지 않는다. 반환값으로 전달해서 폼 안에 인라인으로 표시한다.
-
-```typescript
-// 금지: 에러를 redirect query param으로 처리
-if (!valid) redirect("/login?message=에러");
-
-// 올바른 예: 반환값으로 전달 → 폼에서 인라인 표시
-if (!valid) return { error: "에러 메시지" };
-```
-
-> 예외: `signOut`, 로그인 성공 후 페이지 이동 등 **탐색이 목적**인 경우는 `redirect()` 사용.
-
-## 클라이언트 전용 폼 (모달 내 단순 상태 변경)
-
-Server Action을 form action으로 연결하기 어려운 경우(모달 내 select 등)에만 `useTransition`을 사용한다.
+Server Action을 form 없이 호출하는 경우 `useTransition`을 사용한다.
 
 ```tsx
 "use client";
@@ -143,39 +231,26 @@ Server Action을 form action으로 연결하기 어려운 경우(모달 내 sele
 import { useTransition } from "react";
 import { updateCandidateStatus } from "@/lib/candidate-actions";
 
-type StatusChangeFormProps = {
+type StatusChangeButtonProps = {
   candidateId: string;
-  currentStatus: CandidateStatus;
-  onClose: () => void;
+  newStatus: CandidateStatus;
+  onComplete: () => void;
 };
 
-export function StatusChangeForm({ candidateId, currentStatus, onClose }: StatusChangeFormProps) {
+export function StatusChangeButton({ candidateId, newStatus, onComplete }: StatusChangeButtonProps) {
   const [isPending, startTransition] = useTransition();
-  const [status, setStatus] = useState(currentStatus);
 
-  function handleSubmit() {
+  function handleClick() {
     startTransition(async () => {
-      const result = await updateCandidateStatus(candidateId, status);
-      if (!("error" in result)) onClose();
+      const result = await updateCandidateStatus(candidateId, newStatus);
+      if ("success" in result) onComplete();
     });
   }
 
   return (
-    <div className="space-y-4">
-      <select
-        value={status}
-        onChange={(e) => setStatus(e.target.value as CandidateStatus)}
-        className="w-full rounded-lg border border-rose-100 bg-white px-3 py-2 text-sm"
-      >
-        <option value="active">적극검토</option>
-        <option value="matched">매칭진행중</option>
-        <option value="couple">커플완성</option>
-      </select>
-
-      <button onClick={handleSubmit} disabled={isPending}>
-        {isPending ? "저장 중..." : "변경"}
-      </button>
-    </div>
+    <button onClick={handleClick} disabled={isPending}>
+      {isPending ? "처리 중..." : "변경"}
+    </button>
   );
 }
 ```
@@ -183,10 +258,11 @@ export function StatusChangeForm({ candidateId, currentStatus, onClose }: Status
 ## 규칙
 
 1. 뮤테이션은 **반드시 Server Action** (`"use server"` 파일에 정의)
-2. Server Action 시그니처: `(prevState, formData)` — `useActionState` 대응
-3. 반환 타입: `{ error: string } | { success: true }` — `any` 금지
-4. **에러는 `redirect()` 금지** — 인라인으로 표시
-5. HTML form의 pending은 **`useFormStatus`** 로 처리 (`isPending` prop 전달 금지)
-6. 비-form 뮤테이션(버튼 클릭)은 **`useTransition`** 사용
-7. 뮤테이션 성공 후 **반드시 `revalidatePath()`** 호출
-8. `useState` + `setIsPending(true/false)` 수동 관리 패턴 금지
+2. 검증 스키마는 **`lib/schemas/`에 Zod로 정의** — 서버/클라이언트 공유
+3. **RHF + Zod**가 기본 폼 패턴 — 단순 폼(1~2 필드)만 HTML form action 허용
+4. Server Action은 **파싱된 객체**를 받고, **서버에서 Zod 재검증** 필수
+5. 반환 타입: `{ error: string } | { success: true }` — `any` 금지
+6. **에러는 `redirect()` 금지** — `setError()`로 인라인 표시
+7. RHF 폼의 pending은 **`useTransition`**, HTML form action의 pending은 **`useFormStatus`**
+8. 뮤테이션 성공 후 **반드시 `revalidatePath()`** 호출
+9. `useState` + `setIsPending(true/false)` 수동 관리 패턴 금지

@@ -3,6 +3,7 @@ paths:
   - "app/**/*"
   - "components/**/*"
   - "lib/**/*"
+  - "types/**/*"
 ---
 
 # 아키텍처 구조
@@ -70,7 +71,11 @@ lib/
 ├── auth-actions.ts           # 인증 Server Actions
 ├── admin-actions.ts          # 관리자 Server Actions
 ├── candidate-image-actions.ts
-├── types.ts                  # 도메인 타입 (Supabase 생성 타입과 별개로 앱 타입)
+├── types.ts                  # 레거시 타입 → types/domain.ts로 이관 예정
+├── schemas/                  # Zod 검증 스키마 (서버/클라이언트 공유)
+│   ├── candidate.ts
+│   ├── match.ts
+│   └── admin.ts
 ├── cn.ts                     # className 병합 유틸
 ├── match-flow-columns.ts     # 칸반 컬럼 설정
 ├── status-ui.ts              # 상태별 Tailwind 클래스 (단일 진실 공급원)
@@ -85,17 +90,18 @@ lib/
 
 ## 타입 관리
 
-타입 출처가 두 곳이다. 혼동하지 않는다:
+타입 출처가 세 곳이다. 역할을 혼동하지 않는다:
 
-| 위치 | 내용 | 용도 |
-|------|------|------|
-| `types/supabase.ts` | Supabase CLI 생성 타입 | DB row 타입, `mapXxx()` 함수 인자 |
-| `lib/types.ts` | 앱 도메인 타입 | 컴포넌트 props, 비즈니스 로직 |
+| 위치 | 내용 | 용도 | 상태 |
+|------|------|------|------|
+| `types/domain.ts` | 앱 도메인 타입 (camelCase) | 컴포넌트 props, 비즈니스 로직 | **정본** |
+| `types/supabase.ts` | Supabase CLI 생성 타입 | DB row 타입, `mapXxx()` 함수 인자 | 자동 생성 |
+| `lib/types.ts` | 구 타입 (snake_case) | — | **레거시 → `types/domain.ts`로 이관** |
 
 ```typescript
 // lib/data.ts
-import type { Tables } from "@/types/supabase";  // DB row 타입
-import type { Candidate } from "@/lib/types";     // 앱 도메인 타입
+import type { Tables } from "@/types/supabase";    // DB row 타입
+import type { Candidate } from "@/types/domain";    // 앱 도메인 타입 (정본)
 
 function mapCandidate(row: Tables<"cupid_candidates">): Candidate { ... }
 ```
@@ -132,5 +138,5 @@ export function OpenButton() {
 2. **`"use client"` 트리 말단 배치** — 상위 컴포넌트가 클라이언트가 되지 않도록
 3. **데이터 패칭은 app/ 레이어** — components/는 props로 받기만
 4. **뮤테이션은 Server Actions** — `lib/*-actions.ts`에 정의
-5. **도메인 타입은 `lib/types.ts`** — 컴포넌트 내 로컬 타입 재정의 금지
+5. **도메인 타입은 `types/domain.ts`** — 컴포넌트 내 로컬 타입 재정의 금지
 6. **features/ 폴더 없음** — app/components/lib 3계층 구조 사용
