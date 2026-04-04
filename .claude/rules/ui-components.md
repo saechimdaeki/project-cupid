@@ -180,15 +180,28 @@ components/
 
 ## shadcn/ui 우선 사용 원칙
 
-**UI 요소 구현 시 shadcn/ui 컴포넌트를 우선 사용한다.** 직접 `<button>`, `<input>`, `<div>`로 만들기 전에 `components/ui/`에 해당 컴포넌트가 있는지 먼저 확인한다.
+**UI 요소 구현 시 shadcn/ui 컴포넌트를 우선 사용한다.** `components/ui/`에 해당 컴포넌트가 있으면 반드시 사용한다.
+
+### HTML 태그 직접 사용 금지
+
+shadcn/ui에 대응하는 컴포넌트가 있는 HTML 태그는 직접 사용 금지:
+
+| HTML 태그 | shadcn/ui 컴포넌트 |
+|-----------|-------------------|
+| `<button>` | `Button` |
+| `<input>` | `Input` |
+| `<select>` | `Select` + `SelectTrigger` + `SelectContent` + `SelectItem` |
+| `<textarea>` | `Textarea` |
+| `<label>` | `Label` |
 
 ```tsx
-// 올바른 예: shadcn Button 사용
+// 올바른 예
 import { Button } from "@/components/ui/button";
 <Button variant="outline" className="rounded-full">확인</Button>
 
-// 금지: 직접 button 스타일링
-<button className="inline-flex items-center justify-center rounded-full border ...">확인</button>
+// 금지: 직접 HTML 태그 사용
+<button className="inline-flex items-center ...">확인</button>
+<select className="rounded-xl border ...">...</select>
 ```
 
 shadcn에 없는 커스텀 컴포넌트만 직접 구현한다. 다형성은 `render` prop 사용 (`asChild` 아님):
@@ -330,6 +343,7 @@ shadcn에 없는 커스텀 컴포넌트만 직접 구현한다. 다형성은 `re
 
 코드 리뷰 시 아래 항목을 확인한다:
 
+- [ ] `<button>`, `<select>`, `<input>` 등 HTML 태그를 직접 사용하지 않았는가? (shadcn/ui 컴포넌트 사용)
 - [ ] shadcn/ui에 해당 컴포넌트가 있는데 직접 구현하지 않았는가?
 - [ ] hex 하드코딩 대신 CSS 변수(`text-foreground`, `border-border` 등)를 사용했는가?
 - [ ] `cn()` 대신 template literal로 className을 합치지 않았는가?

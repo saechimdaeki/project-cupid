@@ -118,30 +118,24 @@ export function CandidateCreateForm() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div>
-        <label htmlFor="fullName" className="text-sm font-medium text-slate-700">
-          이름
-        </label>
-        <input
+        <Label htmlFor="fullName">이름</Label>
+        <Input
           id="fullName"
           {...register("fullName")}
-          className="mt-1 w-full rounded-lg border border-rose-100 bg-white px-3 py-2 text-sm text-slate-800"
+          className="mt-1"
         />
         {errors.fullName && (
-          <p className="mt-1 text-sm text-red-500">{errors.fullName.message}</p>
+          <p className="mt-1 text-sm text-destructive">{errors.fullName.message}</p>
         )}
       </div>
 
       {errors.root && (
-        <p className="text-sm text-red-500">{errors.root.message}</p>
+        <p className="text-sm text-destructive">{errors.root.message}</p>
       )}
 
-      <button
-        type="submit"
-        disabled={isPending}
-        className="rounded-lg px-4 py-2 text-sm font-medium"
-      >
+      <Button type="submit" disabled={isPending}>
         {isPending ? "저장 중..." : "저장"}
-      </button>
+      </Button>
     </form>
   );
 }
@@ -210,13 +204,9 @@ export function FormSubmitButton({ children, className }: FormSubmitButtonProps)
   const { pending } = useFormStatus();
 
   return (
-    <button
-      type="submit"
-      disabled={pending}
-      className={cn("rounded-lg px-4 py-2 text-sm font-medium", className)}
-    >
+    <Button type="submit" disabled={pending} className={cn("rounded-lg", className)}>
       {pending ? "처리 중..." : children}
-    </button>
+    </Button>
   );
 }
 ```
@@ -248,9 +238,9 @@ export function StatusChangeButton({ candidateId, newStatus, onComplete }: Statu
   }
 
   return (
-    <button onClick={handleClick} disabled={isPending}>
+    <Button onClick={handleClick} disabled={isPending}>
       {isPending ? "처리 중..." : "변경"}
-    </button>
+    </Button>
   );
 }
 ```

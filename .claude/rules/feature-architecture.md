@@ -126,9 +126,11 @@ export function CandidateLayout({ children }) {
 
 // open-button.tsx (클라이언트)
 "use client";
+import { Button } from "@/components/ui/button";
+
 export function OpenButton() {
   const [open, setOpen] = useState(false);
-  return <button onClick={() => setOpen(true)}>열기</button>;
+  return <Button onClick={() => setOpen(true)}>열기</Button>;
 }
 ```
 

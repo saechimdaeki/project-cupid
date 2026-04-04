@@ -58,10 +58,10 @@ export function DashboardInventoryView({
 
       {timelineOpen ? (
         <div className="fixed inset-0 z-50 flex items-end bg-slate-900/30 backdrop-blur-[2px] xl:hidden">
-          <button
-            type="button"
+          <Button
+            variant="ghost"
             aria-label="닫기"
-            className="absolute inset-0 cursor-pointer"
+            className="absolute inset-0 cursor-pointer rounded-none"
             onClick={() => setTimelineOpen(false)}
           />
           <div className="relative w-full rounded-t-[32px] border border-white/60 bg-gradient-to-b from-rose-50/95 to-pink-50/90 p-5 shadow-2xl">

@@ -43,11 +43,11 @@ export function DashboardTimelinePanel({
     <div className="mt-6 grid gap-4">
       {events.length ? (
         preview.map((event, index) => (
-          <button
+          <Button
             key={event.id}
-            type="button"
+            variant="ghost"
             onClick={() => onSelectEvent?.(event)}
-            className="relative w-full cursor-pointer pl-6 text-left transition hover:opacity-95"
+            className="relative h-auto w-full cursor-pointer pl-6 text-left transition hover:bg-transparent hover:opacity-95"
           >
             {index < preview.length - 1 ? (
               <span className="absolute left-[7px] top-7 h-[calc(100%-0.25rem)] w-px bg-gradient-to-b from-rose-200/80 to-orange-100/50" />
@@ -62,7 +62,7 @@ export function DashboardTimelinePanel({
               </div>
               <p className="mt-1.5 text-sm leading-6 text-slate-600">{event.summary}</p>
             </div>
-          </button>
+          </Button>
         ))
       ) : (
         <div className="rounded-2xl border border-dashed border-rose-200/60 bg-white/60 px-4 py-6 text-center text-sm text-slate-500">
