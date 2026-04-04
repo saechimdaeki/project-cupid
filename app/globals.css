@@ -1,23 +1,59 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
 
 :root {
-  --bg: #0d1117;
-  --bg-elevated: #121926;
-  --panel: rgba(18, 25, 38, 0.72);
-  --panel-strong: rgba(15, 20, 30, 0.92);
-  --panel-soft: rgba(255, 255, 255, 0.04);
-  --line: rgba(255, 255, 255, 0.08);
-  --line-strong: rgba(255, 255, 255, 0.16);
-  --text: #f5f1eb;
-  --muted: #99a3b5;
-  --gold: #c7a56a;
-  --gold-strong: #f3d6a0;
-  --rose: #a66a5b;
-  --green: #6dd3ad;
-  --amber: #f0b96e;
-  --shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
+  --shell-bg: #0d1117;
+  --shell-bg-elevated: #121926;
+  --shell-panel: rgba(18, 25, 38, 0.72);
+  --shell-panel-strong: rgba(15, 20, 30, 0.92);
+  --shell-panel-soft: rgba(255, 255, 255, 0.04);
+  --shell-line: rgba(255, 255, 255, 0.08);
+  --shell-line-strong: rgba(255, 255, 255, 0.16);
+  --shell-text: #f5f1eb;
+  --shell-muted: #99a3b5;
+  --shell-gold: #c7a56a;
+  --shell-gold-strong: #f3d6a0;
+  --shell-rose: #a66a5b;
+  --shell-green: #6dd3ad;
+  --shell-amber: #f0b96e;
+  --shell-shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
   --headline: var(--font-body), "Pretendard Variable", "SUIT Variable", "SF Pro Display", "Apple SD Gothic Neo", sans-serif;
   --body: var(--font-body), "Pretendard Variable", "SUIT Variable", "SF Pro Text", "Apple SD Gothic Neo", sans-serif;
+  --background: #fdf7f3;
+  --foreground: #2a1b21;
+  --card: #ffffff;
+  --card-foreground: #2a1b21;
+  --popover: #ffffff;
+  --popover-foreground: #2a1b21;
+  --primary: #b46d55;
+  --primary-foreground: #fff8f5;
+  --secondary: #f8efea;
+  --secondary-foreground: #5c3d45;
+  --muted: #f3ebe6;
+  --muted-foreground: #8a7a80;
+  --accent: #c7a56a;
+  --accent-foreground: #2a1b21;
+  --destructive: #ef4444;
+  --border: #e8d8cf;
+  --input: #e8d8cf;
+  --ring: #b46d55;
+  --chart-1: #b46d55;
+  --chart-2: #c7a56a;
+  --chart-3: #6dd3ad;
+  --chart-4: #a66a5b;
+  --chart-5: #f0b96e;
+  --radius: 0.625rem;
+  --sidebar: #f8efea;
+  --sidebar-foreground: #2a1b21;
+  --sidebar-primary: #b46d55;
+  --sidebar-primary-foreground: #fff8f5;
+  --sidebar-accent: #f3ebe6;
+  --sidebar-accent-foreground: #5c3d45;
+  --sidebar-border: #e8d8cf;
+  --sidebar-ring: #b46d55;
 }
 
 * {
@@ -649,7 +685,7 @@ button {
   border-radius: 14px;
   display: grid;
   place-items: center;
-  color: var(--gold-strong);
+  color: var(--shell-gold-strong);
   background: linear-gradient(145deg, rgba(199, 165, 106, 0.24), rgba(255, 255, 255, 0.04));
   border: 1px solid rgba(199, 165, 106, 0.3);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
@@ -673,7 +709,7 @@ button {
 
 .eyebrow {
   margin: 0 0 12px;
-  color: var(--gold);
+  color: var(--shell-gold);
   font-size: 0.77rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -699,7 +735,7 @@ button {
 .statusPanel,
 .adminPanel,
 .sidebarCard {
-  border: 1px solid var(--line);
+  border: 1px solid var(--shell-line);
   background: linear-gradient(180deg, rgba(255, 252, 249, 0.94), rgba(252, 246, 242, 0.98));
   border-radius: 30px;
   box-shadow: 0 14px 30px rgba(45, 30, 36, 0.08);
@@ -767,7 +803,7 @@ button {
 }
 
 .highlightText {
-  color: var(--gold-strong);
+  color: var(--shell-gold-strong);
 }
 
 .splashCopy {
@@ -899,7 +935,7 @@ button {
   height: 100%;
   min-height: 700px;
   padding: 30px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--shell-line);
   border-radius: 34px;
   background:
     radial-gradient(circle at 50% 42%, rgba(242, 199, 144, 0.3), transparent 16%),
@@ -907,7 +943,7 @@ button {
     radial-gradient(circle at 80% 18%, rgba(199, 165, 106, 0.22), transparent 22%),
     linear-gradient(180deg, rgba(255, 252, 250, 0.98), rgba(252, 245, 241, 0.98));
   overflow: hidden;
-  box-shadow: var(--shadow);
+  box-shadow: var(--shell-shadow);
   contain: layout paint style;
   isolation: isolate;
 }
@@ -1041,7 +1077,7 @@ button {
   border-radius: 999px;
   background: rgba(255, 248, 241, 0.92);
   border: 1px solid rgba(243, 214, 160, 0.44);
-  color: var(--gold-strong);
+  color: var(--shell-gold-strong);
   font-size: 0.86rem;
 }
 
@@ -1121,7 +1157,7 @@ button {
   display: grid;
   place-items: center;
   background: rgba(199, 165, 106, 0.18);
-  color: var(--gold-strong);
+  color: var(--shell-gold-strong);
   font-size: 0.82rem;
   font-weight: 700;
 }
@@ -1191,7 +1227,7 @@ button {
 }
 
 .cardRegion {
-  color: var(--gold);
+  color: var(--shell-gold);
   font-size: 0.84rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -1334,12 +1370,12 @@ button {
 }
 
 .statusBadge.success {
-  color: var(--green);
+  color: var(--shell-green);
   background: rgba(109, 211, 173, 0.08);
 }
 
 .statusBadge.warning {
-  color: var(--amber);
+  color: var(--shell-amber);
   background: rgba(240, 185, 110, 0.09);
 }
 
@@ -1355,7 +1391,7 @@ button {
 
 .sidebar {
   padding: 28px 22px;
-  border-right: 1px solid var(--line);
+  border-right: 1px solid var(--shell-line);
   background: linear-gradient(180deg, rgba(10, 14, 22, 0.94), rgba(14, 20, 30, 0.96));
   display: flex;
   flex-direction: column;
@@ -1746,7 +1782,7 @@ button {
 }
 
 .notice {
-  color: var(--gold-strong);
+  color: var(--shell-gold-strong);
 }
 
 .emptyState {
@@ -4565,5 +4601,94 @@ button {
   .scenePetalEdge,
   .beamOrbit {
     animation: none !important;
+  }
+}
+
+@theme inline {
+  --font-heading: var(--font-sans);
+  --font-sans: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
   }
 }
