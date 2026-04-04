@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { CupidLogo } from "@/components/cupid-logo";
 import { SakuraRain } from "@/components/sakura-rain";
 import { LandingHero } from "@/components/landing-hero";
 import { LandingTrust } from "@/components/landing-trust";
@@ -29,15 +30,15 @@ export default async function HomePage() {
       <header className="fixed inset-x-0 top-0 z-10 border-b border-border/30 bg-card/30 backdrop-blur-lg">
         <div className="mx-auto flex w-full max-w-[1440px] items-center justify-between px-4 py-3 sm:px-8 lg:px-16">
           <div className="flex items-center gap-3">
-            <div className="flex size-11 items-center justify-center rounded-[20px] border border-border/40 bg-card/70 text-sm font-semibold text-primary shadow-sm">
-              C
+            <div className="flex size-11 items-center justify-center rounded-[20px] border border-border/40 bg-card/70 text-primary shadow-sm">
+              <CupidLogo size={24} />
             </div>
             <div>
               <strong className="block text-sm font-semibold text-foreground sm:text-base">
                 Project Cupid
               </strong>
               <span className="block text-[13px] leading-5 text-muted-foreground">
-                프라이빗 매칭 스튜디오
+                사랑이 피어나는 스튜디오
               </span>
             </div>
           </div>
