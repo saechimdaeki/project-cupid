@@ -38,15 +38,15 @@ export async function signUpWithPassword(formData: FormData) {
   const supabase = await requireSupabaseClient();
 
   if (!validateUsername(username)) {
-    redirectWithMessage("/login", "id는 영문 소문자, 숫자, ., _, - 조합 4-20자로 입력해주세요.");
+    redirectWithMessage("/signup", "id는 영문 소문자, 숫자, ., _, - 조합 4-20자로 입력해주세요.");
   }
 
   if (fullName.length < 2) {
-    redirectWithMessage("/login", "이름을 2자 이상 입력해주세요.");
+    redirectWithMessage("/signup", "이름을 2자 이상 입력해주세요.");
   }
 
   if (password.length < 6) {
-    redirectWithMessage("/login", "비밀번호는 6자 이상이어야 합니다.");
+    redirectWithMessage("/signup", "비밀번호는 6자 이상이어야 합니다.");
   }
 
   const { data: usernameExists, error: usernameCheckError } = await supabase.rpc(
@@ -55,7 +55,7 @@ export async function signUpWithPassword(formData: FormData) {
   );
 
   if (!usernameCheckError && usernameExists) {
-    redirectWithMessage("/login", "이미 사용 중인 id입니다. 다른 id로 가입해주세요.");
+    redirectWithMessage("/signup", "이미 사용 중인 id입니다. 다른 id로 가입해주세요.");
   }
 
   const { data, error } = await supabase.auth.signUp({
@@ -71,14 +71,14 @@ export async function signUpWithPassword(formData: FormData) {
 
   if (error) {
     if (error.message.includes("Database error saving new user")) {
-      redirectWithMessage("/login", "가입 저장 중 오류가 났습니다. 같은 id가 이미 있거나 Supabase 스키마가 최신이 아닐 수 있습니다.");
+      redirectWithMessage("/signup", "가입 저장 중 오류가 났습니다. 같은 id가 이미 있거나 Supabase 스키마가 최신이 아닐 수 있습니다.");
     }
 
-    redirect(`/login?message=${encodeURIComponent(error.message)}`);
+    redirect(`/signup?message=${encodeURIComponent(error.message)}`);
   }
 
   if (!data.session) {
-    redirectWithMessage("/login", "회원가입은 완료됐습니다. Supabase Auth에서 Confirm email을 꺼두면 바로 로그인됩니다.");
+    redirectWithMessage("/login", "회원가입이 완료됐습니다. 로그인해주세요.");
   }
 
   redirect("/pending");

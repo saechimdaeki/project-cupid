@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { CupidLogo } from "@/components/cupid-logo";
 import { SakuraRain } from "@/components/sakura-rain";
-import { LoginForm } from "@/components/login-form";
+import { SignupForm } from "@/components/signup-form";
 
-type LoginPageProps = {
+type SignupPageProps = {
   searchParams: Promise<{ message?: string }>;
 };
 
-export default async function LoginPage({ searchParams }: LoginPageProps) {
+export default async function SignupPage({ searchParams }: SignupPageProps) {
   const { message } = await searchParams;
 
   return (
@@ -30,7 +30,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </div>
         </Link>
 
-        <LoginForm initialMessage={message} />
+        <SignupForm initialMessage={message} />
       </div>
     </main>
   );
