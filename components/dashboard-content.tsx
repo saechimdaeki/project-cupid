@@ -14,8 +14,6 @@ type DashboardContentProps = {
   visibleBoardCandidates: DashboardBoardCandidate[];
   timelineEvents: TimelineEvent[];
   role: AppRole;
-  onSelectTimelineEvent: (event: TimelineEvent) => void;
-  onOpenHistoryList: () => void;
 };
 
 export function DashboardContent({
@@ -25,8 +23,6 @@ export function DashboardContent({
   visibleBoardCandidates,
   timelineEvents,
   role,
-  onSelectTimelineEvent,
-  onOpenHistoryList,
 }: DashboardContentProps) {
   return (
     <>
@@ -43,8 +39,6 @@ export function DashboardContent({
           candidates={filteredCandidates}
           timelineEvents={timelineEvents}
           role={role}
-          onSelectTimelineEvent={onSelectTimelineEvent}
-          onOpenHistoryList={onOpenHistoryList}
         />
       ) : null}
 

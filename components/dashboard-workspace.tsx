@@ -5,8 +5,6 @@ import { type DashboardBoardCandidate } from "@/components/dashboard-flow-board"
 import { DashboardContent } from "@/components/dashboard-content";
 import { DashboardFilterBar } from "@/components/dashboard-filter-bar";
 import { DashboardViewToggle } from "@/components/dashboard-view-toggle";
-import { MatchDetailModal } from "@/components/match-detail-modal";
-import { MatchHistoryListModal } from "@/components/match-history-list-modal";
 import { DashboardViewMode } from "@/lib/types";
 import type { AppRole, Candidate, TimelineEvent } from "@/lib/types";
 
@@ -28,8 +26,6 @@ export function DashboardWorkspace({
   const [status, setStatus] = useState("");
   const [gender, setGender] = useState("");
   const [religion, setReligion] = useState("");
-  const [historyListOpen, setHistoryListOpen] = useState(false);
-  const [selectedTimelineEvent, setSelectedTimelineEvent] = useState<TimelineEvent | null>(null);
   const deferredSearch = useDeferredValue(search);
 
   const statusOptions = ["active", "matched", "couple"];
@@ -75,11 +71,6 @@ export function DashboardWorkspace({
     return boardCandidates.filter((candidate) => ids.has(candidate.id));
   }, [boardCandidates, filteredCandidates]);
 
-  const candidateById = useMemo(
-    () => new Map(candidates.map((candidate) => [candidate.id, candidate])),
-    [candidates],
-  );
-
   return (
     <>
       <DashboardViewToggle view={view} onChange={setView} />
@@ -106,23 +97,6 @@ export function DashboardWorkspace({
         visibleBoardCandidates={visibleBoardCandidates}
         timelineEvents={timelineEvents}
         role={role}
-        onSelectTimelineEvent={(event) => setSelectedTimelineEvent(event)}
-        onOpenHistoryList={() => setHistoryListOpen(true)}
-      />
-
-      <MatchHistoryListModal
-        open={historyListOpen}
-        events={timelineEvents}
-        onClose={() => setHistoryListOpen(false)}
-        onPick={(event) => {
-          setHistoryListOpen(false);
-          setSelectedTimelineEvent(event);
-        }}
-      />
-      <MatchDetailModal
-        event={selectedTimelineEvent}
-        candidateById={candidateById}
-        onClose={() => setSelectedTimelineEvent(null)}
       />
     </>
   );

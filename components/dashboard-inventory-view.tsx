@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { CandidateCard } from "@/components/candidate-card";
 import { DashboardTimelinePanel, TimelineIcon } from "@/components/dashboard-timeline-panel";
+import { MatchDetailModal } from "@/components/match-detail-modal";
+import { MatchHistoryListModal } from "@/components/match-history-list-modal";
 import { Button } from "@/components/ui/button";
 import type { AppRole, Candidate, TimelineEvent } from "@/lib/types";
 
@@ -10,30 +12,41 @@ type DashboardInventoryViewProps = {
   candidates: Candidate[];
   timelineEvents: TimelineEvent[];
   role: AppRole;
-  onSelectTimelineEvent: (event: TimelineEvent) => void;
-  onOpenHistoryList: () => void;
 };
 
 export function DashboardInventoryView({
   candidates,
   timelineEvents,
   role,
-  onSelectTimelineEvent,
-  onOpenHistoryList,
 }: DashboardInventoryViewProps) {
   const [timelineOpen, setTimelineOpen] = useState(false);
+  const [historyListOpen, setHistoryListOpen] = useState(false);
+  const [selectedTimelineEvent, setSelectedTimelineEvent] = useState<TimelineEvent | null>(null);
+
+  const candidateById = useMemo(
+    () => new Map(candidates.map((candidate) => [candidate.id, candidate])),
+    [candidates],
+  );
+
+  const handleSelectEvent = (event: TimelineEvent) => {
+    setSelectedTimelineEvent(event);
+  };
+
+  const handleOpenHistoryList = () => {
+    setHistoryListOpen(true);
+  };
 
   return (
     <>
-      <section className="grid gap-10 xl:grid-cols-[minmax(0,1fr)_minmax(20rem,28rem)]">
-        <div className="grid gap-6">
+      <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)]">
+        <div className="grid gap-5">
           {candidates.length ? (
             candidates.map((candidate) => (
               <CandidateCard key={candidate.id} candidate={candidate} role={role} />
             ))
           ) : (
-            <div className="rounded-[28px] border border-dashed border-rose-200/70 bg-white/60 px-6 py-14 text-center text-sm text-slate-500 shadow-[0_8px_32px_rgb(244,114,182,0.08)] backdrop-blur-sm">
-              조건에 맞는 후보가 없습니다. 필터를 조금 넓혀 다시 확인해보세요.
+            <div className="rounded-2xl border border-dashed border-rose-200/70 bg-white/60 px-6 py-14 text-center text-sm text-slate-500 backdrop-blur-sm">
+              조건에 맞는 후보가 없습니다.
             </div>
           )}
         </div>
@@ -41,9 +54,9 @@ export function DashboardInventoryView({
         <div className="hidden xl:block">
           <DashboardTimelinePanel
             events={timelineEvents}
-            className="sticky top-28 w-full min-w-[18rem]"
-            onSelectEvent={onSelectTimelineEvent}
-            onViewAll={onOpenHistoryList}
+            className="sticky top-20 w-full"
+            onSelectEvent={handleSelectEvent}
+            onViewAll={handleOpenHistoryList}
           />
         </div>
       </section>
@@ -80,16 +93,31 @@ export function DashboardInventoryView({
               events={timelineEvents}
               onSelectEvent={(event) => {
                 setTimelineOpen(false);
-                onSelectTimelineEvent(event);
+                handleSelectEvent(event);
               }}
               onViewAll={() => {
                 setTimelineOpen(false);
-                onOpenHistoryList();
+                handleOpenHistoryList();
               }}
             />
           </div>
         </div>
       ) : null}
+
+      <MatchHistoryListModal
+        open={historyListOpen}
+        events={timelineEvents}
+        onClose={() => setHistoryListOpen(false)}
+        onPick={(event) => {
+          setHistoryListOpen(false);
+          setSelectedTimelineEvent(event);
+        }}
+      />
+      <MatchDetailModal
+        event={selectedTimelineEvent}
+        candidateById={candidateById}
+        onClose={() => setSelectedTimelineEvent(null)}
+      />
     </>
   );
 }
