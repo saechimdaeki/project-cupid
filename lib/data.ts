@@ -1,5 +1,10 @@
 import { mockCandidates, mockMatchRecords, mockMemberships } from "@/lib/mock-data";
 import { dashboardPreviewMatchRecords } from "@/lib/preview-scene";
+import {
+  CANDIDATE_PHOTOS_BUCKET,
+  CANDIDATE_PHOTOS_SIGNED_URL_TTL_SECONDS,
+  createSignedUrlMapForStoragePaths,
+} from "@/lib/storage-signed-urls";
 import { createClient } from "@/lib/supabase/server";
 import type {
   Candidate,
@@ -9,8 +14,6 @@ import type {
   TimelineEvent,
 } from "@/lib/types";
 
-const CANDIDATE_PHOTOS_BUCKET = "sogaeting";
-const SIGNED_URL_TTL_SECONDS = 60 * 60;
 const DASHBOARD_TIMELINE_FETCH_LIMIT = 80;
 const IMAGE_TRANSFORMS = {
   card: {
@@ -107,7 +110,7 @@ async function resolveCandidateImage(
 
   const { data, error } = await supabase.storage
     .from(CANDIDATE_PHOTOS_BUCKET)
-    .createSignedUrl(value, SIGNED_URL_TTL_SECONDS, {
+    .createSignedUrl(value, CANDIDATE_PHOTOS_SIGNED_URL_TTL_SECONDS, {
       transform: IMAGE_TRANSFORMS[variant],
     });
 
@@ -119,23 +122,42 @@ async function resolveCandidateImage(
 }
 
 async function resolveSignedImageMap(
-  supabase: Awaited<ReturnType<typeof createClient>>,
+  supabase: NonNullable<Awaited<ReturnType<typeof createClient>>>,
   values: Array<string | null | undefined>,
-  variant: keyof typeof IMAGE_TRANSFORMS = "card",
 ) {
   const paths = Array.from(
     new Set(values.filter((value): value is string => Boolean(value) && !isDirectImageUrl(value))),
   );
 
-  if (!paths.length || !supabase) {
+  if (!paths.length) {
     return new Map<string, string | null>();
   }
 
-  const signedEntries = await Promise.all(
-    paths.map(async (path) => [path, await resolveCandidateImage(supabase, path, variant)] as const),
+  return createSignedUrlMapForStoragePaths(
+    supabase,
+    CANDIDATE_PHOTOS_BUCKET,
+    paths,
+    CANDIDATE_PHOTOS_SIGNED_URL_TTL_SECONDS,
+  );
+}
+
+async function attachBatchSignedImageUrlsToCandidates(
+  supabase: NonNullable<Awaited<ReturnType<typeof createClient>>>,
+  candidates: Candidate[],
+): Promise<Candidate[]> {
+  const signedMap = await resolveSignedImageMap(
+    supabase,
+    candidates.map((c) => c.image_url),
   );
 
-  return new Map(signedEntries);
+  return candidates.map((candidate) => ({
+    ...candidate,
+    image_url: candidate.image_url
+      ? isDirectImageUrl(candidate.image_url)
+        ? candidate.image_url
+        : signedMap.get(candidate.image_url) ?? null
+      : null,
+  }));
 }
 
 function mapCandidate(row: any): Candidate {
@@ -159,8 +181,29 @@ function mapCandidate(row: any): Candidate {
     image_url: row.image_url,
     paired_candidate_id: row.paired_candidate_id ?? null,
     created_at: row.created_at,
-    created_by_name: row.created_by_name,
+    created_by_name: row.created_by_name ?? undefined,
   };
+}
+
+async function getMembershipFullNameByUserId(
+  supabase: NonNullable<Awaited<ReturnType<typeof createClient>>>,
+  userId: string | null | undefined,
+): Promise<string | undefined> {
+  if (!userId) {
+    return undefined;
+  }
+
+  const { data, error } = await supabase
+    .from("cupid_memberships")
+    .select("full_name")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error || !data?.full_name) {
+    return undefined;
+  }
+
+  return data.full_name;
 }
 
 function mapMatchRecord(row: any): MatchRecord {
@@ -261,7 +304,6 @@ export async function getCandidates(options?: GetCandidatesOptions) {
   const signedImageMap = await resolveSignedImageMap(
     supabase,
     candidates.map((candidate) => candidate.image_url),
-    "card",
   );
 
   const resolvedCandidates = candidates.map((candidate) => ({
@@ -319,9 +361,15 @@ export async function getCandidateById(id: string) {
 
   const candidate = mapCandidate(data);
 
+  const [image_url, creatorName] = await Promise.all([
+    resolveCandidateImage(supabase, candidate.image_url, "detail"),
+    getMembershipFullNameByUserId(supabase, data.created_by),
+  ]);
+
   return {
     ...candidate,
-    image_url: await resolveCandidateImage(supabase, candidate.image_url, "detail"),
+    image_url,
+    created_by_name: creatorName ?? candidate.created_by_name,
   };
 }
 
@@ -357,6 +405,21 @@ export async function getCandidatesBasicByIds(ids: string[]): Promise<Candidate[
   // image_url은 Storage path 그대로 유지 (Signed URL 발급 생략)
   // 과거 이력 표시에는 텍스트 정보만 필요하므로 API 왕복 N번 절감
   return data.map(mapCandidate);
+}
+
+/**
+ * `getCandidatesBasicByIds` + Storage 배치 서명 1회(청크당).
+ * 상세 페이지의 페어/과거 상대 카드처럼 이미지가 필요할 때 사용합니다.
+ */
+export async function getCandidatesBasicByIdsWithSignedImages(
+  ids: string[],
+): Promise<Candidate[]> {
+  const basic = await getCandidatesBasicByIds(ids);
+  const supabase = await createClient();
+  if (!supabase || !basic.length) {
+    return basic;
+  }
+  return attachBatchSignedImageUrlsToCandidates(supabase, basic);
 }
 
 export async function getMatchRecords(candidateId?: string) {
@@ -569,7 +632,6 @@ export async function getCandidatePhotos(candidateId: string) {
   const signedImageMap = await resolveSignedImageMap(
     supabase,
     photos.map((photo) => photo.image_url),
-    "gallery",
   );
 
   return photos.map((photo) => ({

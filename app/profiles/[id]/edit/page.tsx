@@ -36,16 +36,17 @@ function FieldLabel({
 }
 
 export default async function EditCandidatePage({ params, searchParams }: EditCandidatePageProps) {
-  const membership = await requireMembershipRole(["admin", "super_admin"]);
   const { id } = await params;
   const { message } = await searchParams;
-  const candidate = await getCandidateById(id);
+  const [membership, candidate, photos] = await Promise.all([
+    requireMembershipRole(["admin", "super_admin"]),
+    getCandidateById(id),
+    getCandidatePhotos(id),
+  ]);
 
   if (!candidate) {
     notFound();
   }
-
-  const photos = await getCandidatePhotos(id);
 
   return (
     <>

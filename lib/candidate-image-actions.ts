@@ -1,9 +1,11 @@
 "use server";
 
+import {
+  CANDIDATE_PHOTOS_BUCKET,
+  CANDIDATE_PHOTOS_SIGNED_URL_TTL_SECONDS,
+  createSignedUrlMapForStoragePaths,
+} from "@/lib/storage-signed-urls";
 import { createClient } from "@/lib/supabase/server";
-
-const CANDIDATE_PHOTOS_BUCKET = "sogaeting";
-const SIGNED_URL_TTL_SECONDS = 60 * 60;
 
 function isDirectImageUrl(value: string | null | undefined) {
   return Boolean(
@@ -12,21 +14,6 @@ function isDirectImageUrl(value: string | null | undefined) {
         value.startsWith("http://") ||
         value.startsWith("https://")),
   );
-}
-
-async function signStoragePath(
-  supabase: NonNullable<Awaited<ReturnType<typeof createClient>>>,
-  path: string,
-): Promise<string | null> {
-  if (isDirectImageUrl(path)) return path;
-
-  const { data, error } = await supabase.storage
-    .from(CANDIDATE_PHOTOS_BUCKET)
-    .createSignedUrl(path, SIGNED_URL_TTL_SECONDS, {
-      transform: { height: 960, quality: 80, resize: "cover", width: 720 },
-    });
-
-  return error || !data?.signedUrl ? null : data.signedUrl;
 }
 
 /**
@@ -49,13 +36,31 @@ export async function resolveProfileImages(
 
   if (error || !data) return Object.fromEntries(uniqueIds.map((id) => [id, null]));
 
-  const resolved = await Promise.all(
-    data.map(async (row) => {
-      if (!row.image_url) return [row.id, null] as const;
-      const signed = await signStoragePath(supabase, row.image_url);
-      return [row.id, signed] as const;
+  const rowsById = new Map(data.map((row) => [row.id, row]));
+  const storagePaths = [
+    ...new Set(
+      data
+        .map((row) => row.image_url)
+        .filter((url): url is string => Boolean(url) && !isDirectImageUrl(url)),
+    ),
+  ];
+
+  const signedByPath =
+    storagePaths.length > 0
+      ? await createSignedUrlMapForStoragePaths(
+          supabase,
+          CANDIDATE_PHOTOS_BUCKET,
+          storagePaths,
+          CANDIDATE_PHOTOS_SIGNED_URL_TTL_SECONDS,
+        )
+      : new Map<string, string | null>();
+
+  return Object.fromEntries(
+    uniqueIds.map((id) => {
+      const row = rowsById.get(id);
+      if (!row?.image_url) return [id, null] as const;
+      if (isDirectImageUrl(row.image_url)) return [id, row.image_url] as const;
+      return [id, signedByPath.get(row.image_url) ?? null] as const;
     }),
   );
-
-  return Object.fromEntries(resolved);
 }

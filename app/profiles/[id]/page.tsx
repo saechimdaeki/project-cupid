@@ -8,7 +8,12 @@ import { MatchRecordsProvider } from "@/components/match-records-provider";
 import { OperatorDeskControls } from "@/components/operator-desk-controls";
 import { ProfileMatchKanban } from "@/components/profile-match-kanban";
 import { ProfilePastMatchRecords } from "@/components/profile-past-match-records";
-import { getCandidateById, getCandidatePhotos, getCandidatesBasicByIds, getMatchRecords } from "@/lib/data";
+import {
+  getCandidateById,
+  getCandidatePhotos,
+  getCandidatesBasicByIdsWithSignedImages,
+  getMatchRecords,
+} from "@/lib/data";
 import { canEditCandidates, requireMembershipRole } from "@/lib/permissions";
 import { getStatusBadgeClass, getStatusLabel } from "@/lib/status-ui";
 import type { Candidate, CandidatePhoto } from "@/lib/types";
@@ -77,20 +82,16 @@ export default async function CandidateDetailPage({
 }: CandidateDetailPageProps) {
   const { id } = await params;
   const { message } = await searchParams;
-  const [membership, candidate] = await Promise.all([
+  const [membership, candidate, photos, records] = await Promise.all([
     requireMembershipRole(["admin", "super_admin"]),
     getCandidateById(id),
+    getCandidatePhotos(id),
+    getMatchRecords(id),
   ]);
 
   if (!candidate) {
     notFound();
   }
-
-  const [photos, records, counterpartCandidate] = await Promise.all([
-    getCandidatePhotos(candidate.id),
-    getMatchRecords(candidate.id),
-    candidate.paired_candidate_id ? getCandidateById(candidate.paired_candidate_id) : Promise.resolve(null),
-  ]);
 
   const pastCounterpartIds = [
     ...new Set(
@@ -100,10 +101,30 @@ export default async function CandidateDetailPage({
         .filter(Boolean) as string[],
     ),
   ];
-  // getCandidateById N번 → getCandidatesBasicByIds 1번으로 교체 (DB 쿼리 + Signed URL API 왕복 N번 절감)
-  const pastCounterpartRows = await getCandidatesBasicByIds(pastCounterpartIds);
-  const pastCounterpartById = new Map(pastCounterpartRows.map((c) => [c.id, c]));
-  const counterpartsById = Object.fromEntries(pastCounterpartById) as Record<string, Candidate>;
+
+  const relatedCandidateIds = [
+    ...new Set(
+      [candidate.paired_candidate_id, ...pastCounterpartIds].filter((x): x is string => Boolean(x)),
+    ),
+  ];
+
+  const relatedCandidates = relatedCandidateIds.length
+    ? await getCandidatesBasicByIdsWithSignedImages(relatedCandidateIds)
+    : [];
+
+  const relatedById = new Map(relatedCandidates.map((c) => [c.id, c]));
+  const counterpartCandidate = candidate.paired_candidate_id
+    ? relatedById.get(candidate.paired_candidate_id) ?? null
+    : null;
+
+  const counterpartsById = Object.fromEntries(
+    pastCounterpartIds
+      .map((pid) => {
+        const c = relatedById.get(pid);
+        return c ? ([pid, c] as const) : null;
+      })
+      .filter((entry): entry is [string, Candidate] => entry != null),
+  ) as Record<string, Candidate>;
 
   const canOperate = canEditCandidates(membership.role);
   const galleryImageUrls = buildProfileGalleryUrls(candidate, photos);
@@ -151,6 +172,12 @@ export default async function CandidateDetailPage({
                       </h1>
                       <p className="mt-3 max-w-prose text-sm leading-7 text-slate-500 sm:text-base">
                         {candidate.personality_summary || "소개 메모가 아직 등록되지 않았습니다."}
+                      </p>
+                      <p className="mt-3 text-xs text-slate-400">
+                        매물 등록{" "}
+                        <span className="font-medium text-slate-600">
+                          {candidate.created_by_name ?? "기록 없음"}
+                        </span>
                       </p>
                     </div>
                     <span
