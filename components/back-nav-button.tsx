@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
 type BackNavButtonProps = {
   fallbackHref?: string;
@@ -12,8 +13,9 @@ export function BackNavButton({
   const router = useRouter();
 
   return (
-    <button
-      className="inline-flex min-h-12 items-center justify-center rounded-full border border-[#ead8cf] bg-white/90 px-5 text-sm font-semibold text-[#2d1e24] transition hover:-translate-y-0.5"
+    <Button
+      variant="outline"
+      className="min-h-12 rounded-full transition hover:-translate-y-0.5"
       type="button"
       onClick={() => {
         if (window.history.length > 1) {
@@ -25,6 +27,6 @@ export function BackNavButton({
       }}
     >
       뒤로 가기
-    </button>
+    </Button>
   );
 }
