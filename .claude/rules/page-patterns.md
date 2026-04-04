@@ -118,14 +118,11 @@ type ErrorProps = {
 export default function Error({ error, reset }: ErrorProps) {
   return (
     <div className="flex flex-col items-center gap-4 p-12 text-center">
-      <p className="text-lg font-semibold text-slate-800">오류가 발생했습니다</p>
-      <p className="text-sm text-slate-500">{error.message}</p>
-      <button
-        onClick={reset}
-        className="rounded-lg border border-rose-200 px-4 py-2 text-sm text-rose-600 hover:bg-rose-50"
-      >
+      <p className="text-lg font-semibold text-foreground">오류가 발생했습니다</p>
+      <p className="text-sm text-muted-foreground">{error.message}</p>
+      <Button variant="outline" onClick={reset}>
         다시 시도
-      </button>
+      </Button>
     </div>
   );
 }
