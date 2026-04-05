@@ -1,3 +1,4 @@
+import { formatCandidateBrief } from "@/lib/candidate-display";
 import { mockCandidates, mockMatchRecords, mockMemberships } from "@/lib/mock-data";
 import { dashboardPreviewMatchRecords } from "@/lib/preview-scene";
 import {
@@ -261,7 +262,7 @@ function mapDashboardCandidate(row: any): Candidate {
     notes_private: "",
     status: row.status,
     highlight_tags: row.highlight_tags ?? [],
-    image_url: null,
+    image_url: row.image_url ?? null,
     paired_candidate_id: row.paired_candidate_id ?? null,
     created_at: row.created_at,
     created_by_name: row.created_by_name,
@@ -331,7 +332,7 @@ export async function getDashboardCandidates() {
   const { data, error } = await supabase
     .from("cupid_candidates")
     .select(
-      "id, full_name, birth_year, height_text, gender, region, occupation, work_summary, religion, personality_summary, status, highlight_tags, paired_candidate_id, created_at",
+      "id, full_name, birth_year, height_text, gender, region, occupation, work_summary, religion, personality_summary, status, highlight_tags, paired_candidate_id, created_at, image_url",
     )
     .order("created_at", { ascending: false });
 
@@ -339,7 +340,21 @@ export async function getDashboardCandidates() {
     return mockCandidates;
   }
 
-  return mergeCandidates(data.map((row) => mapDashboardCandidate(row)), mockCandidates);
+  const mapped = data.map((row) => mapDashboardCandidate(row));
+  const signedMap = await resolveSignedImageMap(
+    supabase,
+    mapped.map((c) => c.image_url),
+  );
+  const resolved = mapped.map((candidate) => ({
+    ...candidate,
+    image_url: candidate.image_url
+      ? isDirectImageUrl(candidate.image_url)
+        ? candidate.image_url
+        : signedMap.get(candidate.image_url) ?? null
+      : null,
+  }));
+
+  return mergeCandidates(resolved, mockCandidates);
 }
 
 export async function getCandidateById(id: string) {
@@ -558,9 +573,9 @@ export function buildTimelineEvents(
 
     const title =
       sourceCandidate && counterpartCandidate
-        ? `${sourceCandidate.full_name} × ${counterpartCandidate.full_name}`
+        ? `${formatCandidateBrief(sourceCandidate)} × ${formatCandidateBrief(counterpartCandidate)}`
         : sourceCandidate
-          ? `${sourceCandidate.full_name} · ${sourceCandidate.birth_year}년생 · ${sourceCandidate.occupation}`
+          ? formatCandidateBrief(sourceCandidate)
           : record.counterpart_label;
 
     events.push({

@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { formatCandidateBrief } from "@/lib/candidate-display";
 import { createClient } from "@/lib/supabase/server";
 import { buildPairMatchRecordsOrFilter, ONGOING_MATCH_OUTCOMES } from "@/lib/match-flow-columns";
 import { canEditCandidates, canManageRoles, getCurrentMembership } from "@/lib/permissions";
@@ -163,14 +164,9 @@ function buildCounterpartLabel(candidate: {
   region: string;
   occupation: string;
 }) {
-  return [
-    candidate.full_name,
-    `${candidate.birth_year}년생`,
-    candidate.region || null,
-    candidate.occupation || null,
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  const parts = [formatCandidateBrief(candidate)];
+  if (candidate.region?.trim()) parts.push(candidate.region.trim());
+  return parts.join(" · ");
 }
 
 /** viewer / admin / super_admin 변경은 `canManageRoles`(super_admin)만 서버에서 허용 */
@@ -290,10 +286,6 @@ export async function createCandidate(formData: FormData) {
         image_url: uploadedPaths[0] ?? null,
         created_by: membership.user_id,
       };
-
-      if (!payload.full_name) {
-        throw new Error("이름은 필수입니다.");
-      }
 
       if (!GENDER_VALUES.has(payload.gender)) {
         throw new Error("성별은 남 또는 여만 선택할 수 있습니다.");
@@ -456,10 +448,6 @@ export async function updateCandidate(formData: FormData) {
       highlight_tags: highlightTags,
       image_url: primaryImagePath,
     };
-
-    if (!payload.full_name) {
-      throw new Error("이름은 필수입니다.");
-    }
 
     if (!GENDER_VALUES.has(payload.gender)) {
       throw new Error("성별은 남 또는 여만 선택할 수 있습니다.");
@@ -720,14 +708,14 @@ export async function moveCandidatePairStatus(
   if (source.paired_candidate_id && source.paired_candidate_id !== counterpart.id) {
     return {
       ok: false,
-      message: `${source.full_name}은 이미 다른 후보와 연결되어 있습니다.`,
+      message: `${formatCandidateBrief(source)}은(는) 이미 다른 후보와 연결되어 있습니다.`,
     };
   }
 
   if (counterpart.paired_candidate_id && counterpart.paired_candidate_id !== source.id) {
     return {
       ok: false,
-      message: `${counterpart.full_name}은 이미 다른 후보와 연결되어 있습니다.`,
+      message: `${formatCandidateBrief(counterpart)}은(는) 이미 다른 후보와 연결되어 있습니다.`,
     };
   }
 
@@ -752,8 +740,8 @@ export async function moveCandidatePairStatus(
   const outcome = targetStatus === "matched" ? "dating" : "couple";
   const summary =
     targetStatus === "matched"
-      ? `${source.full_name}와 ${counterpart.full_name}의 매칭 진행을 시작했습니다.`
-      : `${source.full_name}와 ${counterpart.full_name}을 커플완성으로 확정했습니다.`;
+      ? `${formatCandidateBrief(source)}와 ${formatCandidateBrief(counterpart)}의 매칭 진행을 시작했습니다.`
+      : `${formatCandidateBrief(source)}와 ${formatCandidateBrief(counterpart)}을(를) 커플완성으로 확정했습니다.`;
   const happenedOn = new Date().toISOString().slice(0, 10);
   const pairOr = buildPairMatchRecordsOrFilter(source.id, counterpart.id);
 
@@ -1181,7 +1169,7 @@ export async function promoteToCoupleFromDesk(
   }
 
   const happenedOn = new Date().toISOString().slice(0, 10);
-  const summary = `${source.full_name}와 ${counterpart.full_name}을 커플완성으로 확정했습니다.`;
+  const summary = `${formatCandidateBrief(source)}와 ${formatCandidateBrief(counterpart)}을(를) 커플완성으로 확정했습니다.`;
   const pairOr = buildPairMatchRecordsOrFilter(source.id, counterpart.id);
 
   const { data: updatedRows } = await supabase

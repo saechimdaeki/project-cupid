@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { getCandidateGalleryLabel } from "@/lib/candidate-display";
 import { resolveProfileImages } from "@/lib/candidate-image-actions";
 import type { Candidate, MatchOutcome, TimelineEvent } from "@/lib/types";
 import { cn } from "@/lib/cn";
@@ -133,13 +134,13 @@ function PersonBlock({ person, sideLabel, resolvedImageUrl }: PersonBlockProps) 
         {isValidUrl ? (
           <img
             src={imageUrl!}
-            alt={`${person.full_name} 프로필 사진`}
+            alt={`${getCandidateGalleryLabel(person)} 프로필 사진`}
             className="w-full h-full object-cover object-center"
           />
         ) : (
           <img
             src={`data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='256' height='320' viewBox='0 0 256 320'><rect width='256' height='320' fill='%23fff1f2'/><circle cx='128' cy='108' r='52' fill='%23fecdd3'/><ellipse cx='128' cy='262' rx='80' ry='64' fill='%23fecdd3'/><text x='128' y='310' text-anchor='middle' font-size='13' fill='%23fda4af'>사진 미등록</text></svg>`}
-            alt={`${person.full_name} 사진 미등록`}
+            alt={`${getCandidateGalleryLabel(person)} 사진 미등록`}
             className="w-full h-full object-cover object-center"
           />
         )}
@@ -148,7 +149,7 @@ function PersonBlock({ person, sideLabel, resolvedImageUrl }: PersonBlockProps) 
       <div className="mt-4 text-center">
         <div className="text-sm text-slate-500">{person.region}</div>
         <div className="mt-0.5 text-xl font-bold text-slate-800">
-          {person.full_name}
+          {getCandidateGalleryLabel(person)}
           <span className="ml-1.5 text-base font-normal text-slate-400">({age}세)</span>
         </div>
       </div>

@@ -84,12 +84,17 @@ export default async function EditCandidatePage({ params, searchParams }: EditCa
               <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#b46d59]">Basic Info</p>
               <h2 className="mt-3 text-[clamp(1.6rem,7vw,2.4rem)] font-semibold tracking-[-0.05em] text-[#24161c]">기본 프로필</h2>
               <p className="mt-3 text-sm leading-6 text-[#8b6a63]">
-                필수 입력: 이름, 지역, 출생연도, 성별, 직업
+                필수 입력: 지역, 출생연도, 성별, 직업 · 이름은 선택(비우면 출생연도·직업으로 표시)
               </p>
               <div className="mt-6 grid gap-4">
                 <label className="grid gap-2">
-                  <FieldLabel required>이름</FieldLabel>
-                  <input name="fullName" defaultValue={candidate.full_name} required className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]" />
+                  <FieldLabel>이름</FieldLabel>
+                  <input
+                    name="fullName"
+                    defaultValue={candidate.full_name}
+                    placeholder="[선택] 비우면 대시보드에 NN년생 직업으로만 표시"
+                    className="min-h-12 rounded-2xl border border-[#ead8cf] bg-white/95 px-4 text-sm font-semibold text-[#37232b]"
+                  />
                 </label>
                 <label className="grid gap-2">
                   <FieldLabel required>출생연도</FieldLabel>
@@ -165,7 +170,7 @@ export default async function EditCandidatePage({ params, searchParams }: EditCa
                 />
               </div>
               <div className="mt-4 rounded-2xl border border-[#f0ddd2] bg-[#fff8f3] px-4 py-4 text-sm leading-6 text-[#8a6b74]">
-                이름, 지역, 출생연도, 성별, 직업은 필수입니다. 나머지는 선택 입력입니다.
+                지역, 출생연도, 성별, 직업은 필수입니다. 이름은 선택입니다. 나머지는 선택 입력입니다.
               </div>
             </article>
           </section>

@@ -55,14 +55,24 @@ export function DashboardWorkspace({
   }, [candidates, deferredSearch, gender, religion, status]);
 
   const boardCandidates: DashboardBoardCandidate[] = useMemo(
-    () => candidates.map((candidate) => ({
-      id: candidate.id, full_name: candidate.full_name, birth_year: candidate.birth_year,
-      height_text: candidate.height_text, gender: candidate.gender, region: candidate.region,
-      occupation: candidate.occupation, work_summary: candidate.work_summary,
-      religion: candidate.religion, personality_summary: candidate.personality_summary,
-      highlight_tags: candidate.highlight_tags, notes_private: candidate.notes_private,
-      status: candidate.status, paired_candidate_id: candidate.paired_candidate_id,
-    })),
+    () =>
+      candidates.map((candidate) => ({
+        id: candidate.id,
+        full_name: candidate.full_name,
+        birth_year: candidate.birth_year,
+        height_text: candidate.height_text,
+        gender: candidate.gender,
+        region: candidate.region,
+        occupation: candidate.occupation,
+        work_summary: candidate.work_summary,
+        religion: candidate.religion,
+        personality_summary: candidate.personality_summary,
+        highlight_tags: candidate.highlight_tags,
+        notes_private: candidate.notes_private,
+        status: candidate.status,
+        paired_candidate_id: candidate.paired_candidate_id,
+        image_url: candidate.image_url,
+      })),
     [candidates],
   );
 

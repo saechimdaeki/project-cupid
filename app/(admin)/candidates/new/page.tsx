@@ -85,12 +85,16 @@ export default async function NewCandidatePage({ searchParams }: NewCandidatePag
                 <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-primary">Basic Info</p>
                 <h2 className="mt-3 text-[clamp(1.6rem,7vw,2.4rem)] font-semibold tracking-[-0.05em] text-foreground">기본 프로필</h2>
                 <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                  필수 입력: 이름, 지역, 출생연도, 성별, 직업
+                  필수 입력: 지역, 출생연도, 성별, 직업 · 이름은 비워두면 카드에 &quot;NN년생 직업&quot;만 표시됩니다.
                 </p>
                 <div className="mt-6 grid gap-4">
                   <Label className="grid gap-2">
-                    <FieldLabel required>이름</FieldLabel>
-                    <Input name="fullName" placeholder="[필수] 이름을 입력해주세요" required className="min-h-12 rounded-2xl border-border bg-white/95 px-4 text-sm font-semibold text-foreground" />
+                    <FieldLabel>이름</FieldLabel>
+                    <Input
+                      name="fullName"
+                      placeholder="[선택] 예: 김OO 또는 비워두기 (대시보드는 93년생 기자 형태로 구분)"
+                      className="min-h-12 rounded-2xl border-border bg-white/95 px-4 text-sm font-semibold text-foreground"
+                    />
                   </Label>
                   <Label className="grid gap-2">
                     <FieldLabel required>출생연도</FieldLabel>
@@ -162,7 +166,7 @@ export default async function NewCandidatePage({ searchParams }: NewCandidatePag
                   />
                 </div>
                 <div className="mt-4 rounded-2xl border border-border bg-secondary px-4 py-4 text-sm leading-6 text-muted-foreground">
-                  이름, 지역, 출생연도, 성별, 직업은 필수입니다. 나머지는 선택 입력입니다. 사진은 private bucket에 저장되고, 상세 화면에서는 signed URL로만 열립니다.
+                  지역, 출생연도, 성별, 직업은 필수입니다. 이름은 알 수 없으면 비워도 됩니다. 나머지는 선택 입력입니다. 사진은 private bucket에 저장되고, 상세 화면에서는 signed URL로만 열립니다.
                 </div>
               </CardContent>
             </Card>

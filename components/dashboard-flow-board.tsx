@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { moveCandidatePairStatus, moveCandidateStatus } from "@/lib/admin-actions";
+import { CandidateAvatarThumb } from "@/components/candidate-avatar-thumb";
+import { formatCandidateBrief, getCandidateCardTitle } from "@/lib/candidate-display";
 import { cn } from "@/lib/cn";
 import {
   canAccessCandidateDetail,
@@ -44,6 +46,7 @@ export type DashboardBoardCandidate = Pick<
   | "notes_private"
   | "status"
   | "paired_candidate_id"
+  | "image_url"
 >;
 
 type PairComposerState = {
@@ -85,21 +88,6 @@ function groupCandidatesByStatus(
   status: CandidateStatus,
 ) {
   return candidates.filter((candidate) => candidate.status === status);
-}
-
-function getHeadline(candidate: DashboardBoardCandidate) {
-  const parts = [
-    candidate.birth_year ? `${String(candidate.birth_year).slice(-2)}년생` : null,
-    candidate.occupation || null,
-  ].filter(Boolean);
-
-  return parts.length ? parts.join(" ") : candidate.full_name;
-}
-
-function getAvatarEmoji(gender: string) {
-  if (gender === "남") return "🤵";
-  if (gender === "여") return "👰";
-  return "💌";
 }
 
 function getEligiblePairOptions(
@@ -253,25 +241,30 @@ export function DashboardFlowBoard({
     const body = (
       <article
         className={cn(
-          "group max-w-full overflow-hidden rounded-2xl border border-rose-100/50 border-t-4 bg-white/90 p-4 shadow-[0_8px_32px_rgb(244,114,182,0.08)] backdrop-blur-sm transition",
+          "group flex min-h-[18rem] max-w-full flex-col overflow-hidden rounded-2xl border border-rose-100/50 border-t-4 bg-white/90 p-4 shadow-[0_8px_32px_rgb(244,114,182,0.08)] backdrop-blur-sm transition",
           getStatusTopBorderClass(candidate.status),
           draggingId === candidate.id && "scale-[0.99] opacity-70",
           isPending ? "opacity-70" : "hover:-translate-y-1 hover:shadow-[0_14px_44px_rgb(244,114,182,0.12)]",
         )}
       >
         <div className="flex items-start gap-3">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-50 to-orange-50 text-2xl shadow-inner">
-            {getAvatarEmoji(candidate.gender)}
-          </div>
+          <CandidateAvatarThumb imageUrl={candidate.image_url} gender={candidate.gender} />
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-rose-400/90">
-              {candidate.full_name}
-            </p>
-            <h3 className="mt-1 text-base font-semibold tracking-[-0.02em] text-slate-800">
-              {getHeadline(candidate)}
+            {candidate.full_name.trim() ? (
+              <p className="line-clamp-1 text-xs font-semibold uppercase tracking-[0.18em] text-rose-400/90">
+                {candidate.full_name.trim()}
+              </p>
+            ) : null}
+            <h3
+              className={cn(
+                "line-clamp-2 min-h-[2.75rem] text-base font-semibold leading-snug tracking-[-0.02em] text-slate-800",
+                candidate.full_name.trim() ? "mt-1" : "",
+              )}
+            >
+              {getCandidateCardTitle(candidate)}
             </h3>
             {candidate.work_summary ? (
-              <p className="mt-1 text-sm text-slate-500 line-clamp-2">{candidate.work_summary}</p>
+              <p className="mt-1 text-sm leading-snug text-slate-500 line-clamp-2">{candidate.work_summary}</p>
             ) : null}
           </div>
         </div>
@@ -331,8 +324,8 @@ export function DashboardFlowBoard({
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-orange-500/90">
               Current Pair
             </p>
-            <p className="mt-1 text-xs font-medium text-slate-600">
-              {pairedCandidate.full_name} · {getHeadline(pairedCandidate)}
+            <p className="mt-1 text-xs font-medium text-slate-600 line-clamp-2">
+              {formatCandidateBrief(pairedCandidate)}
             </p>
           </div>
         ) : null}
@@ -554,7 +547,9 @@ export function DashboardFlowBoard({
                   {pairComposer.targetStatus === "matched" ? "Pair Match" : "Couple Confirm"}
                 </p>
                 <DialogTitle className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-slate-800">
-                  {candidateDirectory.get(pairComposer.candidateId)?.full_name}와 연결할 후보를 선택하세요
+                  {candidateDirectory.get(pairComposer.candidateId)
+                    ? `${formatCandidateBrief(candidateDirectory.get(pairComposer.candidateId)!)}와 연결할 후보를 선택하세요`
+                    : "연결할 후보를 선택하세요"}
                 </DialogTitle>
                 <DialogDescription className="mt-2 text-sm leading-6 text-slate-500">
                   상대 후보를 선택하면 두 후보의 상태가 함께 이동합니다.
@@ -575,7 +570,7 @@ export function DashboardFlowBoard({
                   <option value="">후보를 선택하세요</option>
                   {pairOptions.map((candidate) => (
                     <option key={candidate.id} value={candidate.id}>
-                      {candidate.full_name} · {candidate.gender} · {getHeadline(candidate)}
+                      {formatCandidateBrief(candidate)} · {candidate.gender}
                     </option>
                   ))}
                 </select>

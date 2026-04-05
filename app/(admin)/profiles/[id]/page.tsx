@@ -16,6 +16,7 @@ import {
 } from "@/lib/data";
 import { canEditCandidates, requireMembershipRole } from "@/lib/permissions";
 import { getStatusBadgeClass, getStatusLabel } from "@/lib/status-ui";
+import { getCandidateCardTitle, getCandidateGalleryLabel } from "@/lib/candidate-display";
 import type { Candidate, CandidatePhoto } from "@/lib/types";
 
 type CandidateDetailPageProps = {
@@ -33,8 +34,7 @@ function isRenderableImageUrl(value: string | null | undefined) {
 }
 
 function getTitle(candidate: NonNullable<Awaited<ReturnType<typeof getCandidateById>>>) {
-  const year = String(candidate.birth_year).slice(-2);
-  return `${year} ${candidate.occupation || candidate.full_name}`;
+  return getCandidateCardTitle(candidate);
 }
 
 function getStudioMetaChips(candidate: NonNullable<Awaited<ReturnType<typeof getCandidateById>>>) {
@@ -149,7 +149,7 @@ export default async function CandidateDetailPage({
                 <div className="min-w-0 p-4 sm:p-5 lg:p-6">
                   <div className="relative overflow-hidden rounded-3xl border border-white/70 bg-gradient-to-b from-rose-50/80 to-white/40 p-2 shadow-[0_28px_70px_rgba(244,114,182,0.28)] backdrop-blur-sm sm:p-3">
                     <p className="mb-2 px-1 text-center text-xs font-semibold text-rose-600/90 sm:text-left">
-                      {candidate.full_name}
+                      {getCandidateGalleryLabel(candidate)}
                       <span className="mt-0.5 block font-normal text-slate-500">프로필 갤러리</span>
                     </p>
                     <div className="relative w-full">
@@ -283,7 +283,7 @@ export default async function CandidateDetailPage({
                     </div>
                     <div className="min-w-0 flex-1 text-center sm:text-left">
                       <p className="text-base font-semibold text-slate-800">
-                        {counterpartCandidate.full_name}
+                        {getCandidateGalleryLabel(counterpartCandidate)}
                       </p>
                       <p className="mt-1 text-sm font-medium text-slate-600">
                         {getTitle(counterpartCandidate)}

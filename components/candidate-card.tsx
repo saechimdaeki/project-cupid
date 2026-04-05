@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { CandidateAvatarThumb } from "@/components/candidate-avatar-thumb";
+import { getCandidateCardTitle } from "@/lib/candidate-display";
 import { canAccessCandidateDetail, getRoleLabel } from "@/lib/role-utils";
 import { getStatusBadgeClass, getStatusLabel, getStatusTopBorderClass } from "@/lib/status-ui";
 import type { AppRole, Candidate } from "@/lib/types";
@@ -10,21 +12,6 @@ type CandidateCardProps = {
   candidate: Candidate;
   role?: AppRole;
 };
-
-function getAvatarEmoji(gender: string) {
-  if (gender === "남") return "🤵";
-  if (gender === "여") return "👰";
-  return "💌";
-}
-
-function getHeadline(candidate: Candidate) {
-  const parts = [
-    candidate.birth_year ? `${String(candidate.birth_year).slice(-2)}년생` : null,
-    candidate.occupation || null,
-  ].filter(Boolean);
-
-  return parts.length ? parts.join(" ") : candidate.full_name;
-}
 
 export function CandidateCard({ candidate, role = "viewer" }: CandidateCardProps) {
   const ageLabel = candidate.birth_year ? `${String(candidate.birth_year).slice(-2)}년생` : null;
@@ -44,23 +31,28 @@ export function CandidateCard({ candidate, role = "viewer" }: CandidateCardProps
   const body = (
     <Card
       className={cn(
-        "rounded-[26px] border-rose-100/50 border-t-4 bg-card/95 shadow-[0_10px_40px_rgb(244,114,182,0.1)] backdrop-blur-sm transition hover:-translate-y-1 hover:shadow-[0_16px_48px_rgb(244,114,182,0.14)]",
+        "min-h-[18rem] rounded-[26px] border-rose-100/50 border-t-4 bg-card/95 shadow-[0_10px_40px_rgb(244,114,182,0.1)] backdrop-blur-sm transition hover:-translate-y-1 hover:shadow-[0_16px_48px_rgb(244,114,182,0.14)]",
         getStatusTopBorderClass(candidate.status),
       )}
     >
       <CardContent className="p-6">
         <div className="flex items-start gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-50 to-orange-50 text-[28px] shadow-inner">
-            {getAvatarEmoji(candidate.gender)}
-          </div>
+          <CandidateAvatarThumb imageUrl={candidate.image_url} gender={candidate.gender} />
           <div className="min-w-0 max-w-3xl flex-1">
             <div className="flex max-w-2xl flex-wrap items-start justify-between gap-x-4 gap-y-2">
               <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-rose-400/90">
-                  {candidate.full_name}
-                </p>
-                <h3 className="mt-1 text-lg font-semibold tracking-[-0.03em] text-foreground sm:text-xl">
-                  {getHeadline(candidate)}
+                {candidate.full_name.trim() ? (
+                  <p className="line-clamp-1 text-xs font-semibold uppercase tracking-[0.18em] text-rose-400/90">
+                    {candidate.full_name.trim()}
+                  </p>
+                ) : null}
+                <h3
+                  className={cn(
+                    "line-clamp-2 min-h-[3rem] text-lg font-semibold leading-snug tracking-[-0.03em] text-foreground sm:text-xl",
+                    candidate.full_name.trim() ? "mt-1" : "",
+                  )}
+                >
+                  {getCandidateCardTitle(candidate)}
                 </h3>
                 {candidate.personality_summary ? (
                   <p className="mt-2 text-sm leading-6 text-muted-foreground line-clamp-2">

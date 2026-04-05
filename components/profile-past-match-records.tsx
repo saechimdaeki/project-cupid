@@ -1,5 +1,6 @@
 "use client";
 
+import { formatCandidateBrief } from "@/lib/candidate-display";
 import { deleteMatchRecord } from "@/lib/admin-actions";
 import { filterMatchRecordsForColumn } from "@/lib/match-flow-columns";
 import type { Candidate, MatchRecord } from "@/lib/types";
@@ -14,7 +15,7 @@ function formatPastCounterpartLine(
   if (record.counterpart_candidate_id) {
     const c = counterpartById[record.counterpart_candidate_id];
     if (c) {
-      return `${c.full_name} · ${c.birth_year}년생 · ${c.occupation} · ${c.region}`;
+      return `${formatCandidateBrief(c)} · ${c.region}`;
     }
   }
   return record.counterpart_label;
