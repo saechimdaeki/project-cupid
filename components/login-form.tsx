@@ -1,11 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { useTransition } from "react";
+import Link from "next/link";
 import { useForm, type FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { signInWithPassword } from "@/lib/auth-actions";
+import { signInWithPassword } from "@/server/actions/auth";
 import { loginSchema, type LoginInput } from "@/lib/schemas/auth";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -29,21 +29,20 @@ export function LoginForm() {
     defaultValues: { username: "", password: "" },
   });
 
-  function onSubmit(data: LoginInput) {
+  function handleLogin(data: LoginInput) {
     startTransition(async () => {
       const result = await signInWithPassword(data);
       if (result && "error" in result) {
+        toast.error(result.error);
         if (result.field) {
           setError(result.field as keyof LoginInput, { message: result.error });
-          toast.error(result.error);
-        } else {
-          toast.error(result.error);
         }
       }
+      // 성공 시 Server Action 내부에서 redirect("/dashboard")
     });
   }
 
-  function onInvalid(formErrors: FieldErrors<LoginInput>) {
+  function handleInvalid(formErrors: FieldErrors<LoginInput>) {
     const firstMessage =
       formErrors.username?.message ?? formErrors.password?.message;
     if (firstMessage) toast.error(firstMessage);
@@ -59,7 +58,7 @@ export function LoginForm() {
           </p>
         </div>
 
-        <form className="mt-6" onSubmit={handleSubmit(onSubmit, onInvalid)} noValidate>
+        <form className="mt-6" onSubmit={handleSubmit(handleLogin, handleInvalid)} noValidate>
           <FieldGroup>
             <Field data-invalid={errors.username ? true : undefined}>
               <FieldLabel htmlFor="login-username">아이디</FieldLabel>
