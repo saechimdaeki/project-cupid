@@ -40,29 +40,43 @@ export function DashboardTimelinePanel({
   const showViewAll = Boolean(onViewAll && events.length > RECENT_MATCH_LIMIT);
 
   const list = (
-    <div className="mt-6 grid gap-4">
+    <div className="mt-6 flex flex-col gap-4">
       {events.length ? (
         preview.map((event, index) => (
-          <Button
+          <button
             key={event.id}
-            variant="ghost"
+            type="button"
             onClick={() => onSelectEvent?.(event)}
-            className="relative h-auto w-full cursor-pointer pl-6 text-left transition hover:bg-transparent hover:opacity-95"
+            className={cn(
+              "relative w-full min-w-0 cursor-pointer rounded-xl border border-transparent bg-transparent pl-7 text-left",
+              "text-slate-800 transition hover:bg-rose-50/50",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2",
+            )}
           >
             {index < preview.length - 1 ? (
-              <span className="absolute left-[7px] top-7 h-[calc(100%-0.25rem)] w-px bg-gradient-to-b from-rose-200/80 to-orange-100/50" />
+              <span
+                aria-hidden
+                className="absolute left-[7px] top-6 bottom-[-1rem] w-px bg-gradient-to-b from-rose-200/80 to-orange-100/40"
+              />
             ) : null}
             <span
-              className={cn("absolute left-0 top-1.5 size-4 rounded-full border-[3px] border-white shadow-[0_2px_8px_rgb(244,114,182,0.2)]", getOutcomeDotClass(event.outcome))}
+              className={cn(
+                "absolute left-0 top-1.5 z-[1] size-4 rounded-full border-[3px] border-white shadow-[0_2px_8px_rgb(244,114,182,0.2)]",
+                getOutcomeDotClass(event.outcome),
+              )}
             />
             <div className="rounded-2xl border border-rose-100/40 bg-rose-50/35 p-3.5">
               <div className="flex items-start justify-between gap-3">
-                <strong className="text-sm font-semibold text-slate-800">{event.title}</strong>
-                <span className="shrink-0 text-xs font-medium text-rose-400">{event.happened_on}</span>
+                <strong className="min-w-0 flex-1 text-sm font-semibold leading-snug text-slate-800 break-words">
+                  {event.title}
+                </strong>
+                <span className="shrink-0 pt-0.5 text-xs font-medium text-rose-400 tabular-nums">
+                  {event.happened_on}
+                </span>
               </div>
-              <p className="mt-1.5 text-sm leading-6 text-slate-600">{event.summary}</p>
+              <p className="mt-1.5 text-sm leading-relaxed text-slate-600 break-words">{event.summary}</p>
             </div>
-          </Button>
+          </button>
         ))
       ) : (
         <div className="rounded-2xl border border-dashed border-rose-200/60 bg-white/60 px-4 py-6 text-center text-sm text-slate-500">
