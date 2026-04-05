@@ -719,6 +719,85 @@ export async function getCandidatePhotos(candidateId: string) {
   )();
 }
 
+/**
+ * 프로필 상세 갤러리용 이미지 URL (순서 유지 + Storage 경로 기준 중복 제거).
+ *
+ * `getCandidateById`의 메인 사진은 변환(transform)이 붙은 서명 URL이고,
+ * `getCandidatePhotos`의 동일 파일은 배치 서명 URL이라 문자열이 달라 Set으로는 중복이 안 잡힙니다.
+ * 여기서는 DB의 원본 경로를 기준으로 한 번만 넣은 뒤, 배치 서명으로 통일합니다.
+ */
+async function loadProfileGalleryImageUrlsUncached(candidateId: string): Promise<string[]> {
+  const supabase = await createClient();
+
+  if (!supabase) {
+    const mock = mockCandidates.find((c) => c.id === candidateId);
+    const u = mock?.image_url;
+    return u && isDirectImageUrl(u) ? [u] : [];
+  }
+
+  const [{ data: candidateRow, error: candidateError }, { data: photoRows, error: photosError }] =
+    await Promise.all([
+      supabase.from("cupid_candidates").select("image_url").eq("id", candidateId).maybeSingle(),
+      supabase
+        .from("cupid_candidate_photos")
+        .select("*")
+        .eq("candidate_id", candidateId)
+        .order("is_primary", { ascending: false })
+        .order("sort_order", { ascending: true }),
+    ]);
+
+  const mockFallback = mockCandidates.find((c) => c.id === candidateId);
+
+  const photos =
+    !photosError && photoRows?.length ? photoRows.map((row) => mapPhoto(row)) : [];
+
+  const orderedPaths: string[] = [];
+  const seenPath = new Set<string>();
+
+  const addPath = (raw: string | null | undefined) => {
+    if (raw == null) return;
+    const key = String(raw).trim();
+    if (!key || seenPath.has(key)) return;
+    seenPath.add(key);
+    orderedPaths.push(key);
+  };
+
+  if (!candidateError && candidateRow) {
+    addPath(candidateRow.image_url);
+  } else if (mockFallback?.image_url) {
+    addPath(mockFallback.image_url);
+  }
+
+  for (const photo of photos) {
+    addPath(photo.image_url);
+  }
+
+  if (!orderedPaths.length) {
+    const m = mockFallback?.image_url;
+    return m && isDirectImageUrl(m) ? [m] : [];
+  }
+
+  const signedMap = await resolveSignedImageMap(supabase, orderedPaths);
+
+  const resolved = orderedPaths
+    .map((p) => {
+      if (isDirectImageUrl(p)) return p;
+      const signed = signedMap.get(p);
+      return signed && isDirectImageUrl(signed) ? signed : null;
+    })
+    .filter((u): u is string => u != null);
+
+  return resolved;
+}
+
+export async function getProfileGalleryImageUrls(candidateId: string): Promise<string[]> {
+  return unstable_cache(
+    async () => loadProfileGalleryImageUrlsUncached(candidateId),
+    ["cupid-profile-gallery-urls", candidateId],
+    { tags: [candidateProfileTag(candidateId)], revalidate: 45 },
+  )();
+}
+
 export async function getPendingMemberships() {
   const supabase = await createClient();
 

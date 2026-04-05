@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
@@ -16,26 +16,35 @@ export function ProfileInteractiveGallery({ images, sizes }: ProfileInteractiveG
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
+  const displayImages = useMemo(() => {
+    const seen = new Set<string>();
+    return images.filter((src) => {
+      if (!src || seen.has(src)) return false;
+      seen.add(src);
+      return true;
+    });
+  }, [images]);
+
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const safeIndex = images.length ? Math.min(currentImageIndex, images.length - 1) : 0;
-  const currentSrc = images.length ? images[safeIndex] : null;
+  const safeIndex = displayImages.length ? Math.min(currentImageIndex, displayImages.length - 1) : 0;
+  const currentSrc = displayImages.length ? displayImages[safeIndex] : null;
 
   useEffect(() => {
-    if (currentImageIndex >= images.length && images.length > 0) {
-      setCurrentImageIndex(images.length - 1);
+    if (currentImageIndex >= displayImages.length && displayImages.length > 0) {
+      setCurrentImageIndex(displayImages.length - 1);
     }
-  }, [currentImageIndex, images.length]);
+  }, [currentImageIndex, displayImages.length]);
 
   const goPrev = useCallback(() => {
-    setCurrentImageIndex((i) => (i <= 0 ? images.length - 1 : i - 1));
-  }, [images.length]);
+    setCurrentImageIndex((i) => (i <= 0 ? displayImages.length - 1 : i - 1));
+  }, [displayImages.length]);
 
   const goNext = useCallback(() => {
-    setCurrentImageIndex((i) => (i >= images.length - 1 ? 0 : i + 1));
-  }, [images.length]);
+    setCurrentImageIndex((i) => (i >= displayImages.length - 1 ? 0 : i + 1));
+  }, [displayImages.length]);
 
   useEffect(() => {
     if (!isLightboxOpen) return;
@@ -57,7 +66,7 @@ export function ProfileInteractiveGallery({ images, sizes }: ProfileInteractiveG
     return () => window.removeEventListener("keydown", onKey);
   }, [isLightboxOpen, goPrev, goNext]);
 
-  if (!images.length) {
+  if (!displayImages.length) {
     return (
       <div className="rounded-3xl border border-white/70 bg-white/35 p-3 shadow-[0_28px_70px_rgba(244,114,182,0.22)] backdrop-blur-md sm:p-4">
         <div className="relative flex aspect-[4/5] w-full items-center justify-center overflow-hidden rounded-3xl border border-white/50 bg-gradient-to-b from-rose-100 via-rose-50 to-pink-50">
@@ -72,7 +81,7 @@ export function ProfileInteractiveGallery({ images, sizes }: ProfileInteractiveG
     );
   }
 
-  const showNav = images.length > 1;
+  const showNav = displayImages.length > 1;
 
   const lightbox =
     mounted && isLightboxOpen && currentSrc ? (
@@ -137,7 +146,7 @@ export function ProfileInteractiveGallery({ images, sizes }: ProfileInteractiveG
 
         {showNav ? (
           <p className="pointer-events-none absolute bottom-8 left-0 right-0 z-[99998] text-center text-sm text-white/70">
-            {safeIndex + 1} / {images.length}
+            {safeIndex + 1} / {displayImages.length}
           </p>
         ) : null}
       </div>
@@ -166,9 +175,9 @@ export function ProfileInteractiveGallery({ images, sizes }: ProfileInteractiveG
 
         {showNav ? (
           <div className="mt-4 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {images.map((src, index) => (
+            {displayImages.map((src, index) => (
               <button
-                key={`${src}-${index}`}
+                key={src}
                 type="button"
                 onClick={() => setCurrentImageIndex(index)}
                 className={cn(

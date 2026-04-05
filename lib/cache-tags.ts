@@ -6,7 +6,7 @@ export const TAG_DASHBOARD_CANDIDATES = "cupid-dashboard-candidates";
 /** `getDashboardTimelineData` unstable_cache 태그 */
 export const TAG_DASHBOARD_TIMELINE = "cupid-dashboard-timeline";
 
-/** 후보 상세: getCandidateById / getCandidatePhotos / getMatchRecords(id) 공통 무효화 */
+/** 후보 상세: getCandidateById / getCandidatePhotos / getProfileGalleryImageUrls / getMatchRecords(id) 공통 무효화 */
 export function candidateProfileTag(candidateId: string) {
   return `cupid-candidate-profile-${candidateId}`;
 }
