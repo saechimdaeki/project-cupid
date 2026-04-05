@@ -1,78 +1,96 @@
 "use client";
 
+import { useTransition } from "react";
 import Link from "next/link";
-import { signInWithPassword } from "@/lib/auth-actions";
+import { useForm, type FieldErrors } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
+import { signInWithPassword } from "@/server/actions/auth";
+import { loginSchema, type LoginInput } from "@/lib/schemas/auth";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
 
-type LoginFormProps = {
-  initialMessage?: string;
-};
+export function LoginForm() {
+  const [isPending, startTransition] = useTransition();
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors },
+  } = useForm<LoginInput>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { username: "", password: "" },
+  });
 
-function FieldShell({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="grid gap-2">
-      <Label className="text-sm font-medium text-muted-foreground">{label}</Label>
-      {children}
-    </div>
-  );
-}
+  function handleLogin(data: LoginInput) {
+    startTransition(async () => {
+      const result = await signInWithPassword(data);
+      if (result && "error" in result) {
+        toast.error(result.error);
+        if (result.field) {
+          setError(result.field as keyof LoginInput, { message: result.error });
+        }
+      }
+      // 성공 시 Server Action 내부에서 redirect("/dashboard")
+    });
+  }
 
-export function LoginForm({ initialMessage }: LoginFormProps) {
-  const message = initialMessage ?? "";
+  function handleInvalid(formErrors: FieldErrors<LoginInput>) {
+    const firstMessage =
+      formErrors.username?.message ?? formErrors.password?.message;
+    if (firstMessage) toast.error(firstMessage);
+  }
 
   return (
     <Card className="w-full rounded-[28px] border-border/50 bg-card/80 p-5 shadow-xl backdrop-blur-lg sm:p-6">
       <CardContent className="p-0">
         <div>
-          <h2 className="text-foreground">
-            다시 오셨군요
-          </h2>
+          <h2 className="text-foreground">다시 오셨군요</h2>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
             승인된 계정으로 매칭 보드에 입장하세요.
           </p>
         </div>
 
-        {message ? (
-          <Alert className="mt-5 rounded-2xl">
-            <AlertDescription>{message}</AlertDescription>
-          </Alert>
-        ) : null}
+        <form className="mt-6" onSubmit={handleSubmit(handleLogin, handleInvalid)} noValidate>
+          <FieldGroup>
+            <Field data-invalid={errors.username ? true : undefined}>
+              <FieldLabel htmlFor="login-username">아이디</FieldLabel>
+              <Input
+                id="login-username"
+                className="h-12 rounded-xl border-border/50 bg-card/60"
+                placeholder="junseong"
+                autoComplete="username"
+                aria-invalid={errors.username ? true : undefined}
+                {...register("username")}
+              />
+              <FieldError errors={errors.username ? [errors.username] : undefined} />
+            </Field>
 
-        <form className="mt-6 grid gap-4" action={signInWithPassword}>
-          <FieldShell label="아이디">
-            <Input
-              className="h-12 rounded-xl border-border/50 bg-card/60"
-              name="username"
-              placeholder="junseong"
-              required
-              minLength={4}
-              maxLength={20}
-              pattern="[a-z0-9._-]{4,20}"
-            />
-          </FieldShell>
-          <FieldShell label="비밀번호">
-            <Input
-              className="h-12 rounded-xl border-border/50 bg-card/60"
-              name="password"
-              type="password"
-              placeholder="비밀번호 입력"
-              required
-            />
-          </FieldShell>
+            <Field data-invalid={errors.password ? true : undefined}>
+              <FieldLabel htmlFor="login-password">비밀번호</FieldLabel>
+              <Input
+                id="login-password"
+                className="h-12 rounded-xl border-border/50 bg-card/60"
+                type="password"
+                placeholder="비밀번호 입력"
+                autoComplete="current-password"
+                aria-invalid={errors.password ? true : undefined}
+                {...register("password")}
+              />
+              <FieldError errors={errors.password ? [errors.password] : undefined} />
+            </Field>
 
-          <Button className="mt-2 h-12 rounded-full" type="submit">
-            로그인
-          </Button>
+            <Button className="mt-2 h-12 rounded-full" type="submit" disabled={isPending}>
+              {isPending ? "로그인 중..." : "로그인"}
+            </Button>
+          </FieldGroup>
         </form>
 
         <div className="mt-6 text-center">

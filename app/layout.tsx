@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import localFont from "next/font/local";
 import { cn } from "@/lib/utils";
+import { Toaster } from "sonner";
 
 const pretendard = localFont({
   src: "../node_modules/pretendard/dist/web/variable/woff2/PretendardVariable.woff2",
@@ -28,7 +29,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" className={cn("font-sans", pretendard.variable)}>
-      <body className="overflow-x-hidden">{children}</body>
+      <body className="overflow-x-hidden">
+        {children}
+        <Toaster position="top-center" richColors />
+      </body>
     </html>
   );
 }

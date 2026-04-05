@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { CopyIcon } from "lucide-react";
-import { toast, Toaster } from "sonner";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { PendingStatusGuard } from "@/components/pending-status-guard";
 import { SakuraRain } from "@/components/sakura-rain";
@@ -39,7 +39,6 @@ export function PendingInviteView({
       <SakuraRain petalCount={56} />
       <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_top,rgba(255,242,245,0.84),rgba(255,247,243,0.68),rgba(255,255,255,0.38))]" />
       <PendingStatusGuard />
-      <Toaster position="top-center" richColors />
 
       <div className="relative z-[1] flex w-full max-w-xl flex-col items-center gap-8">
         <Link href="/" className="flex items-center gap-3 transition hover:opacity-80">

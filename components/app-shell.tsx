@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { signOut } from "@/lib/auth-actions";
+import { signOut } from "@/server/actions/auth";
 import { canEditCandidates } from "@/lib/permissions";
 import type { Membership } from "@/lib/types";
 

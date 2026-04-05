@@ -3,13 +3,7 @@ import { CupidLogo } from "@/components/cupid-logo";
 import { SakuraRain } from "@/components/sakura-rain";
 import { LoginForm } from "@/components/login-form";
 
-type LoginPageProps = {
-  searchParams: Promise<{ message?: string }>;
-};
-
-export default async function LoginPage({ searchParams }: LoginPageProps) {
-  const { message } = await searchParams;
-
+export default async function LoginPage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center overflow-x-hidden bg-gradient-to-br from-rose-50 via-pink-50/30 to-orange-50/50 px-4 py-10">
       <SakuraRain petalCount={40} />
@@ -30,7 +24,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </div>
         </Link>
 
-        <LoginForm initialMessage={message} />
+        <LoginForm />
       </div>
     </main>
   );
