@@ -1,4 +1,10 @@
 import { formatCandidateBrief } from "@/lib/candidate-display";
+import {
+  candidateProfileTag,
+  TAG_DASHBOARD_CANDIDATES,
+  TAG_DASHBOARD_TIMELINE,
+} from "@/lib/cache-tags";
+import { unstable_cache } from "next/cache";
 import { mockCandidates, mockMatchRecords, mockMemberships } from "@/lib/mock-data";
 import { dashboardPreviewMatchRecords } from "@/lib/preview-scene";
 import {
@@ -322,7 +328,7 @@ export async function getCandidates(options?: GetCandidatesOptions) {
   );
 }
 
-export async function getDashboardCandidates() {
+async function loadDashboardCandidatesUncached(): Promise<Candidate[]> {
   const supabase = await createClient();
 
   if (!supabase) {
@@ -357,7 +363,14 @@ export async function getDashboardCandidates() {
   return mergeCandidates(resolved, mockCandidates);
 }
 
-export async function getCandidateById(id: string) {
+export async function getDashboardCandidates(): Promise<Candidate[]> {
+  return unstable_cache(loadDashboardCandidatesUncached, ["cupid-dashboard-candidates-data"], {
+    tags: [TAG_DASHBOARD_CANDIDATES],
+    revalidate: 45,
+  })();
+}
+
+async function loadCandidateByIdUncached(id: string) {
   const supabase = await createClient();
 
   if (!supabase) {
@@ -386,6 +399,14 @@ export async function getCandidateById(id: string) {
     image_url,
     created_by_name: creatorName ?? candidate.created_by_name,
   };
+}
+
+export async function getCandidateById(id: string) {
+  return unstable_cache(
+    async () => loadCandidateByIdUncached(id),
+    ["cupid-candidate-detail", id],
+    { tags: [candidateProfileTag(id)], revalidate: 45 },
+  )();
 }
 
 /**
@@ -437,44 +458,64 @@ export async function getCandidatesBasicByIdsWithSignedImages(
   return attachBatchSignedImageUrlsToCandidates(supabase, basic);
 }
 
-export async function getMatchRecords(candidateId?: string) {
+async function loadMatchRecordsForCandidateUncached(candidateId: string): Promise<MatchRecord[]> {
   const supabase = await createClient();
   const preview = previewMatchRecordsForCandidate(candidateId);
 
   if (!supabase) {
-    const base = candidateId
-      ? mockMatchRecords.filter((record) => record.candidate_id === candidateId)
-      : mockMatchRecords;
+    const base = mockMatchRecords.filter((record) => record.candidate_id === candidateId);
     return mergeMatchRecords(base, preview);
   }
 
-  let query = supabase
+  const { data, error } = await supabase
     .from("cupid_match_records")
     .select("*")
+    .eq("candidate_id", candidateId)
     .order("happened_on", { ascending: false });
 
-  if (candidateId) {
-    query = query.eq("candidate_id", candidateId);
-  }
-
-  const { data, error } = await query;
-
   if (error || !data) {
-    const base = candidateId
-      ? mockMatchRecords.filter((record) => record.candidate_id === candidateId)
-      : mockMatchRecords;
+    const base = mockMatchRecords.filter((record) => record.candidate_id === candidateId);
     return mergeMatchRecords(base, preview);
   }
 
   return mergeMatchRecords(
     mergeMatchRecords(
       data.map(mapMatchRecord),
-      candidateId
-        ? mockMatchRecords.filter((record) => record.candidate_id === candidateId)
-        : mockMatchRecords,
+      mockMatchRecords.filter((record) => record.candidate_id === candidateId),
     ),
     preview,
   );
+}
+
+async function loadMatchRecordsAllUncached(): Promise<MatchRecord[]> {
+  const supabase = await createClient();
+  const preview = previewMatchRecordsForCandidate(undefined);
+
+  if (!supabase) {
+    return mergeMatchRecords(mockMatchRecords, preview);
+  }
+
+  const { data, error } = await supabase
+    .from("cupid_match_records")
+    .select("*")
+    .order("happened_on", { ascending: false });
+
+  if (error || !data) {
+    return mergeMatchRecords(mockMatchRecords, preview);
+  }
+
+  return mergeMatchRecords(mergeMatchRecords(data.map(mapMatchRecord), mockMatchRecords), preview);
+}
+
+export async function getMatchRecords(candidateId?: string) {
+  if (candidateId) {
+    return unstable_cache(
+      async () => loadMatchRecordsForCandidateUncached(candidateId),
+      ["cupid-match-records-candidate", candidateId],
+      { tags: [candidateProfileTag(candidateId)], revalidate: 45 },
+    )();
+  }
+  return loadMatchRecordsAllUncached();
 }
 
 export async function getDashboardMatchRecords() {
@@ -498,7 +539,10 @@ export async function getDashboardMatchRecords() {
   return mergeMatchRecords(data.map(mapMatchRecord), mockMatchRecords);
 }
 
-export async function getDashboardTimelineData() {
+async function loadDashboardTimelineDataUncached(): Promise<{
+  records: MatchRecord[];
+  totalCount: number;
+}> {
   const supabase = await createClient();
 
   if (!supabase) {
@@ -540,6 +584,16 @@ export async function getDashboardTimelineData() {
         ? mergedRecords.length
         : Math.max(count, mergedRecords.length),
   };
+}
+
+export async function getDashboardTimelineData(): Promise<{
+  records: MatchRecord[];
+  totalCount: number;
+}> {
+  return unstable_cache(loadDashboardTimelineDataUncached, ["cupid-dashboard-timeline-data"], {
+    tags: [TAG_DASHBOARD_TIMELINE],
+    revalidate: 45,
+  })();
 }
 
 export function buildTimelineEvents(
@@ -601,7 +655,7 @@ export async function getTimelineEvents() {
   return buildTimelineEvents(records, candidateDirectory);
 }
 
-export async function getCandidatePhotos(candidateId: string) {
+async function loadCandidatePhotosUncached(candidateId: string): Promise<CandidatePhoto[]> {
   const supabase = await createClient();
 
   if (!supabase) {
@@ -655,6 +709,14 @@ export async function getCandidatePhotos(candidateId: string) {
       ? photo.image_url
       : signedImageMap.get(photo.image_url) ?? photo.image_url,
   }));
+}
+
+export async function getCandidatePhotos(candidateId: string) {
+  return unstable_cache(
+    async () => loadCandidatePhotosUncached(candidateId),
+    ["cupid-candidate-photos", candidateId],
+    { tags: [candidateProfileTag(candidateId)], revalidate: 45 },
+  )();
 }
 
 export async function getPendingMemberships() {

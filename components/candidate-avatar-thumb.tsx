@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { cn } from "@/lib/cn";
 
 function genderEmoji(gender: string) {
@@ -27,6 +26,8 @@ export function CandidateAvatarThumb({
     (url.startsWith("/") || url.startsWith("http://") || url.startsWith("https://"));
 
   if (isRenderable) {
+    /* next/image 미사용: 대시보드에 썸네일이 수십 장일 때 Vercel Image Optimization이
+       요청을 큐에 쌓아 TTFB 이후에도 느려질 수 있음 → 브라우저 네이티브 lazy 로드 */
     return (
       <div
         className={cn(
@@ -35,7 +36,14 @@ export function CandidateAvatarThumb({
           roundedClassName,
         )}
       >
-        <Image src={url} alt="" fill sizes="64px" className="object-cover" />
+        <img
+          src={url}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          fetchPriority="low"
+          className="h-full w-full object-cover"
+        />
       </div>
     );
   }
