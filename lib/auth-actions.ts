@@ -2,52 +2,30 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import {
+  loginSchema,
+  signupSchema,
+  type LoginInput,
+  type SignupInput,
+} from "@/lib/schemas/auth";
 
-type SupabaseServerClient = NonNullable<Awaited<ReturnType<typeof createClient>>>;
-
-function redirectWithMessage(path: string, message: string) {
-  redirect(`${path}?message=${encodeURIComponent(message)}`);
-}
-
-async function requireSupabaseClient(): Promise<SupabaseServerClient> {
-  const supabase = await createClient();
-
-  if (!supabase) {
-    redirectWithMessage("/login", "Supabase 환경변수가 없습니다.");
-  }
-
-  return supabase as SupabaseServerClient;
-}
-
-function normalizeUsername(value: string) {
-  return value.trim().toLowerCase();
-}
+type ActionResult = { error: string; field?: string } | { success: true };
 
 function usernameToEmail(username: string) {
   return `${username}@project-cupid.local`;
 }
 
-function validateUsername(username: string) {
-  return /^[a-z0-9._-]{4,20}$/.test(username);
-}
-
-export async function signUpWithPassword(formData: FormData) {
-  const username = normalizeUsername(String(formData.get("username") ?? ""));
-  const fullName = String(formData.get("fullName") ?? "").trim();
-  const password = String(formData.get("password") ?? "");
-  const supabase = await requireSupabaseClient();
-
-  if (!validateUsername(username)) {
-    redirectWithMessage("/signup", "id는 영문 소문자, 숫자, ., _, - 조합 4-20자로 입력해주세요.");
+export async function signUpWithPassword(input: SignupInput): Promise<ActionResult> {
+  const parsed = signupSchema.safeParse(input);
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    return { error: issue.message, field: issue.path[0]?.toString() };
   }
 
-  if (fullName.length < 2) {
-    redirectWithMessage("/signup", "이름을 2자 이상 입력해주세요.");
-  }
+  const { username, fullName, password } = parsed.data;
 
-  if (password.length < 6) {
-    redirectWithMessage("/signup", "비밀번호는 6자 이상이어야 합니다.");
-  }
+  const supabase = await createClient();
+  if (!supabase) return { error: "Supabase 환경변수가 없습니다." };
 
   const { data: usernameExists, error: usernameCheckError } = await supabase.rpc(
     "cupid_username_exists",
@@ -55,10 +33,13 @@ export async function signUpWithPassword(formData: FormData) {
   );
 
   if (!usernameCheckError && usernameExists) {
-    redirectWithMessage("/signup", "이미 사용 중인 id입니다. 다른 id로 가입해주세요.");
+    return {
+      error: "이미 사용 중인 아이디입니다. 다른 아이디로 가입해주세요.",
+      field: "username",
+    };
   }
 
-  const { data, error } = await supabase.auth.signUp({
+  const { error } = await supabase.auth.signUp({
     email: usernameToEmail(username),
     password,
     options: {
@@ -71,23 +52,28 @@ export async function signUpWithPassword(formData: FormData) {
 
   if (error) {
     if (error.message.includes("Database error saving new user")) {
-      redirectWithMessage("/signup", "가입 저장 중 오류가 났습니다. 같은 id가 이미 있거나 Supabase 스키마가 최신이 아닐 수 있습니다.");
+      return {
+        error:
+          "가입 저장 중 오류가 났습니다. 같은 아이디가 이미 있거나 Supabase 스키마가 최신이 아닐 수 있습니다.",
+      };
     }
-
-    redirect(`/signup?message=${encodeURIComponent(error.message)}`);
-  }
-
-  if (!data.session) {
-    redirectWithMessage("/login", "회원가입이 완료됐습니다. 로그인해주세요.");
+    return { error: error.message };
   }
 
   redirect("/pending");
 }
 
-export async function signInWithPassword(formData: FormData) {
-  const username = normalizeUsername(String(formData.get("username") ?? ""));
-  const password = String(formData.get("password") ?? "");
-  const supabase = await requireSupabaseClient();
+export async function signInWithPassword(input: LoginInput): Promise<ActionResult> {
+  const parsed = loginSchema.safeParse(input);
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    return { error: issue.message, field: issue.path[0]?.toString() };
+  }
+
+  const { username, password } = parsed.data;
+
+  const supabase = await createClient();
+  if (!supabase) return { error: "Supabase 환경변수가 없습니다." };
 
   const { error } = await supabase.auth.signInWithPassword({
     email: usernameToEmail(username),
@@ -95,7 +81,7 @@ export async function signInWithPassword(formData: FormData) {
   });
 
   if (error) {
-    redirectWithMessage("/login", "id 또는 비밀번호를 다시 확인해주세요.");
+    return { error: "아이디 또는 비밀번호를 다시 확인해주세요." };
   }
 
   redirect("/dashboard");
