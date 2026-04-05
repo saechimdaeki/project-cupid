@@ -72,6 +72,7 @@ export function DashboardWorkspace({
         status: candidate.status,
         paired_candidate_id: candidate.paired_candidate_id,
         image_url: candidate.image_url,
+        created_at: candidate.created_at,
       })),
     [candidates],
   );

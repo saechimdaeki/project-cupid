@@ -40,6 +40,7 @@ export type DashboardBoardCandidate = Pick<
   | "status"
   | "paired_candidate_id"
   | "image_url"
+  | "created_at"
 >;
 
 type PairComposerState = {
@@ -82,6 +83,71 @@ function groupCandidatesByStatus(
 ) {
   return candidates.filter((candidate) => candidate.status === status);
 }
+
+function candidateCreatedAt(candidate: DashboardBoardCandidate): string {
+  return candidate.created_at ?? "1970-01-01T00:00:00.000Z";
+}
+
+/** 등록 최신순(내림차순) */
+function sortByCreatedAtDesc(list: DashboardBoardCandidate[]): DashboardBoardCandidate[] {
+  return [...list].sort((a, b) => candidateCreatedAt(b).localeCompare(candidateCreatedAt(a)));
+}
+
+function newestCreatedAtInPair(row: PairedLaneRow): string {
+  const times = [row.male, row.female]
+    .filter(Boolean)
+    .map((c) => candidateCreatedAt(c!));
+  if (!times.length) return "1970-01-01T00:00:00.000Z";
+  return times.reduce((best, t) => (t > best ? t : best), times[0]);
+}
+
+/** 매칭진행중·커플완성: 한 행에 남·여 페어를 맞추기 위한 행 목록 */
+type PairedLaneRow = {
+  male: DashboardBoardCandidate | null;
+  female: DashboardBoardCandidate | null;
+};
+
+function buildPairedLaneRows(laneItems: DashboardBoardCandidate[]): PairedLaneRow[] {
+  const byId = new Map(laneItems.map((c) => [c.id, c]));
+  const visited = new Set<string>();
+  const rows: PairedLaneRow[] = [];
+
+  for (const c of laneItems) {
+    if (visited.has(c.id)) continue;
+
+    const partner = c.paired_candidate_id ? byId.get(c.paired_candidate_id) : undefined;
+
+    if (partner) {
+      visited.add(c.id);
+      visited.add(partner.id);
+      const members = [c, partner];
+      const male = members.find((m) => m.gender === "남") ?? null;
+      const female = members.find((m) => m.gender === "여") ?? null;
+      if (male || female) {
+        rows.push({ male, female });
+      } else {
+        rows.push({ male: c, female: partner });
+      }
+    } else {
+      visited.add(c.id);
+      if (c.gender === "남") {
+        rows.push({ male: c, female: null });
+      } else if (c.gender === "여") {
+        rows.push({ male: null, female: c });
+      } else {
+        rows.push({ male: c, female: null });
+      }
+    }
+  }
+
+  rows.sort((a, b) => newestCreatedAtInPair(b).localeCompare(newestCreatedAtInPair(a)));
+
+  return rows;
+}
+
+/** 같은 행에서 남·여 카드 높이를 맞추려면 stretch + 자식 h-full */
+const PAIR_LANE_ROW_GRID =
+  "grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-x-3 sm:items-stretch";
 
 function getEligiblePairOptions(
   source: DashboardBoardCandidate | undefined,
@@ -230,7 +296,11 @@ export function DashboardFlowBoard({
     });
   };
 
-  const renderCandidateCard = (candidate: DashboardBoardCandidate) => {
+  const renderCandidateCard = (
+    candidate: DashboardBoardCandidate,
+    options?: { fillRowHeight?: boolean },
+  ) => {
+    const fillRowHeight = options?.fillRowHeight ?? false;
     const ageLabel = candidate.birth_year ? `${String(candidate.birth_year).slice(-2)}년생` : null;
     const extraMeta = [
       candidate.gender || null,
@@ -244,7 +314,8 @@ export function DashboardFlowBoard({
     const body = (
       <article
         className={cn(
-          "group flex min-h-[18rem] max-w-full flex-col overflow-x-hidden overflow-y-visible rounded-2xl border border-rose-100/50 border-t-4 bg-white/90 p-4 shadow-[0_8px_32px_rgb(244,114,182,0.08)] backdrop-blur-sm transition",
+          "group flex max-w-full flex-col overflow-x-hidden overflow-y-visible rounded-2xl border border-rose-100/50 border-t-4 bg-white/90 p-4 shadow-[0_8px_32px_rgb(244,114,182,0.08)] backdrop-blur-sm transition",
+          fillRowHeight ? "h-full min-h-[18rem]" : "min-h-[18rem]",
           getStatusTopBorderClass(candidate.status),
           draggingId === candidate.id && "scale-[0.99] opacity-70",
           pendingCandidateIds.has(candidate.id) && "pointer-events-none opacity-60",
@@ -335,7 +406,12 @@ export function DashboardFlowBoard({
           </div>
         ) : null}
 
-        <div className="mt-4 flex items-center justify-between border-t border-rose-100/50 pt-3">
+        <div
+          className={cn(
+            "mt-4 flex items-center justify-between border-t border-rose-100/50 pt-3",
+            fillRowHeight && "mt-auto",
+          )}
+        >
           <span className="text-xs font-medium text-slate-500">
             {canAccessCandidateDetail(role)
               ? "카드를 눌러 상세 확인"
@@ -372,17 +448,26 @@ export function DashboardFlowBoard({
       },
     };
 
+    const wrapperClass = cn(
+      "min-w-0 max-w-full",
+      fillRowHeight && "flex h-full min-h-0 flex-col",
+    );
+    const linkClass = cn(
+      "min-w-0 max-w-full",
+      fillRowHeight ? "flex h-full min-h-0 flex-col" : "block",
+    );
+
     if (!canAccessCandidateDetail(role)) {
       return (
-        <div key={candidate.id} className="min-w-0 max-w-full" {...wrapperProps}>
+        <div key={candidate.id} className={wrapperClass} {...wrapperProps}>
           {body}
         </div>
       );
     }
 
     return (
-      <div key={candidate.id} className="min-w-0 max-w-full" {...wrapperProps}>
-        <Link href={`/profiles/${candidate.id}`} className="block min-w-0 max-w-full">
+      <div key={candidate.id} className={wrapperClass} {...wrapperProps}>
+        <Link href={`/profiles/${candidate.id}`} className={linkClass}>
           {body}
         </Link>
       </div>
@@ -396,8 +481,10 @@ export function DashboardFlowBoard({
     compact = false,
   ) => {
     const laneItems = groupCandidatesByStatus(items, status);
-    const males = laneItems.filter((c) => c.gender === "남");
-    const females = laneItems.filter((c) => c.gender === "여");
+    const usePairedRows = status === "matched" || status === "couple";
+    const pairedRows = usePairedRows ? buildPairedLaneRows(laneItems) : [];
+    const males = usePairedRows ? [] : sortByCreatedAtDesc(laneItems.filter((c) => c.gender === "남"));
+    const females = usePairedRows ? [] : sortByCreatedAtDesc(laneItems.filter((c) => c.gender === "여"));
 
     const dropHandlers = {
       onDragOver: (event: React.DragEvent<HTMLElement>) => {
@@ -439,6 +526,13 @@ export function DashboardFlowBoard({
       </div>
     );
 
+    /** 페어 행 빈 칸 — 인접 카드와 동일 행 높이(stretch)에 맞춤 */
+    const pairSlotPlaceholder = (gender: "남" | "여") => (
+      <div className="flex h-full min-h-[18rem] items-center justify-center rounded-2xl border border-dashed border-rose-200/60 bg-white/50 px-3 text-center text-xs text-slate-400">
+        {gender === "남" ? "남성 페어 슬롯" : "여성 페어 슬롯"}
+      </div>
+    );
+
     return (
       <article
         key={status}
@@ -462,25 +556,58 @@ export function DashboardFlowBoard({
           </Badge>
         </div>
 
-        {/* 남/여: 동일 너비 2열, 선 없이 gap만으로 살짝 간격 */}
-        <div className="mt-4 grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-x-3 sm:gap-y-4">
-          <div className="min-w-0">
-            <p className="mb-2 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-400/80">
-              <span>🤵</span> 남성
-            </p>
-            <div className="grid min-w-0 gap-3">
-              {males.length ? males.map(renderCandidateCard) : emptySlot("남")}
+        {usePairedRows ? (
+          <div className="mt-4 flex flex-col gap-4">
+            <div className={PAIR_LANE_ROW_GRID}>
+              <p className="mb-0 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-400/80 sm:mb-0">
+                <span>🤵</span> 남성
+              </p>
+              <p className="mb-0 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-rose-400/80 sm:mb-0">
+                <span>👰</span> 여성
+              </p>
+            </div>
+            {pairedRows.length === 0 ? (
+              <div className={PAIR_LANE_ROW_GRID}>
+                <div className="min-w-0">{emptySlot("남")}</div>
+                <div className="min-w-0">{emptySlot("여")}</div>
+              </div>
+            ) : (
+              pairedRows.map((row) => (
+                <div
+                  key={`pair-${row.male?.id ?? "none"}-${row.female?.id ?? "none"}`}
+                  className={PAIR_LANE_ROW_GRID}
+                >
+                  <div className="flex h-full min-h-0 min-w-0 flex-col">
+                    {row.male ? renderCandidateCard(row.male, { fillRowHeight: true }) : pairSlotPlaceholder("남")}
+                  </div>
+                  <div className="flex h-full min-h-0 min-w-0 flex-col">
+                    {row.female ? renderCandidateCard(row.female, { fillRowHeight: true }) : pairSlotPlaceholder("여")}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        ) : (
+          /* 적극검토: 페어가 없으므로 기존 남/여 독립 열 유지 */
+          <div className="mt-4 grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-x-3 sm:gap-y-4">
+            <div className="min-w-0">
+              <p className="mb-2 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-400/80">
+                <span>🤵</span> 남성
+              </p>
+              <div className="grid min-w-0 gap-3">
+                {males.length ? males.map((c) => renderCandidateCard(c)) : emptySlot("남")}
+              </div>
+            </div>
+            <div className="min-w-0">
+              <p className="mb-2 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-rose-400/80">
+                <span>👰</span> 여성
+              </p>
+              <div className="grid min-w-0 gap-3">
+                {females.length ? females.map((c) => renderCandidateCard(c)) : emptySlot("여")}
+              </div>
             </div>
           </div>
-          <div className="min-w-0">
-            <p className="mb-2 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-rose-400/80">
-              <span>👰</span> 여성
-            </p>
-            <div className="grid min-w-0 gap-3">
-              {females.length ? females.map(renderCandidateCard) : emptySlot("여")}
-            </div>
-          </div>
-        </div>
+        )}
       </article>
     );
   };
