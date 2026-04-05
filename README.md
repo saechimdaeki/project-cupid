@@ -1,5 +1,8 @@
 # Project Cupid
 
+<img width="1234" height="930" alt="image" src="https://github.com/user-attachments/assets/ff685081-395d-40bf-9130-2b332c944a58" />
+
+
 > 사람의 결을 읽고, 가장 좋은 타이밍에 인연을 잇기 위한 프라이빗 매칭 워크스페이스
 
 <img width="1097" height="602" alt="Project Cupid 메인" src="https://github.com/user-attachments/assets/7c8ffce7-f34e-4a71-bb45-bc20d747cb4c" />
