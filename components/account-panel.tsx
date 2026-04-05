@@ -1,4 +1,4 @@
-import { signOut } from "@/lib/auth-actions";
+import { signOut } from "@/server/actions/auth";
 import { roleLabel } from "@/lib/permissions";
 import type { Membership } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";

@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { signOut } from "@/lib/auth-actions";
+import { signOut } from "@/server/actions/auth";
 import { getRoleLabel } from "@/lib/role-utils";
 import type { AppRole } from "@/lib/types";
 

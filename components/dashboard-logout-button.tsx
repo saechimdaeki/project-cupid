@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { signOut } from "@/lib/auth-actions";
+import { signOut } from "@/server/actions/auth";
 import { Button } from "@/components/ui/button";
 
 function LogOutIcon({ className }: { className?: string }) {

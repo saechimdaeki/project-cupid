@@ -4,13 +4,7 @@ import { SakuraRain } from "@/components/sakura-rain";
 import { SignupForm } from "@/components/signup-form";
 import { SignupInfo } from "@/components/signup-info";
 
-type SignupPageProps = {
-  searchParams: Promise<{ message?: string }>;
-};
-
-export default async function SignupPage({ searchParams }: SignupPageProps) {
-  const { message } = await searchParams;
-
+export default async function SignupPage() {
   return (
     <main className="flex min-h-screen flex-col items-center overflow-x-hidden bg-gradient-to-br from-rose-50 via-pink-50/30 to-orange-50/50 px-4 py-10 lg:py-16">
       <SakuraRain petalCount={40} />
@@ -44,7 +38,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
             <SignupInfo />
           </div>
           <div className="order-1 lg:order-2">
-            <SignupForm initialMessage={message} />
+            <SignupForm />
           </div>
         </div>
       </div>
