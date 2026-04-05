@@ -10,13 +10,13 @@ import { StudioPageShell } from "@/components/studio-page-shell";
 import { getCandidateCardTitle, getCandidateGalleryLabel } from "@/lib/candidate-display";
 import {
   getCandidateById,
-  getCandidatePhotos,
   getCandidatesBasicByIdsWithSignedImages,
+  getProfileGalleryImageUrls,
   getMatchRecords,
 } from "@/lib/data";
 import { canEditCandidates } from "@/lib/permissions";
 import { getStatusBadgeClass, getStatusLabel } from "@/lib/status-ui";
-import type { Candidate, CandidatePhoto, Membership } from "@/lib/types";
+import type { Candidate, Membership } from "@/lib/types";
 
 export type ProfileDetailContentProps = {
   id: string;
@@ -61,26 +61,11 @@ function getDeskMessage(message?: string) {
   return message ?? null;
 }
 
-function buildProfileGalleryUrls(candidate: Candidate, photos: CandidatePhoto[]): string[] {
-  const seen = new Set<string>();
-  const out: string[] = [];
-  const add = (url: string | null | undefined) => {
-    if (!isRenderableImageUrl(url) || seen.has(url!)) return;
-    seen.add(url!);
-    out.push(url!);
-  };
-  add(candidate.image_url);
-  for (const photo of photos) {
-    add(photo.image_url);
-  }
-  return out;
-}
-
 export async function ProfileDetailContent({ id, message, membership }: ProfileDetailContentProps) {
-  const [candidate, photos, records] = await Promise.all([
+  const [candidate, records, galleryImageUrls] = await Promise.all([
     getCandidateById(id),
-    getCandidatePhotos(id),
     getMatchRecords(id),
+    getProfileGalleryImageUrls(id),
   ]);
 
   if (!candidate) {
@@ -121,7 +106,6 @@ export async function ProfileDetailContent({ id, message, membership }: ProfileD
   ) as Record<string, Candidate>;
 
   const canOperate = canEditCandidates(membership.role);
-  const galleryImageUrls = buildProfileGalleryUrls(candidate, photos);
   const counterpartHeroUrl =
     counterpartCandidate && isRenderableImageUrl(counterpartCandidate.image_url)
       ? counterpartCandidate.image_url
