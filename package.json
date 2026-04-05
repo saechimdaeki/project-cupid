@@ -4,11 +4,12 @@
   "private": true,
   "author": "saechimdaeki",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "clean": "rimraf .next tsconfig.tsbuildinfo"
   },
   "dependencies": {
     "@base-ui/react": "^1.3.0",
@@ -43,6 +44,7 @@
     "@types/react": "^19.0.12",
     "@types/react-dom": "^19.0.4",
     "postcss": "^8.5.8",
+    "rimraf": "^6.1.3",
     "tailwindcss": "^4.2.2",
     "typescript": "^5.8.2"
   }
