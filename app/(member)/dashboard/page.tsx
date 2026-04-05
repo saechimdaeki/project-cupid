@@ -1,33 +1,18 @@
+import { Suspense } from "react";
 import { GlobalNav } from "@/components/global-nav";
-import { ManagerDashboard } from "@/components/manager-dashboard";
+import { DashboardStreamingSkeleton } from "@/components/dashboard-streaming-skeleton";
 import { DashboardViewMode } from "@/lib/types";
-import {
-  buildTimelineEvents,
-  getDashboardCandidates,
-  getDashboardTimelineData,
-} from "@/lib/data";
-import { dashboardPreviewMatchRecords, homePreviewCandidates } from "@/lib/preview-scene";
 import { requireApprovedMembership } from "@/lib/permissions";
+import { DashboardMain } from "./dashboard-main";
 
 type DashboardPageProps = {
   searchParams: Promise<{ view?: string; notice?: string; message?: string }>;
 };
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
-  const [{ view, notice, message }, membership, fetchedCandidates, timelineData] = await Promise.all([
-    searchParams,
-    requireApprovedMembership(),
-    getDashboardCandidates(),
-    getDashboardTimelineData(),
-  ]);
+  const [params, membership] = await Promise.all([searchParams, requireApprovedMembership()]);
 
-  const isPreviewMode = fetchedCandidates.length === 0;
-  const candidates = isPreviewMode ? homePreviewCandidates : fetchedCandidates;
-  const records = isPreviewMode ? dashboardPreviewMatchRecords : timelineData.records;
-  const timelineEvents = buildTimelineEvents(
-    records,
-    new Map(candidates.map((candidate) => [candidate.id, candidate])),
-  );
+  const { view, notice, message } = params;
 
   const bannerText =
     notice ??
@@ -35,9 +20,15 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       ? "이 작업을 수행할 권한이 없습니다. 최고 관리자에게 문의하세요."
       : message);
 
+  const initialView =
+    view === DashboardViewMode.INVENTORY ? DashboardViewMode.INVENTORY : DashboardViewMode.FLOW;
+
   return (
     <>
-      <GlobalNav membership={membership} active={view === DashboardViewMode.INVENTORY ? "candidates" : "dashboard"} />
+      <GlobalNav
+        membership={membership}
+        active={view === DashboardViewMode.INVENTORY ? "candidates" : "dashboard"}
+      />
       {bannerText ? (
         <div
           className="fixed inset-x-0 top-[4.25rem] z-30 flex justify-center px-4 sm:top-[4.5rem]"
@@ -48,12 +39,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           </p>
         </div>
       ) : null}
-      <ManagerDashboard
-        candidates={candidates}
-        timelineEvents={timelineEvents}
-        membership={membership}
-        initialView={view === DashboardViewMode.INVENTORY ? DashboardViewMode.INVENTORY : DashboardViewMode.FLOW}
-      />
+      <Suspense fallback={<DashboardStreamingSkeleton />}>
+        <DashboardMain membership={membership} initialView={initialView} />
+      </Suspense>
     </>
   );
 }

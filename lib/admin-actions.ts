@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { formatCandidateBrief } from "@/lib/candidate-display";
+import { revalidateDashboardCaches } from "@/lib/cache-tags";
 import { createClient } from "@/lib/supabase/server";
 import { buildPairMatchRecordsOrFilter, ONGOING_MATCH_OUTCOMES } from "@/lib/match-flow-columns";
 import { canEditCandidates, canManageRoles, getCurrentMembership } from "@/lib/permissions";
@@ -351,6 +352,7 @@ export async function createCandidate(formData: FormData) {
       error instanceof Error &&
       error.message === "__DUPLICATE_CANDIDATE_SUBMISSION__"
     ) {
+      revalidateDashboardCaches([candidateId]);
       redirect(`/profiles/${candidateId}`);
     }
 
@@ -358,6 +360,8 @@ export async function createCandidate(formData: FormData) {
       error instanceof Error ? error.message : "등록에 실패했습니다.";
     redirect(`/candidates/new?message=${encodeURIComponent(message)}`);
   }
+
+  revalidateDashboardCaches([existingCandidateId ?? candidateId]);
 
   if (existingCandidateId) {
     redirect(`/profiles/${existingCandidateId}`);
@@ -536,6 +540,7 @@ export async function updateCandidate(formData: FormData) {
     );
   }
 
+  revalidateDashboardCaches([candidateId]);
   redirect(`/profiles/${candidateId}?message=updated`);
 }
 
@@ -591,6 +596,7 @@ export async function updateCandidateStatus(formData: FormData) {
     );
   }
 
+  revalidateDashboardCaches(pairIds);
   redirect(`/profiles/${candidateId}?message=status-updated`);
 }
 
@@ -655,6 +661,7 @@ export async function moveCandidateStatus(
     return { ok: false, message: error.message };
   }
 
+  revalidateDashboardCaches(pairIds);
   return { ok: true, status: normalizedStatus };
 }
 
@@ -798,6 +805,7 @@ export async function moveCandidatePairStatus(
     }
   }
 
+  revalidateDashboardCaches([source.id, counterpart.id]);
   return {
     ok: true,
     status: targetStatus as CandidateStatus,
@@ -870,6 +878,9 @@ export async function createMatchRecord(formData: FormData) {
       .eq("id", candidateId);
   }
 
+  revalidateDashboardCaches(
+    counterpartCandidateId ? [candidateId, counterpartCandidateId] : [candidateId],
+  );
   redirect(`/profiles/${candidateId}?message=match-created`);
 }
 
@@ -901,6 +912,7 @@ export async function deleteMatchRecord(formData: FormData) {
     );
   }
 
+  revalidateDashboardCaches([candidateId]);
   redirect(`/profiles/${candidateId}?message=match-deleted`);
 }
 
@@ -1028,6 +1040,7 @@ export async function closeMatchWithRecord(formData: FormData) {
     redirect(`/profiles/${candidateId}?message=${encodeURIComponent(updateError.message)}`);
   }
 
+  revalidateDashboardCaches([source.id, counterpart.id]);
   redirect(`/profiles/${candidateId}?message=match-closed`);
 }
 
@@ -1112,6 +1125,7 @@ export async function setStatusFromDesk(
     }
   }
 
+  revalidateDashboardCaches(pairIds);
   return { ok: true };
 }
 
@@ -1212,5 +1226,6 @@ export async function promoteToCoupleFromDesk(
     }
   }
 
+  revalidateDashboardCaches([source.id, counterpart.id]);
   return { ok: true };
 }
