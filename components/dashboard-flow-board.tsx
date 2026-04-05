@@ -40,6 +40,7 @@ export type DashboardBoardCandidate = Pick<
   | "status"
   | "paired_candidate_id"
   | "image_url"
+  | "created_at"
 >;
 
 type PairComposerState = {
@@ -83,6 +84,23 @@ function groupCandidatesByStatus(
   return candidates.filter((candidate) => candidate.status === status);
 }
 
+function candidateCreatedAt(candidate: DashboardBoardCandidate): string {
+  return candidate.created_at ?? "1970-01-01T00:00:00.000Z";
+}
+
+/** 등록 최신순(내림차순) */
+function sortByCreatedAtDesc(list: DashboardBoardCandidate[]): DashboardBoardCandidate[] {
+  return [...list].sort((a, b) => candidateCreatedAt(b).localeCompare(candidateCreatedAt(a)));
+}
+
+function newestCreatedAtInPair(row: PairedLaneRow): string {
+  const times = [row.male, row.female]
+    .filter(Boolean)
+    .map((c) => candidateCreatedAt(c!));
+  if (!times.length) return "1970-01-01T00:00:00.000Z";
+  return times.reduce((best, t) => (t > best ? t : best), times[0]);
+}
+
 /** 매칭진행중·커플완성: 한 행에 남·여 페어를 맞추기 위한 행 목록 */
 type PairedLaneRow = {
   male: DashboardBoardCandidate | null;
@@ -122,13 +140,7 @@ function buildPairedLaneRows(laneItems: DashboardBoardCandidate[]): PairedLaneRo
     }
   }
 
-  rows.sort((a, b) => {
-    const pairKey = (r: PairedLaneRow) => {
-      const ids = [r.male?.id, r.female?.id].filter(Boolean) as string[];
-      return ids.length ? ids.sort()[0] : "";
-    };
-    return pairKey(a).localeCompare(pairKey(b));
-  });
+  rows.sort((a, b) => newestCreatedAtInPair(b).localeCompare(newestCreatedAtInPair(a)));
 
   return rows;
 }
@@ -471,8 +483,8 @@ export function DashboardFlowBoard({
     const laneItems = groupCandidatesByStatus(items, status);
     const usePairedRows = status === "matched" || status === "couple";
     const pairedRows = usePairedRows ? buildPairedLaneRows(laneItems) : [];
-    const males = usePairedRows ? [] : laneItems.filter((c) => c.gender === "남");
-    const females = usePairedRows ? [] : laneItems.filter((c) => c.gender === "여");
+    const males = usePairedRows ? [] : sortByCreatedAtDesc(laneItems.filter((c) => c.gender === "남"));
+    const females = usePairedRows ? [] : sortByCreatedAtDesc(laneItems.filter((c) => c.gender === "여"));
 
     const dropHandlers = {
       onDragOver: (event: React.DragEvent<HTMLElement>) => {
