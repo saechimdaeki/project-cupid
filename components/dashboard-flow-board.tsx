@@ -253,7 +253,7 @@ export function DashboardFlowBoard({
     const body = (
       <article
         className={cn(
-          "group overflow-hidden rounded-2xl border border-rose-100/50 border-t-4 bg-white/90 p-4 shadow-[0_8px_32px_rgb(244,114,182,0.08)] backdrop-blur-sm transition",
+          "group max-w-full overflow-hidden rounded-2xl border border-rose-100/50 border-t-4 bg-white/90 p-4 shadow-[0_8px_32px_rgb(244,114,182,0.08)] backdrop-blur-sm transition",
           getStatusTopBorderClass(candidate.status),
           draggingId === candidate.id && "scale-[0.99] opacity-70",
           isPending ? "opacity-70" : "hover:-translate-y-1 hover:shadow-[0_14px_44px_rgb(244,114,182,0.12)]",
@@ -376,15 +376,15 @@ export function DashboardFlowBoard({
 
     if (!canAccessCandidateDetail(role)) {
       return (
-        <div key={candidate.id} {...wrapperProps}>
+        <div key={candidate.id} className="min-w-0 max-w-full" {...wrapperProps}>
           {body}
         </div>
       );
     }
 
     return (
-      <div key={candidate.id} {...wrapperProps}>
-        <Link href={`/profiles/${candidate.id}`} className="block">
+      <div key={candidate.id} className="min-w-0 max-w-full" {...wrapperProps}>
+        <Link href={`/profiles/${candidate.id}`} className="block min-w-0 max-w-full">
           {body}
         </Link>
       </div>
@@ -464,23 +464,21 @@ export function DashboardFlowBoard({
           </Badge>
         </div>
 
-        {/* 남(좌) / 여(우) 2-column */}
-        <div className="mt-4 grid grid-cols-2 gap-3">
-          {/* 남성 컬럼 */}
-          <div>
+        {/* 남/여: 동일 너비 2열, 선 없이 gap만으로 살짝 간격 */}
+        <div className="mt-4 grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-x-3 sm:gap-y-4">
+          <div className="min-w-0">
             <p className="mb-2 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-400/80">
               <span>🤵</span> 남성
             </p>
-            <div className="grid gap-3">
+            <div className="grid min-w-0 gap-3">
               {males.length ? males.map(renderCandidateCard) : emptySlot("남")}
             </div>
           </div>
-          {/* 여성 컬럼 */}
-          <div>
+          <div className="min-w-0">
             <p className="mb-2 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-rose-400/80">
               <span>👰</span> 여성
             </p>
-            <div className="grid gap-3">
+            <div className="grid min-w-0 gap-3">
               {females.length ? females.map(renderCandidateCard) : emptySlot("여")}
             </div>
           </div>

@@ -24,7 +24,7 @@ function NavLink({
     <Link
       href={href}
       className={cn(
-        "rounded-full px-4 py-1.5 text-sm font-medium transition-colors duration-200",
+        "rounded-full px-5 py-2.5 text-base font-semibold transition-colors duration-200",
         isActive
           ? "bg-primary/10 text-primary"
           : "text-muted-foreground hover:bg-secondary hover:text-foreground",
@@ -60,7 +60,7 @@ export function GlobalNav({ membership, active = "dashboard" }: GlobalNavProps) 
         {/* CENTER: Navigation (md+, super_admin only) */}
         {isSuper ? (
           <nav
-            className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-1 rounded-full border border-white/60 bg-white/70 px-1.5 py-1 shadow-sm backdrop-blur-sm md:flex"
+            className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-1 rounded-full border border-white/60 bg-white/70 px-2 py-1.5 shadow-sm backdrop-blur-sm md:flex"
             aria-label="관리 메뉴"
           >
             <NavLink

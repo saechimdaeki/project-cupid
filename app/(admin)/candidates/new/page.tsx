@@ -60,12 +60,13 @@ export default async function NewCandidatePage({ searchParams }: NewCandidatePag
               admin과 super_admin은 기본 프로필, 태그, 사진 갤러리까지 함께 등록할 수 있습니다.
             </p>
           </CardContent>
-          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-            <Button variant="outline" className="min-h-12 w-full rounded-full border-border bg-card/90 px-5 text-sm font-semibold text-foreground" render={<Link href="/dashboard" />}>
+          <div className="flex w-full shrink-0 sm:w-auto">
+            <Button
+              variant="outline"
+              className="min-h-14 w-full rounded-full border-border bg-card/90 px-8 text-base font-semibold text-foreground sm:min-w-[10.5rem] sm:w-auto"
+              render={<Link href="/dashboard" />}
+            >
               대시보드
-            </Button>
-            <Button variant="outline" className="min-h-12 w-full rounded-full border-border bg-card/90 px-5 text-sm font-semibold text-foreground" render={<Link href="/admin" />}>
-              승인 관리
             </Button>
           </div>
         </Card>
