@@ -38,8 +38,8 @@ export function DashboardInventoryView({
 
   return (
     <>
-      <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)]">
-        <div className="grid gap-5">
+      <section className="grid gap-6 xl:h-[calc(100dvh-22rem)] xl:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)]">
+        <div className="grid auto-rows-max gap-5 xl:overflow-y-auto xl:[&::-webkit-scrollbar]:w-1 xl:[&::-webkit-scrollbar-track]:bg-transparent xl:[&::-webkit-scrollbar-thumb]:rounded-full xl:[&::-webkit-scrollbar-thumb]:bg-rose-200/60">
           {candidates.length ? (
             candidates.map((candidate) => (
               <CandidateCard key={candidate.id} candidate={candidate} role={role} />
@@ -51,10 +51,10 @@ export function DashboardInventoryView({
           )}
         </div>
 
-        <div className="hidden xl:block">
+        <div className="hidden xl:block xl:overflow-y-auto xl:[&::-webkit-scrollbar]:w-1 xl:[&::-webkit-scrollbar-track]:bg-transparent xl:[&::-webkit-scrollbar-thumb]:rounded-full xl:[&::-webkit-scrollbar-thumb]:bg-rose-200/60">
           <DashboardTimelinePanel
             events={timelineEvents}
-            className="sticky top-20 w-full"
+            className="w-full"
             onSelectEvent={handleSelectEvent}
             onViewAll={handleOpenHistoryList}
           />

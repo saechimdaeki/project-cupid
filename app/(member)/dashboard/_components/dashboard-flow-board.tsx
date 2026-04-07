@@ -537,14 +537,14 @@ export function DashboardFlowBoard({
       <article
         key={status}
         className={cn(
-          "min-h-0 rounded-[26px] border border-white/70 p-5 shadow-[0_10px_40px_rgb(244,114,182,0.08)] backdrop-blur-sm",
+          "flex min-h-0 flex-col rounded-[26px] border border-white/70 p-5 shadow-[0_10px_40px_rgb(244,114,182,0.08)] backdrop-blur-sm",
           getLaneSurfaceClass(status),
           dropTarget === status && "ring-2 ring-rose-400/60 ring-offset-2 ring-offset-rose-50/80",
         )}
         {...dropHandlers}
       >
         {/* 헤더 */}
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex shrink-0 items-start justify-between gap-3">
           <div className="min-w-0">
             <h3 className="text-sm font-semibold text-slate-800">{title}</h3>
             {!compact ? (
@@ -557,8 +557,8 @@ export function DashboardFlowBoard({
         </div>
 
         {usePairedRows ? (
-          <div className="mt-4 flex flex-col gap-4">
-            <div className={PAIR_LANE_ROW_GRID}>
+          <div className="mt-4 flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto -mx-5 px-5 -mb-5 pb-5 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-rose-200/60">
+            <div className={cn(PAIR_LANE_ROW_GRID, "shrink-0")}>
               <p className="mb-0 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-400/80 sm:mb-0">
                 <span>🤵</span> 남성
               </p>
@@ -567,7 +567,7 @@ export function DashboardFlowBoard({
               </p>
             </div>
             {pairedRows.length === 0 ? (
-              <div className={PAIR_LANE_ROW_GRID}>
+              <div className={cn(PAIR_LANE_ROW_GRID, "shrink-0")}>
                 <div className="min-w-0">{emptySlot("남")}</div>
                 <div className="min-w-0">{emptySlot("여")}</div>
               </div>
@@ -575,7 +575,7 @@ export function DashboardFlowBoard({
               pairedRows.map((row) => (
                 <div
                   key={`pair-${row.male?.id ?? "none"}-${row.female?.id ?? "none"}`}
-                  className={PAIR_LANE_ROW_GRID}
+                  className={cn(PAIR_LANE_ROW_GRID, "shrink-0")}
                 >
                   <div className="flex h-full min-h-0 min-w-0 flex-col">
                     {row.male ? renderCandidateCard(row.male, { fillRowHeight: true }) : pairSlotPlaceholder("남")}
@@ -589,9 +589,9 @@ export function DashboardFlowBoard({
           </div>
         ) : (
           /* 적극검토: 페어가 없으므로 기존 남/여 독립 열 유지 */
-          <div className="mt-4 grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-x-3 sm:gap-y-4">
+          <div className="mt-4 grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-y-auto -mx-5 px-5 -mb-5 pb-5 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-rose-200/60 sm:grid-cols-2 sm:gap-x-3">
             <div className="min-w-0">
-              <p className="mb-2 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-400/80">
+              <p className="mb-2 flex shrink-0 items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-400/80">
                 <span>🤵</span> 남성
               </p>
               <div className="grid min-w-0 gap-3">
@@ -599,7 +599,7 @@ export function DashboardFlowBoard({
               </div>
             </div>
             <div className="min-w-0">
-              <p className="mb-2 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-rose-400/80">
+              <p className="mb-2 flex shrink-0 items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-rose-400/80">
                 <span>👰</span> 여성
               </p>
               <div className="grid min-w-0 gap-3">
@@ -654,7 +654,7 @@ export function DashboardFlowBoard({
         )}
       </div>
 
-      <div className="hidden gap-5 lg:grid lg:grid-cols-3 xl:gap-6">
+      <div className="hidden gap-5 lg:grid lg:grid-cols-3 lg:h-[calc(100dvh-22rem)] xl:gap-6">
         {PRIMARY_LANES.map((lane) => renderLane(lane.key, lane.title, lane.description))}
       </div>
 
