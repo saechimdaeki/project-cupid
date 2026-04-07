@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CupidLogo } from "@/components/cupid-logo";
 import { NavProfileMenu } from "@/components/nav-profile-menu";
@@ -84,9 +85,7 @@ export function GlobalNav({ membership, active = "dashboard" }: GlobalNavProps) 
                 href="/candidates/new"
                 className="hidden items-center gap-1.5 rounded-full border border-white/60 bg-white/70 px-4 py-1.5 text-sm font-medium text-foreground shadow-sm backdrop-blur-sm transition hover:bg-white/90 md:inline-flex"
               >
-                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.75" className="size-3.5" strokeLinecap="round">
-                  <path d="M8 3v10M3 8h10" />
-                </svg>
+                <Plus className="size-3.5" />
                 매물 등록
               </Link>
             ) : null}

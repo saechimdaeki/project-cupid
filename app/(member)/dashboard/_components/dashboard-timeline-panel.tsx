@@ -1,5 +1,6 @@
 "use client";
 
+import { History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import { getOutcomeDotClass } from "@/lib/status-ui";
@@ -7,17 +8,7 @@ import type { TimelineEvent } from "@/lib/types";
 
 const RECENT_MATCH_LIMIT = 3;
 
-function TimelineIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="size-5">
-      <path d="M12 3v18" />
-      <path d="M7 8h10" />
-      <path d="M7 16h10" />
-      <circle cx="12" cy="8" r="1.5" fill="currentColor" stroke="none" />
-      <circle cx="12" cy="16" r="1.5" fill="currentColor" stroke="none" />
-    </svg>
-  );
-}
+const TimelineIcon = () => <History className="size-5" />;
 
 type DashboardTimelinePanelProps = {
   events: TimelineEvent[];

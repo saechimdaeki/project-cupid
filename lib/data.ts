@@ -7,7 +7,6 @@ import {
 import { isDirectImageUrl } from "@/lib/image-url-utils";
 import { unstable_cache } from "next/cache";
 import { mockCandidates, mockMatchRecords, mockMemberships } from "@/lib/mock-data";
-import { dashboardPreviewMatchRecords } from "@/lib/preview-scene";
 import {
   CANDIDATE_PHOTOS_BUCKET,
   CANDIDATE_PHOTOS_SIGNED_URL_TTL_SECONDS,
@@ -70,11 +69,6 @@ function mergeMatchRecords(primary: MatchRecord[], secondary: MatchRecord[]) {
   return Array.from(merged.values()).sort((left, right) =>
     right.happened_on.localeCompare(left.happened_on),
   );
-}
-
-function previewMatchRecordsForCandidate(candidateId?: string): MatchRecord[] {
-  if (!candidateId) return [];
-  return dashboardPreviewMatchRecords.filter((record) => record.candidate_id === candidateId);
 }
 
 function normalizeGender(value: string | null | undefined) {
@@ -439,11 +433,9 @@ export async function getCandidatesBasicByIdsWithSignedImages(
 
 async function loadMatchRecordsForCandidateUncached(candidateId: string): Promise<MatchRecord[]> {
   const supabase = await createClient();
-  const preview = previewMatchRecordsForCandidate(candidateId);
 
   if (!supabase) {
-    const base = mockMatchRecords.filter((record) => record.candidate_id === candidateId);
-    return mergeMatchRecords(base, preview);
+    return mockMatchRecords.filter((record) => record.candidate_id === candidateId);
   }
 
   const { data, error } = await supabase
@@ -453,25 +445,20 @@ async function loadMatchRecordsForCandidateUncached(candidateId: string): Promis
     .order("happened_on", { ascending: false });
 
   if (error || !data) {
-    const base = mockMatchRecords.filter((record) => record.candidate_id === candidateId);
-    return mergeMatchRecords(base, preview);
+    return mockMatchRecords.filter((record) => record.candidate_id === candidateId);
   }
 
   return mergeMatchRecords(
-    mergeMatchRecords(
-      data.map(mapMatchRecord),
-      mockMatchRecords.filter((record) => record.candidate_id === candidateId),
-    ),
-    preview,
+    data.map(mapMatchRecord),
+    mockMatchRecords.filter((record) => record.candidate_id === candidateId),
   );
 }
 
 async function loadMatchRecordsAllUncached(): Promise<MatchRecord[]> {
   const supabase = await createClient();
-  const preview = previewMatchRecordsForCandidate(undefined);
 
   if (!supabase) {
-    return mergeMatchRecords(mockMatchRecords, preview);
+    return mockMatchRecords;
   }
 
   const { data, error } = await supabase
@@ -480,10 +467,10 @@ async function loadMatchRecordsAllUncached(): Promise<MatchRecord[]> {
     .order("happened_on", { ascending: false });
 
   if (error || !data) {
-    return mergeMatchRecords(mockMatchRecords, preview);
+    return mockMatchRecords;
   }
 
-  return mergeMatchRecords(mergeMatchRecords(data.map(mapMatchRecord), mockMatchRecords), preview);
+  return mergeMatchRecords(data.map(mapMatchRecord), mockMatchRecords);
 }
 
 export async function getMatchRecords(candidateId?: string) {

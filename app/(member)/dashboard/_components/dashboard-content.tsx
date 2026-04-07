@@ -3,8 +3,8 @@
 import {
   DashboardFlowBoard,
   type DashboardBoardCandidate,
-} from "@/components/dashboard-flow-board";
-import { DashboardInventoryView } from "@/components/dashboard-inventory-view";
+} from "./dashboard-flow-board";
+import { DashboardInventoryView } from "./dashboard-inventory-view";
 import { canEditCandidates } from "@/lib/role-utils";
 import { DashboardViewMode } from "@/lib/types";
 import type { AppRole, Candidate, TimelineEvent } from "@/lib/types";
