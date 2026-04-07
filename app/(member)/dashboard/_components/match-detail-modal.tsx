@@ -7,11 +7,11 @@ import type { Candidate, MatchOutcome, TimelineEvent } from "@/lib/types";
 import { cn } from "@/lib/cn";
 import { Badge } from "@/components/ui/badge";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  ResponsiveModal,
+  ResponsiveModalContent,
+  ResponsiveModalHeader,
+  ResponsiveModalTitle,
+} from "@/components/ui/responsive-modal";
 
 // ── 헬퍼 ──────────────────────────────────────────────────────────────────────
 
@@ -77,7 +77,6 @@ function PersonChip({ person, resolvedImageUrl }: PersonChipProps) {
 
   return (
     <div className="flex flex-1 flex-col items-center gap-3">
-      {/* 프로필 이미지 */}
       <div className="size-20 overflow-hidden rounded-2xl border bg-muted shadow-sm">
         {person && isValidUrl ? (
           <img
@@ -92,7 +91,6 @@ function PersonChip({ person, resolvedImageUrl }: PersonChipProps) {
         )}
       </div>
 
-      {/* 이름 + 메타 */}
       {person ? (
         <div className="text-center">
           <p className="text-sm font-semibold text-foreground">
@@ -151,10 +149,10 @@ export function MatchDetailModal({ event, candidateById, onClose }: MatchDetailM
   const [userA, userB] = orderPair(event.candidate_ids, candidateById);
 
   return (
-    <Dialog open={Boolean(event)} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="max-w-sm">
-        <DialogHeader className="pr-8">
-          <DialogTitle className="text-base">{event.title}</DialogTitle>
+    <ResponsiveModal open={Boolean(event)} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <ResponsiveModalContent className="max-w-sm">
+        <ResponsiveModalHeader className="pr-8">
+          <ResponsiveModalTitle className="text-base">{event.title}</ResponsiveModalTitle>
           <div className="flex items-center gap-2 pt-0.5">
             <span className="text-xs text-muted-foreground">{event.happened_on}</span>
             <Badge
@@ -164,10 +162,9 @@ export function MatchDetailModal({ event, candidateById, onClose }: MatchDetailM
               {matchOutcomeLabel(event.outcome)}
             </Badge>
           </div>
-        </DialogHeader>
+        </ResponsiveModalHeader>
 
-        {/* 인물 카드 */}
-        <div className="flex items-start justify-center gap-4">
+        <div className="flex items-start justify-center gap-4 px-4 pb-2">
           <PersonChip
             person={userA}
             resolvedImageUrl={userA ? resolvedImages[userA.id] : undefined}
@@ -179,13 +176,12 @@ export function MatchDetailModal({ event, candidateById, onClose }: MatchDetailM
           />
         </div>
 
-        {/* 요약 */}
         {event.summary ? (
-          <p className="rounded-xl border bg-muted/50 px-4 py-3 text-sm leading-relaxed text-muted-foreground">
+          <p className="mx-4 mb-4 rounded-xl border bg-muted/50 px-4 py-3 text-sm leading-relaxed text-muted-foreground">
             {event.summary}
           </p>
         ) : null}
-      </DialogContent>
-    </Dialog>
+      </ResponsiveModalContent>
+    </ResponsiveModal>
   );
 }

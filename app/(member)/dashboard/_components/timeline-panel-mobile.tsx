@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
 import type { TimelineEvent } from "@/lib/types";
 import { TimelineIcon } from "./dashboard-timeline-panel";
 import { TimelinePanelContent } from "./timeline-panel-content";
@@ -28,8 +28,9 @@ export function TimelinePanelMobile({
         <TimelineIcon />
       </Button>
 
-      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent side="bottom" className="rounded-t-[32px] p-5 xl:hidden">
+      <Drawer open={sheetOpen} onOpenChange={setSheetOpen}>
+        <DrawerContent className="px-5 pb-8 xl:hidden">
+          <DrawerTitle className="sr-only">최근 매칭 기록</DrawerTitle>
           <TimelinePanelContent
             events={events}
             onSelectEvent={(event) => {
@@ -37,8 +38,8 @@ export function TimelinePanelMobile({
               onSelectEvent(event);
             }}
           />
-        </SheetContent>
-      </Sheet>
+        </DrawerContent>
+      </Drawer>
     </>
   );
 }

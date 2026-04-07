@@ -1,14 +1,14 @@
 "use client";
 
 import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  ResponsiveModal,
+  ResponsiveModalContent,
+  ResponsiveModalHeader,
+  ResponsiveModalTitle,
+  ResponsiveModalDescription,
+  ResponsiveModalFooter,
+} from "@/components/ui/responsive-modal";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import { getOutcomeDotClass } from "@/lib/status-ui";
 import type { TimelineEvent } from "@/lib/types";
@@ -22,15 +22,15 @@ type MatchHistoryListModalProps = {
 
 export function MatchHistoryListModal({ open, events, onClose, onPick }: MatchHistoryListModalProps) {
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>전체 매칭 기록</DialogTitle>
-          <DialogDescription>항목을 눌러 두 사람의 디테일을 확인할 수 있어요.</DialogDescription>
-        </DialogHeader>
+    <ResponsiveModal open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
+      <ResponsiveModalContent>
+        <ResponsiveModalHeader>
+          <ResponsiveModalTitle>전체 매칭 기록</ResponsiveModalTitle>
+          <ResponsiveModalDescription>항목을 눌러 두 사람의 디테일을 확인할 수 있어요.</ResponsiveModalDescription>
+        </ResponsiveModalHeader>
 
-        <div className="max-h-[60vh] overflow-y-auto">
-          <div className="grid gap-3">
+        <div className="max-h-[60vh] overflow-y-auto px-4">
+          <div className="grid gap-3 pb-2">
             {events.length ? (
               events.map((event) => (
                 <button
@@ -64,12 +64,10 @@ export function MatchHistoryListModal({ open, events, onClose, onPick }: MatchHi
           </div>
         </div>
 
-        <DialogFooter>
-          <DialogClose render={<button type="button" className="text-sm text-muted-foreground hover:text-foreground" />}>
-            닫기
-          </DialogClose>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        <ResponsiveModalFooter>
+          <Button variant="outline" onClick={onClose}>닫기</Button>
+        </ResponsiveModalFooter>
+      </ResponsiveModalContent>
+    </ResponsiveModal>
   );
 }
