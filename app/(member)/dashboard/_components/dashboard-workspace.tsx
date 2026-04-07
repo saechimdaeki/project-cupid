@@ -27,7 +27,6 @@ export function DashboardWorkspace({
   const [religion, setReligion] = useState("");
   const deferredSearch = useDeferredValue(search);
 
-  const statusOptions = ["active", "matched", "couple"];
   const genderOptions = useMemo(
     () => Array.from(new Set(candidates.map((candidate) => candidate.gender).filter(Boolean))).sort(),
     [candidates],
@@ -94,7 +93,6 @@ export function DashboardWorkspace({
         onGenderChange={setGender}
         religion={religion}
         onReligionChange={setReligion}
-        statusOptions={statusOptions}
         genderOptions={genderOptions}
         religionOptions={religionOptions}
         filteredCount={filteredCandidates.length}
