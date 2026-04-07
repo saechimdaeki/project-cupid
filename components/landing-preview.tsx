@@ -1,7 +1,9 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { PersonPreview } from "@/components/person-preview";
 import { cn } from "@/lib/cn";
-import { homePreviewCandidates } from "@/lib/preview-scene";
+
+const FEMALE = { imageUrl: "/99년생 여자 기획자.png", label: "96년생 · 서울 마포", subtitle: "브랜드 마케터 · 뷰티 스타트업" };
+const MALE   = { imageUrl: "/94년생 남자 개발자.png",  label: "92년생 · 판교",     subtitle: "백엔드 개발자 · 핀테크 스타트업" };
 
 function ProfileCard({
   imageUrl,
@@ -41,9 +43,6 @@ function ProfileCard({
 }
 
 export function LandingPreview() {
-  const female = homePreviewCandidates[0];
-  const male = homePreviewCandidates[1] ?? homePreviewCandidates[0];
-
   return (
     <section className="flex flex-col items-center gap-6">
       <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
@@ -60,15 +59,15 @@ export function LandingPreview() {
       <div className="relative mt-4 flex w-full items-center justify-center">
         <div className="relative h-[26rem] w-full max-w-xl">
           <ProfileCard
-            imageUrl={female.image_url}
-            name={`${String(female.birth_year).slice(2)}년생 · ${female.region}`}
-            subtitle={`${female.occupation} · ${female.work_summary}`}
+            imageUrl={FEMALE.imageUrl}
+            name={FEMALE.label}
+            subtitle={FEMALE.subtitle}
             className="absolute left-4 top-4 rotate-[-8deg] sm:left-12"
           />
           <ProfileCard
-            imageUrl={male.image_url}
-            name={`${String(male.birth_year).slice(2)}년생 · ${male.region}`}
-            subtitle={`${male.occupation} · ${male.work_summary}`}
+            imageUrl={MALE.imageUrl}
+            name={MALE.label}
+            subtitle={MALE.subtitle}
             className="absolute bottom-4 right-4 rotate-[6deg] sm:right-12"
           />
 
