@@ -234,7 +234,7 @@ export function FlowBoardCard({
       key={candidate.id}
       id={candidate.id}
       disabled={draggableDisabled}
-      className={cn(fillRowHeight && "flex h-full flex-col")}
+      className={cn("min-w-0", fillRowHeight && "flex h-full flex-col")}
     >
       {inner}
     </DraggableWrapper>

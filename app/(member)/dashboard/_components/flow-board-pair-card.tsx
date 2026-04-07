@@ -10,7 +10,7 @@ import { canAccessCandidateDetail, getRoleLabel } from "@/lib/role-utils";
 import { Badge } from "@/components/ui/badge";
 import type { AppRole } from "@/lib/types";
 import type { DashboardBoardCandidate } from "./dashboard-flow-board";
-import type { PairedLaneRow } from "./flow-board-lane";
+import type { PairedLaneRow } from "./flow-board-paired-lane";
 
 type DraggableWrapperProps = {
   id: string;

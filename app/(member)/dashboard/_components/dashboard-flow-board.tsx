@@ -14,11 +14,11 @@ import { moveCandidatePairStatus, moveCandidateStatus } from "@/lib/admin-action
 import { formatCandidateBrief } from "@/lib/candidate-display";
 import { cn } from "@/lib/cn";
 import { canEditCandidates } from "@/lib/role-utils";
-import { getStatusBadgeClass } from "@/lib/status-ui";
 import type { AppRole, Candidate, CandidateStatus } from "@/lib/types";
 import { DashboardPairMatchDialog } from "./dashboard-pair-match-dialog";
 import { FlowBoardCardBody } from "./flow-board-card";
-import { FlowBoardLane, groupCandidatesByStatus } from "./flow-board-lane";
+import { FlowBoardMobileView } from "./flow-board-mobile-view";
+import { FlowBoardDesktopView } from "./flow-board-desktop-view";
 import { Button } from "@/components/ui/button";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -57,7 +57,7 @@ type DashboardFlowBoardProps = {
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const PRIMARY_LANES = [
+export const PRIMARY_LANES = [
   {
     key: "active",
     title: "적극검토",
@@ -120,6 +120,7 @@ export function DashboardFlowBoard({
   const [pendingCandidateIds, setPendingCandidateIds] = useState<ReadonlySet<string>>(
     () => new Set(),
   );
+  const dndContextId = useId();
   const pairMatchTitleId = useId();
   const canOperate = canEditCandidates(role);
 
@@ -294,6 +295,7 @@ export function DashboardFlowBoard({
 
   return (
     <DndContext
+      id={dndContextId}
       sensors={sensors}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
@@ -307,64 +309,19 @@ export function DashboardFlowBoard({
           </div>
         ) : null}
 
-        {/* 모바일 레인 탭 */}
-        <div className="flex gap-2 overflow-x-auto pb-1 lg:hidden">
-          {PRIMARY_LANES.map((lane) => {
-            const count = groupCandidatesByStatus(items, lane.key).length;
+        <FlowBoardMobileView
+          items={items}
+          mobileLane={mobileLane}
+          onMobileLaneChange={setMobileLane}
+          dropTarget={dropTarget}
+          {...sharedLaneProps}
+        />
 
-            return (
-              <Button
-                key={lane.key}
-                variant="outline"
-                onClick={() => setMobileLane(lane.key)}
-                className={cn(
-                  "shrink-0 gap-2 rounded-full px-4 py-2 text-sm font-medium transition",
-                  mobileLane === lane.key
-                    ? cn(getStatusBadgeClass(lane.key), "border")
-                    : "border border-slate-200 bg-white text-slate-600",
-                )}
-              >
-                <span>{lane.title}</span>
-                <span
-                  className={cn(
-                    "rounded-full px-2 py-0.5 text-xs",
-                    mobileLane === lane.key ? "bg-white/15" : "bg-slate-100",
-                  )}
-                >
-                  {count}
-                </span>
-              </Button>
-            );
-          })}
-        </div>
-
-        {/* 모바일 단일 레인 */}
-        <div className="grid gap-4 lg:hidden">
-          <FlowBoardLane
-            status={mobileLane}
-            title={PRIMARY_LANES.find((lane) => lane.key === mobileLane)?.title ?? ""}
-            description={PRIMARY_LANES.find((lane) => lane.key === mobileLane)?.description ?? ""}
-            compact
-            items={groupCandidatesByStatus(items, mobileLane)}
-            isDropTarget={dropTarget === mobileLane}
-            {...sharedLaneProps}
-          />
-        </div>
-
-        {/* 데스크톱 3열 칸반 */}
-        <div className="hidden gap-5 lg:grid lg:grid-cols-3 lg:h-[calc(100dvh-22rem)] xl:gap-6">
-          {PRIMARY_LANES.map((lane) => (
-            <FlowBoardLane
-              key={lane.key}
-              status={lane.key}
-              title={lane.title}
-              description={lane.description}
-              items={groupCandidatesByStatus(items, lane.key)}
-              isDropTarget={dropTarget === lane.key}
-              {...sharedLaneProps}
-            />
-          ))}
-        </div>
+        <FlowBoardDesktopView
+          items={items}
+          dropTarget={dropTarget}
+          {...sharedLaneProps}
+        />
 
         {/* 페어 매칭 다이얼로그 */}
         <DashboardPairMatchDialog

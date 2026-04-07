@@ -83,7 +83,7 @@ export function DashboardWorkspace({
     [candidates],
   );
 
-  // 전체목록: status 필터 포함 전체 적용 / 플로우: active 후보에만 성별·종교·검색 적용
+  // 전체목록: status 필터 포함 전체 적용 / 플로우: active 후보에만 성별·종교·검색 적용, graduated/archived 제외
   const filteredCandidates = useMemo(() => {
     const query = deferredSearch.trim().toLowerCase();
     return candidates.filter((candidate) => {
@@ -93,6 +93,8 @@ export function DashboardWorkspace({
         if (religion && candidate.religion !== religion) return false;
         if (!query) return true;
       } else {
+        if (candidate.status === "graduated" || candidate.status === "archived") return false;
+        // matched/couple는 필터 적용 없이 항상 표시
         if (candidate.status !== "active") return true;
         if (gender && candidate.gender !== gender) return false;
         if (religion && candidate.religion !== religion) return false;
@@ -107,33 +109,9 @@ export function DashboardWorkspace({
     });
   }, [candidates, deferredSearch, isInventoryView, status, gender, religion]);
 
-  const boardCandidates: DashboardBoardCandidate[] = useMemo(
-    () =>
-      candidates.map((candidate) => ({
-        id: candidate.id,
-        full_name: candidate.full_name,
-        birth_year: candidate.birth_year,
-        height_text: candidate.height_text,
-        gender: candidate.gender,
-        region: candidate.region,
-        occupation: candidate.occupation,
-        work_summary: candidate.work_summary,
-        religion: candidate.religion,
-        personality_summary: candidate.personality_summary,
-        highlight_tags: candidate.highlight_tags,
-        notes_private: candidate.notes_private,
-        status: candidate.status,
-        paired_candidate_id: candidate.paired_candidate_id,
-        image_url: candidate.image_url,
-        created_at: candidate.created_at,
-      })),
-    [candidates],
-  );
-
-  const visibleBoardCandidates = useMemo(() => {
-    const ids = new Set(filteredCandidates.map((candidate) => candidate.id));
-    return boardCandidates.filter((candidate) => ids.has(candidate.id));
-  }, [boardCandidates, filteredCandidates]);
+  // Candidate는 DashboardBoardCandidate의 상위집합 — 구조적 호환으로 리매핑 불필요
+  const boardCandidates: DashboardBoardCandidate[] = candidates;
+  const visibleBoardCandidates: DashboardBoardCandidate[] = filteredCandidates;
 
   return (
     <>
