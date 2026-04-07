@@ -22,7 +22,7 @@ export function ManagerDashboard({
   const candidates = useDashboardCandidateSignedImages(candidatesFromServer);
 
   return (
-    <div className="relative h-dvh overflow-hidden bg-gradient-to-br from-rose-50 to-orange-50/50 text-slate-800">
+    <div className="relative min-h-dvh bg-gradient-to-br from-rose-50 to-orange-50/50 text-slate-800 xl:h-dvh xl:overflow-hidden">
       <SakuraRain petalCount={62} />
       <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(ellipse_at_22%_0%,rgba(255,228,230,0.6),transparent_46%),radial-gradient(ellipse_at_82%_28%,rgba(255,237,213,0.48),transparent_42%),radial-gradient(circle_at_50%_100%,rgba(255,241,242,0.52),transparent_55%)]" />
 

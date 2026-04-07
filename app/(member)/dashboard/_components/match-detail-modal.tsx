@@ -9,7 +9,6 @@ import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -18,11 +17,11 @@ import {
 
 function matchOutcomeLabel(outcome: MatchOutcome) {
   switch (outcome) {
-    case "intro_sent":   return "소개 시작";
+    case "intro_sent":    return "소개 시작";
     case "first_meeting": return "첫 만남";
-    case "dating":       return "후속 진행";
-    case "couple":       return "커플완성";
-    case "closed":       return "종료";
+    case "dating":        return "후속 진행";
+    case "couple":        return "커플완성";
+    case "closed":        return "종료";
   }
 }
 
@@ -50,25 +49,14 @@ function orderPair(
   return [a, b];
 }
 
-// ── PersonBlock ───────────────────────────────────────────────────────────────
+// ── PersonChip ────────────────────────────────────────────────────────────────
 
-type PersonBlockProps = {
+type PersonChipProps = {
   person: Candidate | null;
-  sideLabel: string;
   resolvedImageUrl: string | null | undefined;
 };
 
-function PersonBlock({ person, sideLabel, resolvedImageUrl }: PersonBlockProps) {
-  const chips = person ? [
-    person.gender,
-    person.birth_year ? `${person.birth_year}년생` : null,
-    person.height_text && person.height_text !== "모름" ? person.height_text : null,
-    person.occupation,
-    person.region,
-    person.religion,
-    person.mbti,
-  ].filter(Boolean) as string[] : [];
-
+function PersonChip({ person, resolvedImageUrl }: PersonChipProps) {
   const imageUrl = resolvedImageUrl !== undefined ? resolvedImageUrl : person?.image_url;
   const isValidUrl = Boolean(
     imageUrl &&
@@ -77,48 +65,53 @@ function PersonBlock({ person, sideLabel, resolvedImageUrl }: PersonBlockProps) 
         imageUrl.startsWith("https://")),
   );
 
-  return (
-    <div className="flex flex-1 flex-col items-center">
-      <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-        {sideLabel}
-      </p>
+  const age = person?.birth_year
+    ? new Date().getFullYear() - person.birth_year + 1
+    : null;
 
-      <div className="h-72 w-full max-w-[14rem] overflow-hidden rounded-3xl border bg-muted shadow-sm">
+  const meta = [
+    age ? `${age}세` : null,
+    person?.region,
+    person?.occupation,
+  ].filter(Boolean).join(" · ");
+
+  return (
+    <div className="flex flex-1 flex-col items-center gap-3">
+      {/* 프로필 이미지 */}
+      <div className="size-20 overflow-hidden rounded-2xl border bg-muted shadow-sm">
         {person && isValidUrl ? (
           <img
             src={imageUrl!}
-            alt={`${getCandidateGalleryLabel(person)} 프로필 사진`}
+            alt={`${getCandidateGalleryLabel(person)} 프로필`}
             className="h-full w-full object-cover object-center"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">
-            {person ? "사진 미등록" : "프로필 미연결"}
+          <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
+            {person ? "사진 없음" : "미연결"}
           </div>
         )}
       </div>
 
+      {/* 이름 + 메타 */}
       {person ? (
-        <>
-          <div className="mt-3 text-center">
-            <p className="text-sm text-muted-foreground">{person.region}</p>
-            <p className="mt-0.5 text-base font-semibold text-foreground">
-              {getCandidateGalleryLabel(person)}
-              <span className="ml-1 text-sm font-normal text-muted-foreground">
-                ({new Date().getFullYear() - person.birth_year + 1}세)
-              </span>
-            </p>
-          </div>
-          {chips.length > 0 ? (
-            <div className="mt-2 flex flex-wrap justify-center gap-1">
-              {chips.map((label) => (
-                <Badge key={label} variant="secondary" className="rounded-full text-xs">
-                  {label}
-                </Badge>
-              ))}
-            </div>
+        <div className="text-center">
+          <p className="text-sm font-semibold text-foreground">
+            {getCandidateGalleryLabel(person)}
+          </p>
+          {meta ? (
+            <p className="mt-0.5 text-xs text-muted-foreground">{meta}</p>
           ) : null}
-        </>
-      ) : null}
+          {person.mbti ? (
+            <p className="mt-1">
+              <Badge variant="secondary" className="rounded-full text-xs">
+                {person.mbti}
+              </Badge>
+            </p>
+          ) : null}
+        </div>
+      ) : (
+        <p className="text-xs text-muted-foreground">프로필 미연결</p>
+      )}
     </div>
   );
 }
@@ -159,41 +152,38 @@ export function MatchDetailModal({ event, candidateById, onClose }: MatchDetailM
 
   return (
     <Dialog open={Boolean(event)} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{event.title}</DialogTitle>
-          <DialogDescription>
-            <span className="mr-2">{event.happened_on}</span>
+      <DialogContent className="max-w-sm">
+        <DialogHeader className="pr-8">
+          <DialogTitle className="text-base">{event.title}</DialogTitle>
+          <div className="flex items-center gap-2 pt-0.5">
+            <span className="text-xs text-muted-foreground">{event.happened_on}</span>
             <Badge
               variant="outline"
               className={cn("rounded-full text-xs font-medium", outcomeBadgeClass(event.outcome))}
             >
               {matchOutcomeLabel(event.outcome)}
             </Badge>
-          </DialogDescription>
+          </div>
         </DialogHeader>
 
-        <div className="flex flex-col items-center gap-6 md:flex-row md:items-start md:justify-center">
-          <PersonBlock
+        {/* 인물 카드 */}
+        <div className="flex items-start justify-center gap-4">
+          <PersonChip
             person={userA}
-            sideLabel="상대방 A"
             resolvedImageUrl={userA ? resolvedImages[userA.id] : undefined}
           />
-          <div className="flex shrink-0 items-center justify-center py-2 text-4xl md:mt-24 md:py-0" aria-hidden>
-            <span className="animate-pulse">❤️</span>
-          </div>
-          <PersonBlock
+          <div className="mt-8 shrink-0 text-rose-300 text-lg" aria-hidden>♥</div>
+          <PersonChip
             person={userB}
-            sideLabel="상대방 B"
             resolvedImageUrl={userB ? resolvedImages[userB.id] : undefined}
           />
         </div>
 
+        {/* 요약 */}
         {event.summary ? (
-          <div className="rounded-xl border bg-muted/50 p-4">
-            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">매칭 요약</p>
-            <p className="mt-1.5 text-sm leading-relaxed text-foreground">{event.summary}</p>
-          </div>
+          <p className="rounded-xl border bg-muted/50 px-4 py-3 text-sm leading-relaxed text-muted-foreground">
+            {event.summary}
+          </p>
         ) : null}
       </DialogContent>
     </Dialog>
