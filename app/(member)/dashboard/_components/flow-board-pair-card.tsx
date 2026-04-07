@@ -39,25 +39,15 @@ function DraggableWrapper({ id, disabled, className, children }: DraggableWrappe
   );
 }
 
-type FlowBoardPairHalfProps = {
+// ── PairHalfContent — 시각적 렌더링만 (인터랙션 없음) ──────────────────────
+
+type PairHalfContentProps = {
   candidate: DashboardBoardCandidate | null;
   genderPlaceholder: "남" | "여";
   isCoupled: boolean;
-  role: AppRole;
-  canOperate: boolean;
-  pendingCandidateIds: ReadonlySet<string>;
-  draggingId: string | null;
 };
 
-function FlowBoardPairHalf({
-  candidate,
-  genderPlaceholder,
-  isCoupled,
-  role,
-  canOperate,
-  pendingCandidateIds,
-  draggingId,
-}: FlowBoardPairHalfProps) {
+function PairHalfContent({ candidate, genderPlaceholder, isCoupled }: PairHalfContentProps) {
   if (!candidate) {
     return (
       <div className="flex h-full min-h-[18rem] items-center justify-center px-4 text-center text-xs text-slate-400">
@@ -73,19 +63,8 @@ function FlowBoardPairHalf({
     candidate.religion ? `종교 ${candidate.religion}` : null,
   ].filter(Boolean) as string[];
 
-  const isPending = pendingCandidateIds.has(candidate.id);
-  const isThisDragging = draggingId === candidate.id;
-  const draggableDisabled = !canOperate || isCoupled || isPending;
-
-  const content = (
-    <div
-      className={cn(
-        "flex h-full min-h-[18rem] flex-col p-4 transition-colors",
-        isPending && "pointer-events-none opacity-60",
-        !isPending && "hover:bg-white/40",
-        isThisDragging && "opacity-0",
-      )}
-    >
+  return (
+    <div className="flex h-full min-h-[18rem] flex-col p-4 transition-colors hover:bg-white/40">
       <div className="flex items-start gap-2.5">
         <CandidateAvatarThumb imageUrl={candidate.image_url} gender={candidate.gender} />
         <div className="min-w-0 flex-1">
@@ -159,35 +138,37 @@ function FlowBoardPairHalf({
       ) : null}
 
       <div className="mt-auto flex items-center justify-between border-t border-rose-100/50 pt-3">
-        <span className="text-xs font-medium text-slate-500">
-          {canAccessCandidateDetail(role) ? "상세 확인" : getRoleLabel(role)}
-        </span>
-        {canOperate ? (
-          isCoupled ? (
-            <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-orange-400">
-              🔒
-            </span>
-          ) : (
-            <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-rose-300">
-              drag
-            </span>
-          )
-        ) : null}
+        <span className="text-xs font-medium text-slate-500">상세 확인</span>
+        {isCoupled ? (
+          <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-orange-400">
+            🔒
+          </span>
+        ) : (
+          <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-rose-300">
+            drag
+          </span>
+        )}
       </div>
     </div>
   );
+}
 
-  const inner = canAccessCandidateDetail(role) ? (
-    <Link href={`/profiles/${candidate.id}`} className="block h-full">
-      {content}
-    </Link>
-  ) : content;
+// ── FlowBoardPairHalf — 링크 래퍼 ────────────────────────────────────────────
 
-  return (
-    <DraggableWrapper id={candidate.id} disabled={draggableDisabled} className="h-full">
-      {inner}
-    </DraggableWrapper>
-  );
+type FlowBoardPairHalfProps = {
+  candidate: DashboardBoardCandidate | null;
+  genderPlaceholder: "남" | "여";
+  isCoupled: boolean;
+  role: AppRole;
+};
+
+function FlowBoardPairHalf({ candidate, genderPlaceholder, isCoupled, role }: FlowBoardPairHalfProps) {
+  const content = <PairHalfContent candidate={candidate} genderPlaceholder={genderPlaceholder} isCoupled={isCoupled} />;
+
+  if (candidate && canAccessCandidateDetail(role)) {
+    return <Link href={`/profiles/${candidate.id}`} className="block h-full">{content}</Link>;
+  }
+  return content;
 }
 
 export type FlowBoardPairCardProps = {
@@ -195,55 +176,35 @@ export type FlowBoardPairCardProps = {
   role: AppRole;
   canOperate: boolean;
   pendingCandidateIds: ReadonlySet<string>;
-  draggingId: string | null;
 };
 
-export function FlowBoardPairCard({
-  row,
-  role,
-  canOperate,
-  pendingCandidateIds,
-  draggingId,
-}: FlowBoardPairCardProps) {
-  const isCoupled = (row.male ?? row.female)?.status === "couple";
+// ── PairCardShell — 공통 외곽 레이아웃 ───────────────────────────────────────
 
+type PairCardShellProps = {
+  isCoupled: boolean;
+  left: React.ReactNode;
+  right: React.ReactNode;
+  className?: string;
+};
+
+function PairCardShell({ isCoupled, left, right, className }: PairCardShellProps) {
   return (
     <article
       className={cn(
         "relative grid grid-cols-2 rounded-[26px] border bg-white/90 shadow-[0_8px_32px_rgb(244,114,182,0.08)] backdrop-blur-sm",
         isCoupled ? "border-emerald-100/70" : "border-blue-100/60",
+        className,
       )}
     >
-      <div className="overflow-hidden rounded-l-[26px]">
-        <FlowBoardPairHalf
-          candidate={row.male}
-          genderPlaceholder="남"
-          isCoupled={isCoupled}
-          role={role}
-          canOperate={canOperate}
-          pendingCandidateIds={pendingCandidateIds}
-          draggingId={draggingId}
-        />
-      </div>
-
+      <div className="overflow-hidden rounded-l-[26px]">{left}</div>
       <div
         className={cn(
           "overflow-hidden rounded-r-[26px] border-l",
           isCoupled ? "border-l-emerald-100" : "border-l-blue-100",
         )}
       >
-        <FlowBoardPairHalf
-          candidate={row.female}
-          genderPlaceholder="여"
-          isCoupled={isCoupled}
-          role={role}
-          canOperate={canOperate}
-          pendingCandidateIds={pendingCandidateIds}
-          draggingId={draggingId}
-        />
+        {right}
       </div>
-
-      {/* 구분선 위 중앙 아이콘 */}
       <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
         <div
           className={cn(
@@ -259,5 +220,54 @@ export function FlowBoardPairCard({
         </div>
       </div>
     </article>
+  );
+}
+
+// ── FlowBoardPairCard — 드래그 가능한 페어 카드 ───────────────────────────────
+
+export function FlowBoardPairCard({ row, role, canOperate, pendingCandidateIds }: FlowBoardPairCardProps) {
+  const isCoupled = (row.male ?? row.female)?.status === "couple";
+  const primaryCandidate = row.male ?? row.female;
+  const isPending =
+    (row.male ? pendingCandidateIds.has(row.male.id) : false) ||
+    (row.female ? pendingCandidateIds.has(row.female.id) : false);
+  const draggableDisabled = !canOperate || isCoupled || isPending || !primaryCandidate;
+
+  return (
+    <DraggableWrapper
+      id={primaryCandidate?.id ?? "pair-placeholder"}
+      disabled={draggableDisabled}
+      className={cn(isPending && "pointer-events-none opacity-60")}
+    >
+      <PairCardShell
+        isCoupled={isCoupled}
+        left={<FlowBoardPairHalf candidate={row.male} genderPlaceholder="남" isCoupled={isCoupled} role={role} />}
+        right={<FlowBoardPairHalf candidate={row.female} genderPlaceholder="여" isCoupled={isCoupled} role={role} />}
+      />
+    </DraggableWrapper>
+  );
+}
+
+// ── FlowBoardPairCardOverlay — 드래그 오버레이용 정적 페어 카드 ───────────────
+
+export type FlowBoardPairCardOverlayProps = {
+  male: DashboardBoardCandidate | null;
+  female: DashboardBoardCandidate | null;
+};
+
+export function FlowBoardPairCardOverlay({ male, female }: FlowBoardPairCardOverlayProps) {
+  const isCoupled = (male ?? female)?.status === "couple";
+
+  return (
+    <PairCardShell
+      isCoupled={isCoupled}
+      className="rotate-1 shadow-[0_24px_60px_rgb(244,114,182,0.22)]"
+      left={
+        <PairHalfContent candidate={male} genderPlaceholder="남" isCoupled={isCoupled} />
+      }
+      right={
+        <PairHalfContent candidate={female} genderPlaceholder="여" isCoupled={isCoupled} />
+      }
+    />
   );
 }

@@ -17,6 +17,7 @@ import { canEditCandidates } from "@/lib/role-utils";
 import type { AppRole, Candidate, CandidateStatus } from "@/lib/types";
 import { DashboardPairMatchDialog } from "./dashboard-pair-match-dialog";
 import { FlowBoardCardBody } from "./flow-board-card";
+import { FlowBoardPairCardOverlay } from "./flow-board-pair-card";
 import { FlowBoardMobileView } from "./flow-board-mobile-view";
 import { FlowBoardDesktopView } from "./flow-board-desktop-view";
 import { Button } from "@/components/ui/button";
@@ -261,6 +262,7 @@ export function DashboardFlowBoard({
     const candidate = candidateDirectory.get(candidateId);
     if (!candidate) return;
     if (candidate.status === "couple") return;
+    if (candidate.status === targetStatus) return;
 
     if (targetStatus === "matched" || targetStatus === "couple") {
       const options = getEligiblePairOptions(candidate, allCandidates, targetStatus);
@@ -284,12 +286,14 @@ export function DashboardFlowBoard({
   // ── Render ──────────────────────────────────────────────────────────────────
 
   const draggingCandidate = draggingId ? candidateDirectory.get(draggingId) : null;
+  const draggingPartner = draggingCandidate?.paired_candidate_id
+    ? candidateDirectory.get(draggingCandidate.paired_candidate_id) ?? null
+    : null;
 
   const sharedLaneProps = {
     role,
     canOperate,
     pendingCandidateIds,
-    draggingId,
     candidateDirectory,
   };
 
@@ -402,7 +406,12 @@ export function DashboardFlowBoard({
 
       {/* 드래그 중인 카드 오버레이 */}
       <DragOverlay dropAnimation={null}>
-        {draggingCandidate ? (
+        {draggingCandidate && draggingPartner ? (
+          <FlowBoardPairCardOverlay
+            male={draggingCandidate.gender === "남" ? draggingCandidate : draggingPartner}
+            female={draggingCandidate.gender === "여" ? draggingCandidate : draggingPartner}
+          />
+        ) : draggingCandidate ? (
           <div className="w-72">
             <FlowBoardCardBody
               candidate={draggingCandidate}

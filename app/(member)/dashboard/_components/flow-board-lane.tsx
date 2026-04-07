@@ -21,7 +21,6 @@ export type FlowBoardLaneProps = {
   role: AppRole;
   canOperate: boolean;
   pendingCandidateIds: ReadonlySet<string>;
-  draggingId: string | null;
   candidateDirectory: ReadonlyMap<string, DashboardBoardCandidate>;
 };
 
@@ -71,7 +70,6 @@ export function FlowBoardLane({
   role,
   canOperate,
   pendingCandidateIds,
-  draggingId,
   candidateDirectory,
 }: FlowBoardLaneProps) {
   const isPairedLane = status === "matched" || status === "couple";
@@ -103,7 +101,6 @@ export function FlowBoardLane({
           role={role}
           canOperate={canOperate}
           pendingCandidateIds={pendingCandidateIds}
-          draggingId={draggingId}
         />
       ) : (
         <FlowBoardActiveLaneContent

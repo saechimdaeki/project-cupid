@@ -16,7 +16,6 @@ type FlowBoardPairedLaneContentProps = {
   role: AppRole;
   canOperate: boolean;
   pendingCandidateIds: ReadonlySet<string>;
-  draggingId: string | null;
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -71,7 +70,6 @@ export function FlowBoardPairedLaneContent({
   role,
   canOperate,
   pendingCandidateIds,
-  draggingId,
 }: FlowBoardPairedLaneContentProps) {
   const pairedRows = buildPairedLaneRows(items);
 
@@ -89,7 +87,6 @@ export function FlowBoardPairedLaneContent({
             role={role}
             canOperate={canOperate}
             pendingCandidateIds={pendingCandidateIds}
-            draggingId={draggingId}
           />
         ))
       )}

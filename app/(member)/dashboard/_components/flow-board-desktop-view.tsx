@@ -13,7 +13,6 @@ type FlowBoardDesktopViewProps = {
   role: AppRole;
   canOperate: boolean;
   pendingCandidateIds: ReadonlySet<string>;
-  draggingId: string | null;
   candidateDirectory: ReadonlyMap<string, DashboardBoardCandidate>;
 };
 
@@ -25,7 +24,6 @@ export function FlowBoardDesktopView({
   role,
   canOperate,
   pendingCandidateIds,
-  draggingId,
   candidateDirectory,
 }: FlowBoardDesktopViewProps) {
   return (
@@ -41,7 +39,6 @@ export function FlowBoardDesktopView({
           role={role}
           canOperate={canOperate}
           pendingCandidateIds={pendingCandidateIds}
-          draggingId={draggingId}
           candidateDirectory={candidateDirectory}
         />
       ))}

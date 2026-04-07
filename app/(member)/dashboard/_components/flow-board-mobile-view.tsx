@@ -18,7 +18,6 @@ type FlowBoardMobileViewProps = {
   role: AppRole;
   canOperate: boolean;
   pendingCandidateIds: ReadonlySet<string>;
-  draggingId: string | null;
   candidateDirectory: ReadonlyMap<string, DashboardBoardCandidate>;
 };
 
@@ -32,7 +31,6 @@ export function FlowBoardMobileView({
   role,
   canOperate,
   pendingCandidateIds,
-  draggingId,
   candidateDirectory,
 }: FlowBoardMobileViewProps) {
   return (
@@ -79,7 +77,6 @@ export function FlowBoardMobileView({
         role={role}
         canOperate={canOperate}
         pendingCandidateIds={pendingCandidateIds}
-        draggingId={draggingId}
         candidateDirectory={candidateDirectory}
       />
     </div>
