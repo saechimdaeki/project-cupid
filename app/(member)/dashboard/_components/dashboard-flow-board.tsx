@@ -12,14 +12,13 @@ import {
 import type { DragEndEvent, DragOverEvent, DragStartEvent } from "@dnd-kit/core";
 import { moveCandidatePairStatus, moveCandidateStatus } from "@/lib/admin-actions";
 import { formatCandidateBrief } from "@/lib/candidate-display";
-import { cn } from "@/lib/cn";
 import { canEditCandidates } from "@/lib/role-utils";
-import { getStatusBadgeClass } from "@/lib/status-ui";
 import type { AppRole, Candidate, CandidateStatus } from "@/lib/types";
-import { DashboardPairMatchDialog } from "./dashboard-pair-match-dialog";
+import { PairMatchDialog } from "./pair-match-dialog";
 import { FlowBoardCardBody } from "./flow-board-card";
-import { FlowBoardLane, groupCandidatesByStatus } from "./flow-board-lane";
-import { Button } from "@/components/ui/button";
+import { FlowBoardPairCardOverlay } from "./flow-board-pair-card";
+import { FlowBoardMobileView } from "./flow-board-mobile-view";
+import { FlowBoardDesktopView } from "./flow-board-desktop-view";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -57,7 +56,7 @@ type DashboardFlowBoardProps = {
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const PRIMARY_LANES = [
+export const PRIMARY_LANES = [
   {
     key: "active",
     title: "적극검토",
@@ -120,7 +119,7 @@ export function DashboardFlowBoard({
   const [pendingCandidateIds, setPendingCandidateIds] = useState<ReadonlySet<string>>(
     () => new Set(),
   );
-  const pairMatchTitleId = useId();
+  const dndContextId = useId();
   const canOperate = canEditCandidates(role);
 
   const sensors = useSensors(
@@ -191,14 +190,12 @@ export function DashboardFlowBoard({
     });
   };
 
-  const confirmPairMove = () => {
-    if (!pairComposer?.counterpartId) {
-      setNotice("상대 후보를 선택해야 합니다.");
-      return;
-    }
-
+  const executePairMove = (
+    candidateId: string,
+    counterpartId: string,
+    targetStatus: "matched" | "couple",
+  ) => {
     const previousItems = items;
-    const { candidateId, counterpartId, targetStatus } = pairComposer;
     const affectedIds = new Set([candidateId, counterpartId]);
 
     setItems((existing) =>
@@ -228,6 +225,14 @@ export function DashboardFlowBoard({
 
       router.refresh();
     });
+  };
+
+  const confirmPairMove = () => {
+    if (!pairComposer?.counterpartId) {
+      setNotice("상대 후보를 선택해야 합니다.");
+      return;
+    }
+    executePairMove(pairComposer.candidateId, pairComposer.counterpartId, pairComposer.targetStatus);
   };
 
   // ── DnD handlers ───────────────────────────────────────────────────────────
@@ -260,15 +265,23 @@ export function DashboardFlowBoard({
     const candidate = candidateDirectory.get(candidateId);
     if (!candidate) return;
     if (candidate.status === "couple") return;
+    if (candidate.status === targetStatus) return;
 
     if (targetStatus === "matched" || targetStatus === "couple") {
       const options = getEligiblePairOptions(candidate, allCandidates, targetStatus);
-      const defaultCounterpartId =
+      const existingCounterpartId =
         candidate.paired_candidate_id &&
         options.some((option) => option.id === candidate.paired_candidate_id)
           ? candidate.paired_candidate_id
-          : "";
-      setPairComposer({ candidateId, targetStatus, counterpartId: defaultCounterpartId });
+          : null;
+
+      // 커플완성으로 이동 시 이미 페어가 있으면 다이얼로그 없이 바로 이동
+      if (targetStatus === "couple" && existingCounterpartId) {
+        executePairMove(candidateId, existingCounterpartId, targetStatus);
+        return;
+      }
+
+      setPairComposer({ candidateId, targetStatus, counterpartId: existingCounterpartId ?? "" });
       return;
     }
 
@@ -283,17 +296,20 @@ export function DashboardFlowBoard({
   // ── Render ──────────────────────────────────────────────────────────────────
 
   const draggingCandidate = draggingId ? candidateDirectory.get(draggingId) : null;
+  const draggingPartner = draggingCandidate?.paired_candidate_id
+    ? candidateDirectory.get(draggingCandidate.paired_candidate_id) ?? null
+    : null;
 
   const sharedLaneProps = {
     role,
     canOperate,
     pendingCandidateIds,
-    draggingId,
     candidateDirectory,
   };
 
   return (
     <DndContext
+      id={dndContextId}
       sensors={sensors}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
@@ -307,151 +323,54 @@ export function DashboardFlowBoard({
           </div>
         ) : null}
 
-        {/* 모바일 레인 탭 */}
-        <div className="flex gap-2 overflow-x-auto pb-1 lg:hidden">
-          {PRIMARY_LANES.map((lane) => {
-            const count = groupCandidatesByStatus(items, lane.key).length;
+        <FlowBoardMobileView
+          items={items}
+          mobileLane={mobileLane}
+          onMobileLaneChange={setMobileLane}
+          dropTarget={dropTarget}
+          {...sharedLaneProps}
+        />
 
-            return (
-              <Button
-                key={lane.key}
-                variant="outline"
-                onClick={() => setMobileLane(lane.key)}
-                className={cn(
-                  "shrink-0 gap-2 rounded-full px-4 py-2 text-sm font-medium transition",
-                  mobileLane === lane.key
-                    ? cn(getStatusBadgeClass(lane.key), "border")
-                    : "border border-slate-200 bg-white text-slate-600",
-                )}
-              >
-                <span>{lane.title}</span>
-                <span
-                  className={cn(
-                    "rounded-full px-2 py-0.5 text-xs",
-                    mobileLane === lane.key ? "bg-white/15" : "bg-slate-100",
-                  )}
-                >
-                  {count}
-                </span>
-              </Button>
-            );
-          })}
-        </div>
-
-        {/* 모바일 단일 레인 */}
-        <div className="grid gap-4 lg:hidden">
-          <FlowBoardLane
-            status={mobileLane}
-            title={PRIMARY_LANES.find((lane) => lane.key === mobileLane)?.title ?? ""}
-            description={PRIMARY_LANES.find((lane) => lane.key === mobileLane)?.description ?? ""}
-            compact
-            items={groupCandidatesByStatus(items, mobileLane)}
-            isDropTarget={dropTarget === mobileLane}
-            {...sharedLaneProps}
-          />
-        </div>
-
-        {/* 데스크톱 3열 칸반 */}
-        <div className="hidden gap-5 lg:grid lg:grid-cols-3 lg:h-[calc(100dvh-22rem)] xl:gap-6">
-          {PRIMARY_LANES.map((lane) => (
-            <FlowBoardLane
-              key={lane.key}
-              status={lane.key}
-              title={lane.title}
-              description={lane.description}
-              items={groupCandidatesByStatus(items, lane.key)}
-              isDropTarget={dropTarget === lane.key}
-              {...sharedLaneProps}
-            />
-          ))}
-        </div>
+        <FlowBoardDesktopView
+          items={items}
+          dropTarget={dropTarget}
+          {...sharedLaneProps}
+        />
 
         {/* 페어 매칭 다이얼로그 */}
-        <DashboardPairMatchDialog
+        <PairMatchDialog
           open={Boolean(pairComposer)}
-          labelledBy={pairMatchTitleId}
           onClose={() => setPairComposer(null)}
-        >
-          {pairComposer ? (
-            <>
-              <header className="flex flex-col gap-2 text-left">
-                <p
-                  className={cn(
-                    "text-xs font-semibold uppercase tracking-[0.24em]",
-                    pairComposer.targetStatus === "matched" ? "text-blue-500" : "text-emerald-500",
-                  )}
-                >
-                  {pairComposer.targetStatus === "matched" ? "Pair Match" : "Couple Confirm"}
-                </p>
-                <h2
-                  id={pairMatchTitleId}
-                  className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-slate-800"
-                >
-                  {candidateDirectory.get(pairComposer.candidateId)
-                    ? `${formatCandidateBrief(candidateDirectory.get(pairComposer.candidateId)!)}와 연결할 후보를 선택하세요`
-                    : "연결할 후보를 선택하세요"}
-                </h2>
-                <p className="mt-2 text-sm leading-6 text-slate-500">
-                  상대 후보를 선택하면 두 후보의 상태가 함께 이동합니다.
-                </p>
-              </header>
-
-              <label className="mt-5 grid gap-2">
-                <span className="text-sm font-medium text-slate-700">상대 후보</span>
-                <select
-                  value={pairComposer.counterpartId}
-                  onChange={(event) =>
-                    setPairComposer((current) =>
-                      current ? { ...current, counterpartId: event.target.value } : current,
-                    )
-                  }
-                  className="h-12 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-700 outline-none"
-                >
-                  <option value="">후보를 선택하세요</option>
-                  {pairOptions.map((candidate) => (
-                    <option key={candidate.id} value={candidate.id}>
-                      {formatCandidateBrief(candidate)} · {candidate.gender}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              {!pairOptions.length ? (
-                <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
-                  현재 연결 가능한 반대 성별 후보가 없습니다.
-                </div>
-              ) : null}
-
-              <footer className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
-                <Button
-                  variant="outline"
-                  onClick={() => setPairComposer(null)}
-                  className="h-11 rounded-full border border-slate-200 px-4 text-sm font-medium text-slate-600"
-                >
-                  취소
-                </Button>
-                <Button
-                  disabled={isPending || !pairComposer.counterpartId}
-                  onClick={confirmPairMove}
-                  className="h-11 rounded-full bg-rose-500 px-5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {pairComposer.targetStatus === "matched" ? "매칭진행중으로 이동" : "커플완성으로 확정"}
-                </Button>
-              </footer>
-            </>
-          ) : null}
-        </DashboardPairMatchDialog>
+          targetStatus={pairComposer?.targetStatus ?? "matched"}
+          candidateName={
+            pairComposer
+              ? (candidateDirectory.get(pairComposer.candidateId)
+                  ? formatCandidateBrief(candidateDirectory.get(pairComposer.candidateId)!)
+                  : "")
+              : ""
+          }
+          counterpartId={pairComposer?.counterpartId ?? ""}
+          onCounterpartChange={(id) =>
+            setPairComposer((current) => (current ? { ...current, counterpartId: id ?? "" } : current))
+          }
+          pairOptions={pairOptions}
+          isPending={isPending}
+          onConfirm={confirmPairMove}
+        />
       </div>
 
       {/* 드래그 중인 카드 오버레이 */}
       <DragOverlay dropAnimation={null}>
-        {draggingCandidate ? (
+        {draggingCandidate && draggingPartner ? (
+          <FlowBoardPairCardOverlay
+            male={draggingCandidate.gender === "남" ? draggingCandidate : draggingPartner}
+            female={draggingCandidate.gender === "여" ? draggingCandidate : draggingPartner}
+          />
+        ) : draggingCandidate ? (
           <div className="w-72">
             <FlowBoardCardBody
               candidate={draggingCandidate}
               candidateDirectory={candidateDirectory}
-              role={role}
-              canOperate={canOperate}
               pendingCandidateIds={pendingCandidateIds}
               isOverlay
             />

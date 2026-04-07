@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useDraggable } from "@dnd-kit/core";
 import { CandidateAvatarThumb } from "@/components/candidate-avatar-thumb";
-import { formatCandidateBrief, getCandidateCardTitle } from "@/lib/candidate-display";
+import { formatCandidateBrief } from "@/lib/candidate-display";
 import { cn } from "@/lib/cn";
-import { canAccessCandidateDetail, getRoleLabel } from "@/lib/role-utils";
+import { canAccessCandidateDetail } from "@/lib/role-utils";
 import { getStatusTopBorderClass } from "@/lib/status-ui";
 import { Badge } from "@/components/ui/badge";
 import type { AppRole } from "@/lib/types";
@@ -41,8 +41,6 @@ function DraggableWrapper({ id, disabled, className, children }: DraggableWrappe
 export type FlowBoardCardBodyProps = {
   candidate: DashboardBoardCandidate;
   candidateDirectory: ReadonlyMap<string, DashboardBoardCandidate>;
-  role: AppRole;
-  canOperate: boolean;
   pendingCandidateIds: ReadonlySet<string>;
   fillRowHeight?: boolean;
   isOverlay?: boolean;
@@ -51,27 +49,26 @@ export type FlowBoardCardBodyProps = {
 export function FlowBoardCardBody({
   candidate,
   candidateDirectory,
-  role,
-  canOperate,
   pendingCandidateIds,
   fillRowHeight = false,
   isOverlay = false,
 }: FlowBoardCardBodyProps) {
-  const ageLabel = candidate.birth_year ? `${String(candidate.birth_year).slice(-2)}년생` : null;
-  const extraMeta = [
-    candidate.gender || null,
-    candidate.height_text ?? null,
-    candidate.religion ? `종교 ${candidate.religion}` : null,
-  ].filter(Boolean) as string[];
   const pairedCandidate = candidate.paired_candidate_id
     ? candidateDirectory.get(candidate.paired_candidate_id)
     : null;
 
+  const birthYearText = candidate.birth_year ? `${String(candidate.birth_year).slice(-2)}년생` : null;
+
+  const specLine = [
+    candidate.height_text ?? null,
+    candidate.religion || null,
+  ].filter(Boolean).join(" · ");
+
   return (
     <article
       className={cn(
-        "group flex max-w-full flex-col overflow-x-hidden overflow-y-visible rounded-2xl border border-rose-100/50 border-t-4 bg-white/90 p-4 shadow-[0_8px_32px_rgb(244,114,182,0.08)] backdrop-blur-sm transition",
-        fillRowHeight ? "h-full min-h-[18rem]" : "min-h-[18rem]",
+        "group flex max-w-full flex-col overflow-x-hidden overflow-y-visible rounded-2xl border border-rose-100/50 border-t-4 bg-white/90 p-3.5 shadow-[0_8px_32px_rgb(244,114,182,0.08)] backdrop-blur-sm transition",
+        fillRowHeight ? "h-full" : "",
         getStatusTopBorderClass(candidate.status),
         !isOverlay && pendingCandidateIds.has(candidate.id) && "pointer-events-none opacity-60",
         !isOverlay && !pendingCandidateIds.has(candidate.id) &&
@@ -79,112 +76,78 @@ export function FlowBoardCardBody({
         isOverlay && "rotate-1 shadow-[0_24px_60px_rgb(244,114,182,0.22)]",
       )}
     >
-      <div className="flex items-start gap-3">
-        <CandidateAvatarThumb imageUrl={candidate.image_url} gender={candidate.gender} />
+      {/* 헤더: 아바타 + 이름·나이·지역·직업 */}
+      <div className="flex items-start gap-2.5">
+        <CandidateAvatarThumb
+          imageUrl={candidate.image_url}
+          gender={candidate.gender}
+          className="h-14 w-14 shrink-0"
+        />
         <div className="min-w-0 flex-1">
           {candidate.full_name.trim() ? (
-            <p className="line-clamp-1 text-xs font-semibold uppercase tracking-[0.18em] text-rose-400/90">
+            <p className="truncate text-base font-bold text-rose-500">
               {candidate.full_name.trim()}
             </p>
           ) : null}
-          <h3
-            className={cn(
-              "line-clamp-2 min-h-[2.75rem] text-base font-semibold leading-snug tracking-[-0.02em] text-slate-800",
-              candidate.full_name.trim() ? "mt-1" : "",
-            )}
-          >
-            {getCandidateCardTitle(candidate)}
-          </h3>
-          {candidate.work_summary ? (
-            <p className="mt-1 line-clamp-2 text-sm leading-snug text-slate-500">
-              {candidate.work_summary}
+          {birthYearText ? (
+            <p className="mt-0.5 text-xs text-slate-400">{birthYearText}</p>
+          ) : null}
+          {candidate.region ? (
+            <p className="mt-0.5 text-xs text-slate-400">{candidate.region}</p>
+          ) : null}
+          {candidate.occupation ? (
+            <p className="mt-0.5 text-xs font-medium text-slate-600">
+              {candidate.occupation}
             </p>
           ) : null}
         </div>
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-2">
-        {ageLabel ? (
-          <Badge className="rounded-full bg-rose-100 px-2.5 py-1 font-semibold text-rose-600">
-            {ageLabel}
-          </Badge>
-        ) : null}
-        {candidate.occupation ? (
-          <Badge className="rounded-full bg-orange-100 px-2.5 py-1 font-semibold text-orange-600">
-            {candidate.occupation}
-          </Badge>
-        ) : null}
-        {candidate.region ? (
-          <Badge className="rounded-full bg-rose-100 px-2.5 py-1 font-semibold text-rose-600">
-            {candidate.region}
-          </Badge>
-        ) : null}
-        {extraMeta.map((item, i) => (
-          <Badge
-            key={`${candidate.id}-${item}`}
-            className={cn(
-              "rounded-full px-2.5 py-1",
-              i % 2 === 0 ? "bg-orange-100 text-orange-600" : "bg-rose-100 text-rose-600",
-            )}
-          >
-            {item}
-          </Badge>
-        ))}
-        {candidate.highlight_tags.slice(0, 2).map((tag) => (
-          <Badge
-            key={`${candidate.id}-${tag}`}
-            className="rounded-full border border-rose-200/60 bg-white/80 px-2.5 py-1 font-semibold text-rose-600"
-          >
-            {tag}
-          </Badge>
-        ))}
-      </div>
+      {/* 직장 소개 */}
+      {candidate.work_summary ? (
+        <p className="mt-2.5 line-clamp-2 text-xs leading-relaxed text-slate-500">
+          {candidate.work_summary}
+        </p>
+      ) : null}
 
+      {/* 키 · 종교 */}
+      {specLine ? (
+        <p className="mt-1.5 text-xs text-slate-400">{specLine}</p>
+      ) : null}
+
+
+      {/* 태그 */}
+      {candidate.highlight_tags.length > 0 ? (
+        <div className="mt-2.5 flex flex-wrap gap-1.5">
+          {candidate.highlight_tags.slice(0, 3).map((tag) => (
+            <Badge
+              key={`${candidate.id}-${tag}`}
+              className="rounded-full border border-rose-200/60 bg-white/80 px-2 py-0.5 text-xs font-medium text-rose-600"
+            >
+              {tag}
+            </Badge>
+          ))}
+        </div>
+      ) : null}
+
+      {/* Manager Note */}
       {candidate.notes_private ? (
-        <div className="mt-4 rounded-2xl border border-rose-100/50 bg-rose-50/50 px-3 py-2.5">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-rose-400">
-            Manager Note
-          </p>
-          <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-600">
+        <div className="mt-2.5 rounded-xl border border-rose-100/50 bg-rose-50/50 px-2.5 py-2">
+          <p className="line-clamp-2 text-xs leading-5 text-slate-500">
             {candidate.notes_private}
           </p>
         </div>
       ) : null}
 
+      {/* Current Pair */}
       {pairedCandidate ? (
-        <div className="mt-4 rounded-2xl border border-orange-100/60 bg-orange-50/40 px-3 py-2.5">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-orange-500/90">
-            Current Pair
-          </p>
-          <p className="mt-1 line-clamp-2 text-xs font-medium text-slate-600">
-            {formatCandidateBrief(pairedCandidate)}
+        <div className="mt-2 rounded-xl border border-orange-100/60 bg-orange-50/40 px-2.5 py-1.5">
+          <p className="truncate text-xs font-medium text-orange-600">
+            🔗 {formatCandidateBrief(pairedCandidate)}
           </p>
         </div>
       ) : null}
 
-      <div
-        className={cn(
-          "mt-4 flex items-center justify-between border-t border-rose-100/50 pt-3",
-          fillRowHeight && "mt-auto",
-        )}
-      >
-        <span className="text-xs font-medium text-slate-500">
-          {canAccessCandidateDetail(role)
-            ? "카드를 눌러 상세 확인"
-            : `${getRoleLabel(role)} 권한은 목록만 확인`}
-        </span>
-        {canOperate ? (
-          candidate.status === "couple" ? (
-            <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-orange-400">
-              🔒 locked
-            </span>
-          ) : (
-            <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-rose-300">
-              drag
-            </span>
-          )
-        ) : null}
-      </div>
     </article>
   );
 }
@@ -213,8 +176,6 @@ export function FlowBoardCard({
     <FlowBoardCardBody
       candidate={candidate}
       candidateDirectory={candidateDirectory}
-      role={role}
-      canOperate={canOperate}
       pendingCandidateIds={pendingCandidateIds}
       fillRowHeight={fillRowHeight}
     />
@@ -234,7 +195,7 @@ export function FlowBoardCard({
       key={candidate.id}
       id={candidate.id}
       disabled={draggableDisabled}
-      className={cn(fillRowHeight && "flex h-full flex-col")}
+      className={cn("min-w-0", fillRowHeight && "flex h-full flex-col")}
     >
       {inner}
     </DraggableWrapper>
