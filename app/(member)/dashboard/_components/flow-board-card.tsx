@@ -71,7 +71,7 @@ export function FlowBoardCardBody({
     <article
       className={cn(
         "group flex max-w-full flex-col overflow-x-hidden overflow-y-visible rounded-2xl border border-rose-100/50 border-t-4 bg-white/90 p-4 shadow-[0_8px_32px_rgb(244,114,182,0.08)] backdrop-blur-sm transition",
-        fillRowHeight ? "h-full min-h-[18rem]" : "min-h-[18rem]",
+        fillRowHeight ? "h-full" : "",
         getStatusTopBorderClass(candidate.status),
         !isOverlay && pendingCandidateIds.has(candidate.id) && "pointer-events-none opacity-60",
         !isOverlay && !pendingCandidateIds.has(candidate.id) &&
@@ -161,30 +161,6 @@ export function FlowBoardCardBody({
           </p>
         </div>
       ) : null}
-
-      <div
-        className={cn(
-          "mt-4 flex items-center justify-between border-t border-rose-100/50 pt-3",
-          fillRowHeight && "mt-auto",
-        )}
-      >
-        <span className="text-xs font-medium text-slate-500">
-          {canAccessCandidateDetail(role)
-            ? "카드를 눌러 상세 확인"
-            : `${getRoleLabel(role)} 권한은 목록만 확인`}
-        </span>
-        {canOperate ? (
-          candidate.status === "couple" ? (
-            <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-orange-400">
-              🔒 locked
-            </span>
-          ) : (
-            <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-rose-300">
-              drag
-            </span>
-          )
-        ) : null}
-      </div>
     </article>
   );
 }

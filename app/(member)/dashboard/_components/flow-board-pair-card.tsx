@@ -50,7 +50,7 @@ type PairHalfContentProps = {
 function PairHalfContent({ candidate, genderPlaceholder, isCoupled }: PairHalfContentProps) {
   if (!candidate) {
     return (
-      <div className="flex h-full min-h-[18rem] items-center justify-center px-4 text-center text-xs text-slate-400">
+      <div className="flex h-full min-h-0 items-center justify-center px-4 text-center text-xs text-slate-400">
         {genderPlaceholder === "남" ? "남성 페어 없음" : "여성 페어 없음"}
       </div>
     );
@@ -64,7 +64,7 @@ function PairHalfContent({ candidate, genderPlaceholder, isCoupled }: PairHalfCo
   ].filter(Boolean) as string[];
 
   return (
-    <div className="flex h-full min-h-[18rem] flex-col p-4 transition-colors hover:bg-white/40">
+    <div className="flex h-full min-h-0 flex-col p-4 transition-colors hover:bg-white/40">
       <div className="flex items-start gap-2.5">
         <CandidateAvatarThumb imageUrl={candidate.image_url} gender={candidate.gender} />
         <div className="min-w-0 flex-1">
@@ -136,19 +136,6 @@ function PairHalfContent({ candidate, genderPlaceholder, isCoupled }: PairHalfCo
           </p>
         </div>
       ) : null}
-
-      <div className="mt-auto flex items-center justify-between border-t border-rose-100/50 pt-3">
-        <span className="text-xs font-medium text-slate-500">상세 확인</span>
-        {isCoupled ? (
-          <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-orange-400">
-            🔒
-          </span>
-        ) : (
-          <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-rose-300">
-            drag
-          </span>
-        )}
-      </div>
     </div>
   );
 }
