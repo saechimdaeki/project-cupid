@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Filter, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,23 +31,6 @@ type DashboardToolbarProps = {
   religionOptions: string[];
   filteredCount: number;
 };
-
-function SearchIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="size-4 shrink-0 text-rose-400">
-      <circle cx="11" cy="11" r="6.5" />
-      <path d="m16 16 4.5 4.5" />
-    </svg>
-  );
-}
-
-function FilterIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="size-4">
-      <path d="M4 6h16M7 12h10M10 18h4" strokeLinecap="round" />
-    </svg>
-  );
-}
 
 function FilterSelect({
   value,
@@ -110,7 +94,7 @@ export function DashboardToolbar({
       {/* Row 1: Search + View toggle + Filter toggle(mobile) */}
       <div className="flex items-center gap-3">
         <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-rose-100/80 bg-white/90 px-3">
-          <SearchIcon />
+          <Search className="size-4 shrink-0 text-rose-400" />
           <input
             value={search}
             onChange={(event) => onSearchChange(event.target.value)}
@@ -159,7 +143,7 @@ export function DashboardToolbar({
           )}
           aria-label="필터"
         >
-          <FilterIcon />
+          <Filter className="size-4" />
         </Button>
       </div>
 

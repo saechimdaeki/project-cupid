@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
+import { LogOut } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,15 +20,6 @@ type NavProfileMenuProps = {
   username: string;
   role: AppRole;
 };
-
-function LogOutIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className={className} aria-hidden>
-      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M16 17l5-5-5-5M21 12H9" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
 
 function clearClientAuthMirror() {
   try {
@@ -81,7 +73,7 @@ export function NavProfileMenu({ fullName, username, role }: NavProfileMenuProps
           onClick={handleLogout}
           className="cursor-pointer gap-2 px-3 py-2 text-muted-foreground"
         >
-          <LogOutIcon className="size-4" />
+          <LogOut className="size-4" />
           {pending ? "로그아웃 중..." : "로그아웃"}
         </DropdownMenuItem>
       </DropdownMenuContent>
