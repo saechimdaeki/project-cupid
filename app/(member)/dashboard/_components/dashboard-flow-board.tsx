@@ -19,7 +19,7 @@ import {
   getStatusTopBorderClass,
 } from "@/lib/status-ui";
 import type { AppRole, Candidate, CandidateStatus } from "@/lib/types";
-import { DashboardPairMatchDialog } from "@/components/dashboard-pair-match-dialog";
+import { DashboardPairMatchDialog } from "./dashboard-pair-match-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 

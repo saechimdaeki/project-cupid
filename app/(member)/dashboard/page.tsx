@@ -1,9 +1,9 @@
 import { Suspense } from "react";
 import { GlobalNav } from "@/components/global-nav";
-import { DashboardStreamingSkeleton } from "@/components/dashboard-streaming-skeleton";
+import { DashboardStreamingSkeleton } from "./_components/dashboard-streaming-skeleton";
 import { DashboardViewMode } from "@/lib/types";
 import { requireApprovedMembership } from "@/lib/permissions";
-import { DashboardMain } from "./dashboard-main";
+import { DashboardMain } from "./_components/dashboard-main";
 
 type DashboardPageProps = {
   searchParams: Promise<{ view?: string; notice?: string; message?: string }>;

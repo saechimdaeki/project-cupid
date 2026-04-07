@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { CandidateCard } from "@/components/candidate-card";
-import { DashboardTimelinePanel, TimelineIcon } from "@/components/dashboard-timeline-panel";
+import { DashboardTimelinePanel, TimelineIcon } from "./dashboard-timeline-panel";
 import { MatchDetailModal } from "@/components/match-detail-modal";
 import { MatchHistoryListModal } from "@/components/match-history-list-modal";
 import { Button } from "@/components/ui/button";

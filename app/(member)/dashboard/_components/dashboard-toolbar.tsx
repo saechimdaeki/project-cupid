@@ -12,8 +12,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/cn";
+import { DashboardViewMode } from "@/lib/types";
 
-type DashboardFilterBarProps = {
+type DashboardToolbarProps = {
+  view: DashboardViewMode;
+  onViewChange: (next: DashboardViewMode) => void;
   search: string;
   onSearchChange: (value: string) => void;
   status: string;
@@ -75,7 +78,9 @@ function FilterSelect({
   );
 }
 
-export function DashboardFilterBar({
+export function DashboardToolbar({
+  view,
+  onViewChange,
   search,
   onSearchChange,
   status,
@@ -88,7 +93,7 @@ export function DashboardFilterBar({
   genderOptions,
   religionOptions,
   filteredCount,
-}: DashboardFilterBarProps) {
+}: DashboardToolbarProps) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const hasActiveFilters = Boolean(status || gender || religion || search);
 
@@ -102,7 +107,7 @@ export function DashboardFilterBar({
 
   return (
     <section className="flex flex-col gap-3 rounded-2xl border border-white/60 bg-white/80 p-4 shadow-sm backdrop-blur-md">
-      {/* Row 1: Search + filter toggle */}
+      {/* Row 1: Search + View toggle + Filter toggle(mobile) */}
       <div className="flex items-center gap-3">
         <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-rose-100/80 bg-white/90 px-3">
           <SearchIcon />
@@ -114,6 +119,35 @@ export function DashboardFilterBar({
           />
         </div>
 
+        {/* View toggle (tablet+) */}
+        <div className="hidden shrink-0 items-center rounded-xl border border-rose-100/60 bg-white/60 p-0.5 sm:flex">
+          <Button
+            variant="ghost"
+            onClick={() => onViewChange(DashboardViewMode.FLOW)}
+            className={cn(
+              "rounded-lg px-3.5 py-2 text-sm font-medium transition-colors",
+              view === DashboardViewMode.FLOW
+                ? "bg-gradient-to-r from-rose-500 to-pink-500 text-white shadow-sm hover:bg-transparent hover:text-white"
+                : "text-slate-500 hover:bg-transparent hover:text-slate-700",
+            )}
+          >
+            플로우
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() => onViewChange(DashboardViewMode.INVENTORY)}
+            className={cn(
+              "rounded-lg px-3.5 py-2 text-sm font-medium transition-colors",
+              view === DashboardViewMode.INVENTORY
+                ? "bg-gradient-to-r from-rose-500 to-pink-500 text-white shadow-sm hover:bg-transparent hover:text-white"
+                : "text-slate-500 hover:bg-transparent hover:text-slate-700",
+            )}
+          >
+            전체 후보
+          </Button>
+        </div>
+
+        {/* Filter toggle (mobile) */}
         <Button
           variant="outline"
           onClick={() => setFiltersOpen((current) => !current)}
@@ -129,7 +163,35 @@ export function DashboardFilterBar({
         </Button>
       </div>
 
-      {/* Row 2: Filters */}
+      {/* View toggle (mobile full-width) */}
+      <div className="flex items-center rounded-xl border border-rose-100/60 bg-white/60 p-0.5 sm:hidden">
+        <Button
+          variant="ghost"
+          onClick={() => onViewChange(DashboardViewMode.FLOW)}
+          className={cn(
+            "flex-1 rounded-lg py-2 text-sm font-medium transition-colors",
+            view === DashboardViewMode.FLOW
+              ? "bg-gradient-to-r from-rose-500 to-pink-500 text-white shadow-sm hover:bg-transparent hover:text-white"
+              : "text-slate-500 hover:bg-transparent hover:text-slate-700",
+          )}
+        >
+          플로우
+        </Button>
+        <Button
+          variant="ghost"
+          onClick={() => onViewChange(DashboardViewMode.INVENTORY)}
+          className={cn(
+            "flex-1 rounded-lg py-2 text-sm font-medium transition-colors",
+            view === DashboardViewMode.INVENTORY
+              ? "bg-gradient-to-r from-rose-500 to-pink-500 text-white shadow-sm hover:bg-transparent hover:text-white"
+              : "text-slate-500 hover:bg-transparent hover:text-slate-700",
+          )}
+        >
+          전체 후보
+        </Button>
+      </div>
+
+      {/* Row 2: Filters (desktop: always, mobile: toggle) */}
       <div className={cn(filtersOpen ? "flex" : "hidden", "flex-wrap items-center gap-2 lg:flex")}>
         <FilterSelect value={status} options={statusOptions} placeholder="상태" onChange={onStatusChange} />
         <FilterSelect value={gender} options={genderOptions} placeholder="성별" onChange={onGenderChange} />
@@ -168,9 +230,7 @@ export function DashboardFilterBar({
               &quot;{search}&quot;
             </Badge>
           ) : null}
-          <span className="text-xs text-slate-500">
-            {`${filteredCount}명 표시`}
-          </span>
+          <span className="text-xs text-slate-500">{filteredCount}명 표시</span>
         </div>
       ) : null}
     </section>

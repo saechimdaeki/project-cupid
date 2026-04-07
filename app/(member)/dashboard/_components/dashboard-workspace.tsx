@@ -1,10 +1,9 @@
 "use client";
 
 import { useDeferredValue, useMemo, useState } from "react";
-import { type DashboardBoardCandidate } from "@/components/dashboard-flow-board";
-import { DashboardContent } from "@/components/dashboard-content";
-import { DashboardFilterBar } from "@/components/dashboard-filter-bar";
-import { DashboardViewToggle } from "@/components/dashboard-view-toggle";
+import { type DashboardBoardCandidate } from "./dashboard-flow-board";
+import { DashboardContent } from "./dashboard-content";
+import { DashboardToolbar } from "./dashboard-toolbar";
 import { DashboardViewMode } from "@/lib/types";
 import type { AppRole, Candidate, TimelineEvent } from "@/lib/types";
 
@@ -84,9 +83,9 @@ export function DashboardWorkspace({
 
   return (
     <>
-      <DashboardViewToggle view={view} onChange={setView} />
-
-      <DashboardFilterBar
+      <DashboardToolbar
+        view={view}
+        onViewChange={setView}
         search={search}
         onSearchChange={setSearch}
         status={status}

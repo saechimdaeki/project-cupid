@@ -1,4 +1,4 @@
-import { ManagerDashboard } from "@/components/manager-dashboard";
+import { ManagerDashboard } from "./manager-dashboard";
 import {
   buildTimelineEvents,
   getDashboardCandidates,

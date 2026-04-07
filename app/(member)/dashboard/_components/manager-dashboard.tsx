@@ -1,7 +1,7 @@
 "use client";
 
-import { DashboardStatBar } from "@/components/dashboard-stat-bar";
-import { DashboardWorkspace } from "@/components/dashboard-workspace";
+import { DashboardStatBar } from "./dashboard-stat-bar";
+import { DashboardWorkspace } from "./dashboard-workspace";
 import { SakuraRain } from "@/components/sakura-rain";
 import { useDashboardCandidateSignedImages } from "@/hooks/useDashboardCandidateSignedImages";
 import { DashboardViewMode } from "@/lib/types";
