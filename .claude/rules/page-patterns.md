@@ -171,9 +171,9 @@ Suspense 배치는 두 가지 층위로 결정한다.
 // app/(member)/dashboard/page.tsx
 import { Suspense } from "react";
 import { GlobalNav } from "@/components/global-nav";
-import { DashboardStreamingSkeleton } from "@/components/dashboard-streaming-skeleton";
 import { requireApprovedMembership } from "@/lib/permissions";
-import { DashboardMain } from "./dashboard-main";
+import { DashboardMain } from "./_components/dashboard-main";
+import { DashboardStreamingSkeleton } from "./_components/dashboard-streaming-skeleton";
 
 export default async function DashboardPage() {
   const membership = await requireApprovedMembership(); // 빠른 체크는 await

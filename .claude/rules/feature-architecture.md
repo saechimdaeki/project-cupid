@@ -12,7 +12,7 @@ paths:
 
 ```
 app/           # 라우팅 + 페이지 (Next.js App Router)
-components/    # 모든 UI 컴포넌트
+components/    # 전역 UI 컴포넌트 (여러 라우트에서 사용)
 lib/           # 데이터 접근, 유틸, 타입, Server Actions
 types/         # Supabase 생성 타입 (types/supabase.ts)
 supabase/      # Supabase 설정, 마이그레이션
@@ -45,9 +45,35 @@ export default async function CandidatesPage() {
 }
 ```
 
-## components/ — UI 레이어
+## _components/ — 라우트 전용 컴포넌트
 
-**역할: 렌더링만.** props를 받아서 UI를 그린다. 직접 Supabase 쿼리 금지.
+특정 라우트에서만 사용하는 컴포넌트는 해당 라우트 폴더 안의 `_components/`에 둔다.
+언더스코어 prefix는 Next.js 라우터가 해당 폴더를 라우트로 인식하지 않도록 한다.
+
+```
+app/(member)/dashboard/
+├── page.tsx
+├── loading.tsx
+└── _components/          # dashboard 전용 컴포넌트
+    ├── dashboard-main.tsx
+    ├── manager-dashboard.tsx
+    └── ...
+```
+
+**판단 기준:**
+- 해당 라우트 외 다른 곳에서 import하지 않는다 → `_components/`
+- 여러 라우트에서 공유된다 → `components/` (전역)
+
+`_components/` 내부 파일끼리는 상대 경로로 import한다:
+```tsx
+// _components/manager-dashboard.tsx
+import { DashboardWorkspace } from "./dashboard-workspace"; // 상대 경로
+import { SakuraRain } from "@/components/sakura-rain";      // 전역 컴포넌트는 @/ 유지
+```
+
+## components/ — 전역 UI 레이어
+
+**역할: 렌더링만.** 여러 라우트에서 공유되는 컴포넌트. props를 받아서 UI를 그린다. 직접 Supabase 쿼리 금지.
 
 - 파일명: **kebab-case** (`candidate-card.tsx`)
 - 컴포넌트명: **PascalCase** (`CandidateCard`)
@@ -56,11 +82,11 @@ export default async function CandidatesPage() {
 ```
 components/
 ├── candidate-card.tsx           # 단일 파일
-└── dashboard-flow-board/        # 폴더 (복잡한 컴포넌트)
+└── some-complex-component/      # 폴더 (복잡한 컴포넌트)
     ├── index.ts
-    ├── dashboard-flow-board.tsx
-    ├── flow-column.tsx
-    └── use-flow-board.ts        # 커스텀 훅 (항상 별도 파일)
+    ├── some-complex-component.tsx
+    ├── sub-component.tsx
+    └── use-some-hook.ts         # 커스텀 훅 (항상 별도 파일)
 ```
 
 ## lib/ — 로직 레이어
@@ -142,3 +168,4 @@ export function OpenButton() {
 4. **뮤테이션은 Server Actions** — `lib/*-actions.ts`에 정의
 5. **도메인 타입은 `types/domain.ts`** — 컴포넌트 내 로컬 타입 재정의 금지
 6. **features/ 폴더 없음** — app/components/lib 3계층 구조 사용
+7. **라우트 전용 컴포넌트는 `_components/`** — 해당 라우트 폴더 안에 co-locate, 전역 공유 시에만 `components/`로 이동
