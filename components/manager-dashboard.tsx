@@ -3,6 +3,7 @@
 import { DashboardStatBar } from "@/components/dashboard-stat-bar";
 import { DashboardWorkspace } from "@/components/dashboard-workspace";
 import { SakuraRain } from "@/components/sakura-rain";
+import { useDashboardCandidateSignedImages } from "@/hooks/useDashboardCandidateSignedImages";
 import { DashboardViewMode } from "@/lib/types";
 import type { Candidate, Membership, TimelineEvent } from "@/lib/types";
 
@@ -14,11 +15,13 @@ type ManagerDashboardProps = {
 };
 
 export function ManagerDashboard({
-  candidates,
+  candidates: candidatesFromServer,
   timelineEvents,
   membership,
   initialView = DashboardViewMode.FLOW,
 }: ManagerDashboardProps) {
+  const candidates = useDashboardCandidateSignedImages(candidatesFromServer);
+
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-gradient-to-br from-rose-50 to-orange-50/50 text-slate-800">
       <SakuraRain petalCount={62} />

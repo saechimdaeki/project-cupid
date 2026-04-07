@@ -4,6 +4,7 @@ import {
   TAG_DASHBOARD_CANDIDATES,
   TAG_DASHBOARD_TIMELINE,
 } from "@/lib/cache-tags";
+import { isDirectImageUrl } from "@/lib/image-url-utils";
 import { unstable_cache } from "next/cache";
 import { mockCandidates, mockMatchRecords, mockMemberships } from "@/lib/mock-data";
 import { dashboardPreviewMatchRecords } from "@/lib/preview-scene";
@@ -91,15 +92,6 @@ function normalizeGender(value: string | null | undefined) {
 function normalizeHeightText(value: unknown) {
   const text = String(value ?? "").trim();
   return text || "모름";
-}
-
-function isDirectImageUrl(value: string | null | undefined) {
-  return Boolean(
-    value &&
-      (value.startsWith("/") ||
-        value.startsWith("http://") ||
-        value.startsWith("https://")),
-  );
 }
 
 async function resolveCandidateImage(
@@ -347,26 +339,13 @@ async function loadDashboardCandidatesUncached(): Promise<Candidate[]> {
   }
 
   const mapped = data.map((row) => mapDashboardCandidate(row));
-  const signedMap = await resolveSignedImageMap(
-    supabase,
-    mapped.map((c) => c.image_url),
-  );
-  const resolved = mapped.map((candidate) => ({
-    ...candidate,
-    image_url: candidate.image_url
-      ? isDirectImageUrl(candidate.image_url)
-        ? candidate.image_url
-        : signedMap.get(candidate.image_url) ?? null
-      : null,
-  }));
-
-  return mergeCandidates(resolved, mockCandidates);
+  return mergeCandidates(mapped, mockCandidates);
 }
 
 export async function getDashboardCandidates(): Promise<Candidate[]> {
   return unstable_cache(loadDashboardCandidatesUncached, ["cupid-dashboard-candidates-data"], {
     tags: [TAG_DASHBOARD_CANDIDATES],
-    revalidate: 45,
+    revalidate: 90,
   })();
 }
 
@@ -552,21 +531,13 @@ async function loadDashboardTimelineDataUncached(): Promise<{
     };
   }
 
-  const [countResult, recordsResult] = await Promise.all([
-    supabase
-      .from("cupid_match_records")
-      .select("id", { count: "exact", head: true }),
-    supabase
-      .from("cupid_match_records")
-      .select(
-        "id, candidate_id, counterpart_label, counterpart_candidate_id, matchmaker_name, outcome, summary, happened_on",
-      )
-      .order("happened_on", { ascending: false })
-      .limit(DASHBOARD_TIMELINE_FETCH_LIMIT),
-  ]);
-
-  const { count, error: countError } = countResult;
-  const { data, error } = recordsResult;
+  const { data, error } = await supabase
+    .from("cupid_match_records")
+    .select(
+      "id, candidate_id, counterpart_label, counterpart_candidate_id, matchmaker_name, outcome, summary, happened_on",
+    )
+    .order("happened_on", { ascending: false })
+    .limit(DASHBOARD_TIMELINE_FETCH_LIMIT);
 
   if (error || !data) {
     return {
@@ -579,10 +550,7 @@ async function loadDashboardTimelineDataUncached(): Promise<{
 
   return {
     records: mergedRecords,
-    totalCount:
-      countError || typeof count !== "number"
-        ? mergedRecords.length
-        : Math.max(count, mergedRecords.length),
+    totalCount: mergedRecords.length,
   };
 }
 
@@ -592,7 +560,7 @@ export async function getDashboardTimelineData(): Promise<{
 }> {
   return unstable_cache(loadDashboardTimelineDataUncached, ["cupid-dashboard-timeline-data"], {
     tags: [TAG_DASHBOARD_TIMELINE],
-    revalidate: 45,
+    revalidate: 90,
   })();
 }
 
