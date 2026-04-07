@@ -12,6 +12,7 @@ import { SakuraRain } from "@/components/sakura-rain";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
+import { useDashboardCandidateSignedImages } from "@/hooks/useDashboardCandidateSignedImages";
 import { canEditCandidates } from "@/lib/role-utils";
 import { getOutcomeDotClass } from "@/lib/status-ui";
 import type { AppRole, Candidate, Membership, TimelineEvent } from "@/lib/types";
@@ -213,11 +214,13 @@ function TimelinePanel({
 /* ─── Main Dashboard ─── */
 
 export function DashboardV2({
-  candidates,
+  candidates: candidatesFromServer,
   timelineEvents,
   membership,
   initialView = "flow",
 }: DashboardV2Props) {
+  const candidates = useDashboardCandidateSignedImages(candidatesFromServer);
+
   const [view, setView] = useState<ViewMode>(initialView);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [search, setSearch] = useState("");
