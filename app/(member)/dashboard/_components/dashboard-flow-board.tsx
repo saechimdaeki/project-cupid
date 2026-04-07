@@ -193,14 +193,12 @@ export function DashboardFlowBoard({
     });
   };
 
-  const confirmPairMove = () => {
-    if (!pairComposer?.counterpartId) {
-      setNotice("상대 후보를 선택해야 합니다.");
-      return;
-    }
-
+  const executePairMove = (
+    candidateId: string,
+    counterpartId: string,
+    targetStatus: "matched" | "couple",
+  ) => {
     const previousItems = items;
-    const { candidateId, counterpartId, targetStatus } = pairComposer;
     const affectedIds = new Set([candidateId, counterpartId]);
 
     setItems((existing) =>
@@ -230,6 +228,14 @@ export function DashboardFlowBoard({
 
       router.refresh();
     });
+  };
+
+  const confirmPairMove = () => {
+    if (!pairComposer?.counterpartId) {
+      setNotice("상대 후보를 선택해야 합니다.");
+      return;
+    }
+    executePairMove(pairComposer.candidateId, pairComposer.counterpartId, pairComposer.targetStatus);
   };
 
   // ── DnD handlers ───────────────────────────────────────────────────────────
@@ -266,12 +272,19 @@ export function DashboardFlowBoard({
 
     if (targetStatus === "matched" || targetStatus === "couple") {
       const options = getEligiblePairOptions(candidate, allCandidates, targetStatus);
-      const defaultCounterpartId =
+      const existingCounterpartId =
         candidate.paired_candidate_id &&
         options.some((option) => option.id === candidate.paired_candidate_id)
           ? candidate.paired_candidate_id
-          : "";
-      setPairComposer({ candidateId, targetStatus, counterpartId: defaultCounterpartId });
+          : null;
+
+      // 커플완성으로 이동 시 이미 페어가 있으면 다이얼로그 없이 바로 이동
+      if (targetStatus === "couple" && existingCounterpartId) {
+        executePairMove(candidateId, existingCounterpartId, targetStatus);
+        return;
+      }
+
+      setPairComposer({ candidateId, targetStatus, counterpartId: existingCounterpartId ?? "" });
       return;
     }
 
