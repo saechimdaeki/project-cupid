@@ -2,7 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 /** `lib/data.ts`, `lib/candidate-image-actions.ts` 와 동일 */
 export const CANDIDATE_PHOTOS_BUCKET = "sogaeting";
-export const CANDIDATE_PHOTOS_SIGNED_URL_TTL_SECONDS = 60 * 60;
+// 상세/갤러리 체류 중 URL 만료로 이미지가 깨지는 현상을 줄이기 위해 TTL을 넉넉히 유지합니다.
+export const CANDIDATE_PHOTOS_SIGNED_URL_TTL_SECONDS = 60 * 60 * 24;
 
 const BATCH_CHUNK_SIZE = 100;
 
