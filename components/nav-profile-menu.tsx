@@ -1,7 +1,8 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useTransition } from "react";
-import { LogOut } from "lucide-react";
+import { FolderKanban, LogOut } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { signOut } from "@/server/actions/auth";
-import { getRoleLabel } from "@/lib/role-utils";
+import { canEditCandidates, getRoleLabel } from "@/lib/role-utils";
 import type { AppRole } from "@/lib/types";
 
 type NavProfileMenuProps = {
@@ -32,8 +33,10 @@ function clearClientAuthMirror() {
 }
 
 export function NavProfileMenu({ fullName, username, role }: NavProfileMenuProps) {
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
   const initial = fullName.trim().slice(0, 1) || "?";
+  const canManageCandidates = canEditCandidates(role);
 
   function handleLogout() {
     clearClientAuthMirror();
@@ -68,6 +71,15 @@ export function NavProfileMenu({ fullName, username, role }: NavProfileMenuProps
           </DropdownMenuLabel>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
+        {canManageCandidates ? (
+          <DropdownMenuItem
+            onClick={() => router.push("/candidates/manage")}
+            className="cursor-pointer gap-2 px-3 py-2 text-muted-foreground"
+          >
+            <FolderKanban className="size-4" />
+            내 매물 관리
+          </DropdownMenuItem>
+        ) : null}
         <DropdownMenuItem
           disabled={pending}
           onClick={handleLogout}
