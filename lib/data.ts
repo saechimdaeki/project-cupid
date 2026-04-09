@@ -174,6 +174,7 @@ function mapCandidate(row: any): Candidate {
     image_url: row.image_url,
     paired_candidate_id: row.paired_candidate_id ?? null,
     created_at: row.created_at,
+    created_by: row.created_by ?? null,
     created_by_name: row.created_by_name ?? undefined,
   };
 }
@@ -257,6 +258,7 @@ function mapDashboardCandidate(row: any): Candidate {
     image_url: row.image_url ?? null,
     paired_candidate_id: row.paired_candidate_id ?? null,
     created_at: row.created_at,
+    created_by: row.created_by ?? null,
     created_by_name: row.created_by_name,
   };
 }
@@ -318,22 +320,26 @@ async function loadDashboardCandidatesUncached(): Promise<Candidate[]> {
   const supabase = await createClient();
 
   if (!supabase) {
-    return mockCandidates;
+    return mockCandidates.filter((candidate) => candidate.status !== "archived");
   }
 
   const { data, error } = await supabase
     .from("cupid_candidates")
     .select(
-      "id, full_name, birth_year, height_text, gender, region, occupation, work_summary, religion, personality_summary, status, highlight_tags, paired_candidate_id, created_at, image_url",
+      "id, full_name, birth_year, height_text, gender, region, occupation, work_summary, religion, personality_summary, status, highlight_tags, paired_candidate_id, created_at, image_url, created_by",
     )
+    .neq("status", "archived")
     .order("created_at", { ascending: false });
 
   if (error || !data) {
-    return mockCandidates;
+    return mockCandidates.filter((candidate) => candidate.status !== "archived");
   }
 
   const mapped = data.map((row) => mapDashboardCandidate(row));
-  return mergeCandidates(mapped, mockCandidates);
+  return mergeCandidates(
+    mapped,
+    mockCandidates.filter((candidate) => candidate.status !== "archived"),
+  );
 }
 
 export async function getDashboardCandidates(): Promise<Candidate[]> {
@@ -341,6 +347,42 @@ export async function getDashboardCandidates(): Promise<Candidate[]> {
     tags: [TAG_DASHBOARD_CANDIDATES],
     revalidate: 90,
   })();
+}
+
+export async function getManagedCandidates(
+  membership: Membership,
+  scope: "mine" | "all" = "mine",
+): Promise<Candidate[]> {
+  const supabase = await createClient();
+  const isSuperAll = membership.role === "super_admin" && scope === "all";
+
+  if (!supabase) {
+    return isSuperAll
+      ? mockCandidates
+      : mockCandidates.filter((candidate) => candidate.created_by === membership.user_id);
+  }
+
+  let query = supabase
+    .from("cupid_candidates")
+    .select(
+      "id, full_name, birth_year, height_text, gender, region, occupation, work_summary, religion, personality_summary, status, highlight_tags, paired_candidate_id, created_at, image_url, created_by",
+    )
+    .order("created_at", { ascending: false });
+
+  if (!isSuperAll) {
+    query = query.eq("created_by", membership.user_id);
+  }
+
+  const { data, error } = await query;
+
+  if (error || !data) {
+    return isSuperAll
+      ? mockCandidates
+      : mockCandidates.filter((candidate) => candidate.created_by === membership.user_id);
+  }
+
+  const candidates = data.map((row) => mapDashboardCandidate(row));
+  return attachBatchSignedImageUrlsToCandidates(supabase, candidates);
 }
 
 async function loadCandidateByIdUncached(id: string) {

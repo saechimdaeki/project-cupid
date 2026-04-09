@@ -34,3 +34,15 @@ export function canEditCandidates(role: AppRole) {
 export function canManageRoles(role: AppRole) {
   return role === "super_admin";
 }
+
+export function canManageCandidateVisibility(
+  role: AppRole,
+  currentUserId: string,
+  candidateCreatedBy?: string | null,
+) {
+  if (role === "super_admin") {
+    return true;
+  }
+
+  return role === "admin" && Boolean(candidateCreatedBy) && candidateCreatedBy === currentUserId;
+}
