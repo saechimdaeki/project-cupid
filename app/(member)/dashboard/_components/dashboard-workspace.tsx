@@ -7,6 +7,7 @@ import { DashboardContent } from "./dashboard-content";
 import { DashboardStatBar } from "./dashboard-stat-bar";
 import { DashboardToolbar } from "./dashboard-toolbar";
 import { DashboardViewToggle } from "./dashboard-view-toggle";
+import { canEditCandidates } from "@/lib/role-utils";
 import { DashboardViewMode } from "@/lib/types";
 import type { AppRole, Candidate, TimelineEvent } from "@/lib/types";
 
@@ -136,7 +137,12 @@ export function DashboardWorkspace({
         </div>
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex items-center justify-between gap-3">
+        {!canEditCandidates(role) ? (
+          <div className="rounded-full border border-white/60 bg-white/70 px-4 py-2 text-sm text-slate-600 shadow-sm backdrop-blur-md">
+            현재 권한은 보기 전용입니다. 상세 이동과 상태 변경은 어드민 이상 권한에서 가능합니다.
+          </div>
+        ) : <div />}
         <DashboardViewToggle view={view} onViewChange={handleViewChange} />
       </div>
 

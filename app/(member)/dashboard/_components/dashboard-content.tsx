@@ -5,7 +5,6 @@ import {
   type DashboardBoardCandidate,
 } from "./dashboard-flow-board";
 import { DashboardInventoryView } from "./dashboard-inventory-view";
-import { canEditCandidates } from "@/lib/role-utils";
 import { DashboardViewMode } from "@/lib/types";
 import type { AppRole, Candidate, TimelineEvent } from "@/lib/types";
 
@@ -46,11 +45,6 @@ export function DashboardContent({
         />
       ) : null}
 
-      {!canEditCandidates(role) ? (
-        <div className="rounded-[24px] border border-white/60 bg-white/70 px-5 py-4 text-sm text-slate-600 shadow-[0_8px_30px_rgb(244,114,182,0.08)] backdrop-blur-md">
-          현재 권한은 보기 전용입니다. 상세 이동과 상태 변경은 어드민 이상 권한에서 가능합니다.
-        </div>
-      ) : null}
     </>
   );
 }
