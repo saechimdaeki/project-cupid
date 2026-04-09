@@ -25,10 +25,7 @@ function sortByCreatedAtDesc(list: DashboardBoardCandidate[]): DashboardBoardCan
   );
 }
 
-function buildActiveLaneRows(
-  males: DashboardBoardCandidate[],
-  females: DashboardBoardCandidate[],
-) {
+function buildActiveLaneRows(males: DashboardBoardCandidate[], females: DashboardBoardCandidate[]) {
   const rowCount = Math.max(males.length, females.length);
 
   return Array.from({ length: rowCount }, (_, index) => ({

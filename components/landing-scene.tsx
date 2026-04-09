@@ -41,7 +41,9 @@ export function LandingScene({ leftCandidate, rightCandidate }: LandingSceneProp
               {String(leftCandidate.birth_year).slice(2)}년생 {leftCandidate.region}{" "}
               {leftCandidate.occupation}
             </strong>
-            <span>{leftCandidate.full_name} · {leftCandidate.work_summary}</span>
+            <span>
+              {leftCandidate.full_name} · {leftCandidate.work_summary}
+            </span>
           </div>
         </div>
       </div>
@@ -72,7 +74,9 @@ export function LandingScene({ leftCandidate, rightCandidate }: LandingSceneProp
               {String(rightCandidate.birth_year).slice(2)}년생 {rightCandidate.region}{" "}
               {rightCandidate.occupation}
             </strong>
-            <span>{rightCandidate.full_name} · {rightCandidate.work_summary}</span>
+            <span>
+              {rightCandidate.full_name} · {rightCandidate.work_summary}
+            </span>
           </div>
         </div>
       </div>
@@ -81,7 +85,10 @@ export function LandingScene({ leftCandidate, rightCandidate }: LandingSceneProp
         <div className="loveSignature">
           <p className="eyebrow">Connection Mood</p>
           <strong>좋은 소개는 조건보다 분위기와 흐름을 섬세하게 읽는 데서 시작됩니다</strong>
-          <span>첫 화면에서는 차갑게 분류하는 느낌보다, 따뜻하고 신뢰감 있는 연결의 공기를 먼저 보여줍니다.</span>
+          <span>
+            첫 화면에서는 차갑게 분류하는 느낌보다, 따뜻하고 신뢰감 있는 연결의 공기를 먼저
+            보여줍니다.
+          </span>
         </div>
       </div>
     </div>

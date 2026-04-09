@@ -76,8 +76,7 @@ export function NavProfileMenu({ fullName, username, role }: NavProfileMenuProps
             onClick={() => router.push("/candidates/manage")}
             className="cursor-pointer gap-2 px-3 py-2 text-muted-foreground"
           >
-            <FolderKanban className="size-4" />
-            내 매물 관리
+            <FolderKanban className="size-4" />내 매물 관리
           </DropdownMenuItem>
         ) : null}
         <DropdownMenuItem

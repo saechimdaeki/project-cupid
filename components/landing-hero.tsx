@@ -11,12 +11,10 @@ export function LandingHero({ isLoggedIn }: LandingHeroProps) {
       <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
         Private Love Studio
       </p>
-      <h1 className="text-foreground">
-        좋은 인연을 잇습니다
-      </h1>
+      <h1 className="text-foreground">좋은 인연을 잇습니다</h1>
       <p className="max-w-[52ch] text-[15px] leading-7 text-muted-foreground">
-        승인된 사람만 들어와 사진, 이력, 만남의 흐름을 함께 보며
-        사랑의 시작을 설계하는 프라이빗 공간입니다.
+        승인된 사람만 들어와 사진, 이력, 만남의 흐름을 함께 보며 사랑의 시작을 설계하는 프라이빗
+        공간입니다.
       </p>
 
       <div className="mt-2 flex flex-wrap items-center justify-center gap-3">

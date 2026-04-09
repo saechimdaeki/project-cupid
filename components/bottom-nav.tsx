@@ -20,20 +20,21 @@ type NavItemProps = {
 
 function NavItem({ href, label, isActive, icon }: NavItemProps) {
   return (
-    <Link
-      href={href}
-      className="flex flex-col items-center gap-1"
-    >
-      <span className={cn(
-        "flex size-7 items-center justify-center transition-colors duration-200",
-        isActive ? "text-rose-500" : "text-slate-400",
-      )}>
+    <Link href={href} className="flex flex-col items-center gap-1">
+      <span
+        className={cn(
+          "flex size-7 items-center justify-center transition-colors duration-200",
+          isActive ? "text-rose-500" : "text-slate-400",
+        )}
+      >
         {icon}
       </span>
-      <span className={cn(
-        "text-[11px] font-semibold tracking-[0.02em]",
-        isActive ? "text-rose-600" : "text-slate-400",
-      )}>
+      <span
+        className={cn(
+          "text-[11px] font-semibold tracking-[0.02em]",
+          isActive ? "text-rose-600" : "text-slate-400",
+        )}
+      >
         {label}
       </span>
     </Link>

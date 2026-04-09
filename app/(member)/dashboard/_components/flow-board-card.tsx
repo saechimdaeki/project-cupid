@@ -57,12 +57,13 @@ export function FlowBoardCardBody({
     ? candidateDirectory.get(candidate.paired_candidate_id)
     : null;
 
-  const birthYearText = candidate.birth_year ? `${String(candidate.birth_year).slice(-2)}년생` : null;
+  const birthYearText = candidate.birth_year
+    ? `${String(candidate.birth_year).slice(-2)}년생`
+    : null;
 
-  const specLine = [
-    candidate.height_text ?? null,
-    candidate.religion || null,
-  ].filter(Boolean).join(" · ");
+  const specLine = [candidate.height_text ?? null, candidate.religion || null]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
     <article
@@ -71,7 +72,8 @@ export function FlowBoardCardBody({
         fillRowHeight ? "h-full" : "",
         getStatusTopBorderClass(candidate.status),
         !isOverlay && pendingCandidateIds.has(candidate.id) && "pointer-events-none opacity-60",
-        !isOverlay && !pendingCandidateIds.has(candidate.id) &&
+        !isOverlay &&
+          !pendingCandidateIds.has(candidate.id) &&
           "hover:shadow-[0_14px_44px_rgb(244,114,182,0.12)]",
         isOverlay && "rotate-1 shadow-[0_24px_60px_rgb(244,114,182,0.22)]",
       )}
@@ -89,16 +91,12 @@ export function FlowBoardCardBody({
               {candidate.full_name.trim()}
             </p>
           ) : null}
-          {birthYearText ? (
-            <p className="mt-0.5 text-xs text-slate-400">{birthYearText}</p>
-          ) : null}
+          {birthYearText ? <p className="mt-0.5 text-xs text-slate-400">{birthYearText}</p> : null}
           {candidate.region ? (
             <p className="mt-0.5 text-xs text-slate-400">{candidate.region}</p>
           ) : null}
           {candidate.occupation ? (
-            <p className="mt-0.5 text-xs font-medium text-slate-600">
-              {candidate.occupation}
-            </p>
+            <p className="mt-0.5 text-xs font-medium text-slate-600">{candidate.occupation}</p>
           ) : null}
         </div>
       </div>
@@ -111,10 +109,7 @@ export function FlowBoardCardBody({
       ) : null}
 
       {/* 키 · 종교 */}
-      {specLine ? (
-        <p className="mt-1.5 text-xs text-slate-400">{specLine}</p>
-      ) : null}
-
+      {specLine ? <p className="mt-1.5 text-xs text-slate-400">{specLine}</p> : null}
 
       {/* 태그 */}
       {candidate.highlight_tags.length > 0 ? (
@@ -133,9 +128,7 @@ export function FlowBoardCardBody({
       {/* Manager Note */}
       {candidate.notes_private ? (
         <div className="mt-2.5 rounded-xl border border-rose-100/50 bg-rose-50/50 px-2.5 py-2">
-          <p className="line-clamp-2 text-xs leading-5 text-slate-500">
-            {candidate.notes_private}
-          </p>
+          <p className="line-clamp-2 text-xs leading-5 text-slate-500">{candidate.notes_private}</p>
         </div>
       ) : null}
 
@@ -147,7 +140,6 @@ export function FlowBoardCardBody({
           </p>
         </div>
       ) : null}
-
     </article>
   );
 }
@@ -188,7 +180,9 @@ export function FlowBoardCard({
     >
       {body}
     </Link>
-  ) : body;
+  ) : (
+    body
+  );
 
   return (
     <DraggableWrapper

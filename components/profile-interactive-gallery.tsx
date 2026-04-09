@@ -28,7 +28,9 @@ export function ProfileInteractiveGallery({ images, sizes }: ProfileInteractiveG
     setMounted(true);
   }, []);
 
-  const safeIndex = displayImages.length ? Math.min(currentImageIndex, displayImages.length - 1) : 0;
+  const safeIndex = displayImages.length
+    ? Math.min(currentImageIndex, displayImages.length - 1)
+    : 0;
   const currentSrc = displayImages.length ? displayImages[safeIndex] : null;
 
   useEffect(() => {

@@ -22,8 +22,7 @@ export function CandidateAvatarThumb({
 }: CandidateAvatarThumbProps) {
   const url = imageUrl?.trim();
   const isRenderable =
-    url &&
-    (url.startsWith("/") || url.startsWith("http://") || url.startsWith("https://"));
+    url && (url.startsWith("/") || url.startsWith("http://") || url.startsWith("https://"));
 
   if (isRenderable) {
     /* next/image 미사용: 대시보드에 썸네일이 수십 장일 때 Vercel Image Optimization이

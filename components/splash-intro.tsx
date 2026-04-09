@@ -38,10 +38,7 @@ export function SplashIntro() {
   }
 
   return (
-    <div
-      className={`splashOverlay ${leaving ? "leave" : ""}`}
-      aria-hidden="true"
-    >
+    <div className={`splashOverlay ${leaving ? "leave" : ""}`} aria-hidden="true">
       <Button
         variant="ghost"
         type="button"
@@ -83,9 +80,7 @@ export function SplashIntro() {
             Project Cupid
           </p>
           <h1>좋은 인연을 잇습니다</h1>
-          <p>
-            첫 소개부터 커플 성사까지, 흐름을 차분하게 정리하는 프라이빗 매칭 워크스페이스
-          </p>
+          <p>첫 소개부터 커플 성사까지, 흐름을 차분하게 정리하는 프라이빗 매칭 워크스페이스</p>
         </div>
       </div>
     </div>

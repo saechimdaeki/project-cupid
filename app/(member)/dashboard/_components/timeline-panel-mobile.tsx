@@ -12,10 +12,7 @@ type TimelinePanelMobileProps = {
   onSelectEvent: (event: TimelineEvent) => void;
 };
 
-export function TimelinePanelMobile({
-  events,
-  onSelectEvent,
-}: TimelinePanelMobileProps) {
+export function TimelinePanelMobile({ events, onSelectEvent }: TimelinePanelMobileProps) {
   const [sheetOpen, setSheetOpen] = useState(false);
 
   return (

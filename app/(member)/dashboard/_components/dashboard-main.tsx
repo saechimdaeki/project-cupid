@@ -1,9 +1,5 @@
 import { ManagerDashboard } from "./manager-dashboard";
-import {
-  buildTimelineEvents,
-  getDashboardCandidates,
-  getDashboardTimelineData,
-} from "@/lib/data";
+import { buildTimelineEvents, getDashboardCandidates, getDashboardTimelineData } from "@/lib/data";
 import { DashboardViewMode } from "@/lib/types";
 import type { Membership } from "@/lib/types";
 

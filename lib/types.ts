@@ -1,17 +1,7 @@
 export type MembershipStatus = "pending" | "approved" | "rejected";
 export type AppRole = "super_admin" | "admin" | "viewer";
-export type CandidateStatus =
-  | "active"
-  | "matched"
-  | "couple"
-  | "graduated"
-  | "archived";
-export type MatchOutcome =
-  | "intro_sent"
-  | "first_meeting"
-  | "dating"
-  | "couple"
-  | "closed";
+export type CandidateStatus = "active" | "matched" | "couple" | "graduated" | "archived";
+export type MatchOutcome = "intro_sent" | "first_meeting" | "dating" | "couple" | "closed";
 export enum DashboardViewMode {
   FLOW = "flow",
   INVENTORY = "inventory",

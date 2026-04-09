@@ -45,7 +45,9 @@ export function SignupInfo() {
                 </span>
                 <div>
                   <p className="text-sm font-semibold text-foreground">{item.title}</p>
-                  <p className="mt-0.5 text-[13px] leading-5 text-muted-foreground">{item.description}</p>
+                  <p className="mt-0.5 text-[13px] leading-5 text-muted-foreground">
+                    {item.description}
+                  </p>
                 </div>
               </div>
             ))}
@@ -62,7 +64,9 @@ export function SignupInfo() {
             {ROLES.map((item) => (
               <div key={item.role} className="flex items-center justify-between gap-4">
                 <span className="text-sm font-semibold text-foreground">{item.role}</span>
-                <span className="text-[13px] leading-5 text-muted-foreground">{item.description}</span>
+                <span className="text-[13px] leading-5 text-muted-foreground">
+                  {item.description}
+                </span>
               </div>
             ))}
           </div>

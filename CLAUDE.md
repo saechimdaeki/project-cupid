@@ -4,13 +4,13 @@
 
 ## 기술 스택
 
-| 항목 | 내용 |
-|------|------|
-| 프레임워크 | Next.js 15 (App Router) |
-| 언어 | TypeScript |
-| DB / Auth | Supabase (`@supabase/ssr`) |
-| 스타일 | Tailwind CSS v4 (`@import "tailwindcss"`) |
-| 배포 | Vercel (예정) |
+| 항목       | 내용                                      |
+| ---------- | ----------------------------------------- |
+| 프레임워크 | Next.js 15 (App Router)                   |
+| 언어       | TypeScript                                |
+| DB / Auth  | Supabase (`@supabase/ssr`)                |
+| 스타일     | Tailwind CSS v4 (`@import "tailwindcss"`) |
+| 배포       | Vercel (예정)                             |
 
 외부 상태 관리 라이브러리 없음. TanStack Query, Zustand, Redux 없음.
 
@@ -52,11 +52,11 @@ supabase/      # 스키마, 마이그레이션
 
 타입 파일이 세 곳이다:
 
-| 파일 | 용도 | 상태 |
-|------|------|------|
-| `types/domain.ts` | 앱 도메인 타입 (camelCase 필드) | **정본** |
-| `types/supabase.ts` | Supabase CLI 생성 DB row 타입 | 자동 생성 |
-| `lib/types.ts` | 구 타입 (snake_case 필드) | **레거시 → 점진적 이관** |
+| 파일                | 용도                            | 상태                     |
+| ------------------- | ------------------------------- | ------------------------ |
+| `types/domain.ts`   | 앱 도메인 타입 (camelCase 필드) | **정본**                 |
+| `types/supabase.ts` | Supabase CLI 생성 DB row 타입   | 자동 생성                |
+| `lib/types.ts`      | 구 타입 (snake_case 필드)       | **레거시 → 점진적 이관** |
 
 새 코드는 `types/domain.ts`를 사용한다. `lib/types.ts`는 레거시이며 `types/domain.ts`로 이관 예정.
 
@@ -79,6 +79,7 @@ npm run lint       # ESLint
 ## Rules 위치
 
 `.claude/rules/` 에 상세 규칙 있음:
+
 - `api-patterns.md` — Supabase 쿼리 & Server Actions
 - `common-conventions.md` — TypeScript, 네이밍
 - `feature-architecture.md` — 디렉토리 구조, 의존성 방향

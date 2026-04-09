@@ -51,7 +51,12 @@ export function PairMatchDialog({
     : null;
 
   return (
-    <ResponsiveModal open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
+    <ResponsiveModal
+      open={open}
+      onOpenChange={(isOpen) => {
+        if (!isOpen) onClose();
+      }}
+    >
       <ResponsiveModalContent className="sm:max-w-sm">
         <ResponsiveModalHeader>
           <ResponsiveModalTitle>{candidateName}와 연결할 후보 선택</ResponsiveModalTitle>
@@ -66,9 +71,7 @@ export function PairMatchDialog({
               <Label htmlFor="counterpart-select">상대 후보</Label>
               <Select value={counterpartId} onValueChange={onCounterpartChange}>
                 <SelectTrigger id="counterpart-select" className="w-full">
-                  <SelectValue placeholder="후보를 선택하세요">
-                    {selectedLabel}
-                  </SelectValue>
+                  <SelectValue placeholder="후보를 선택하세요">{selectedLabel}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {pairOptions.map((candidate) => (
@@ -90,7 +93,9 @@ export function PairMatchDialog({
         </div>
 
         <ResponsiveModalFooter>
-          <Button variant="outline" onClick={onClose}>취소</Button>
+          <Button variant="outline" onClick={onClose}>
+            취소
+          </Button>
           <Button disabled={isPending || !counterpartId} onClick={onConfirm}>
             {isMatched ? "매칭진행중으로 이동" : "커플완성으로 확정"}
           </Button>

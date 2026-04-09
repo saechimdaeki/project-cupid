@@ -16,8 +16,7 @@ function HomeAccountShellSkeleton() {
 }
 
 const HomeAccountShell = dynamic(
-  () =>
-    import("@/components/home-account-shell").then((module) => module.HomeAccountShell),
+  () => import("@/components/home-account-shell").then((module) => module.HomeAccountShell),
   {
     ssr: false,
     loading: () => <HomeAccountShellSkeleton />,

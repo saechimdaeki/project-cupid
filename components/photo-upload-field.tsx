@@ -87,9 +87,7 @@ async function loadImage(file: File) {
 
 async function optimizeImageFile(file: File) {
   const canOptimize =
-    file.type === "image/jpeg" ||
-    file.type === "image/png" ||
-    file.type === "image/webp";
+    file.type === "image/jpeg" || file.type === "image/png" || file.type === "image/webp";
 
   if (!canOptimize || file.size <= MIN_COMPRESSION_TARGET_BYTES) {
     return {
@@ -163,9 +161,7 @@ export function PhotoUploadField({
   const supabase = useMemo(() => createClient(), []);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [previews, setPreviews] = useState<UploadedPreviewItem[]>([]);
-  const [message, setMessage] = useState(
-    "여러 장을 첨부하면 첫 사진이 대표 사진이 됩니다.",
-  );
+  const [message, setMessage] = useState("여러 장을 첨부하면 첫 사진이 대표 사진이 됩니다.");
   const [isUploading, setIsUploading] = useState(false);
   const [nativeMode, setNativeMode] = useState(false);
 
@@ -236,7 +232,8 @@ export function PhotoUploadField({
           }))
         : await Promise.all(selectedFiles.map(optimizeImageFile));
 
-      const totalBytes = previews.reduce((sum, item) => sum + item.size, 0) +
+      const totalBytes =
+        previews.reduce((sum, item) => sum + item.size, 0) +
         processedFiles.reduce((sum, item) => sum + item.file.size, 0);
 
       if (totalBytes > MAX_TOTAL_UPLOAD_BYTES) {
@@ -267,9 +264,7 @@ export function PhotoUploadField({
             size: item.file.size,
             sizeText: formatBytes(item.file.size),
             helperText:
-              previews.length + index === 0
-                ? `${item.helperText} · 대표 사진`
-                : item.helperText,
+              previews.length + index === 0 ? `${item.helperText} · 대표 사진` : item.helperText,
           });
         }
       } catch (error) {
@@ -313,7 +308,8 @@ export function PhotoUploadField({
           <Badge variant="secondary">[선택]</Badge>
         </span>
         <span className="text-sm leading-7 text-muted-foreground">
-          선택 사항입니다. 사진은 브라우저에서 바로 안전하게 업로드됩니다. 모바일에서는 원본 업로드를 우선 사용합니다.
+          선택 사항입니다. 사진은 브라우저에서 바로 안전하게 업로드됩니다. 모바일에서는 원본
+          업로드를 우선 사용합니다.
         </span>
         <span className="inline-flex min-h-11 w-full items-center justify-center rounded-full border border-border bg-card px-4 text-sm font-semibold text-secondary-foreground sm:w-fit">
           사진 선택하기

@@ -15,11 +15,7 @@ import {
   getProfileGalleryImageUrls,
   getMatchRecords,
 } from "@/lib/data";
-import {
-  canEditCandidates,
-  canManageCandidateVisibility,
-  canManageRoles,
-} from "@/lib/permissions";
+import { canEditCandidates, canManageCandidateVisibility, canManageRoles } from "@/lib/permissions";
 import { getStatusBadgeClass, getStatusLabel } from "@/lib/status-ui";
 import type { Candidate, Membership } from "@/lib/types";
 
@@ -31,10 +27,7 @@ export type ProfileDetailContentProps = {
 
 function isRenderableImageUrl(value: string | null | undefined) {
   return Boolean(
-    value &&
-      (value.startsWith("/") ||
-        value.startsWith("http://") ||
-        value.startsWith("https://")),
+    value && (value.startsWith("/") || value.startsWith("http://") || value.startsWith("https://")),
   );
 }
 
@@ -100,7 +93,7 @@ export async function ProfileDetailContent({ id, message, membership }: ProfileD
 
   const relatedById = new Map(relatedCandidates.map((c) => [c.id, c]));
   const counterpartCandidate = candidate.paired_candidate_id
-    ? relatedById.get(candidate.paired_candidate_id) ?? null
+    ? (relatedById.get(candidate.paired_candidate_id) ?? null)
     : null;
 
   const counterpartsById = Object.fromEntries(
@@ -138,7 +131,9 @@ export async function ProfileDetailContent({ id, message, membership }: ProfileD
                     <div className="relative overflow-hidden rounded-3xl border border-white/70 bg-gradient-to-b from-rose-50/80 to-white/40 p-2 shadow-[0_28px_70px_rgba(244,114,182,0.28)] backdrop-blur-sm sm:p-3">
                       <p className="mb-2 px-1 text-center text-xs font-semibold text-rose-600/90 sm:text-left">
                         {getCandidateGalleryLabel(candidate)}
-                        <span className="mt-0.5 block font-normal text-slate-500">프로필 갤러리</span>
+                        <span className="mt-0.5 block font-normal text-slate-500">
+                          프로필 갤러리
+                        </span>
                       </p>
                       <div className="relative w-full">
                         <ProfileInteractiveGallery
@@ -212,9 +207,10 @@ export async function ProfileDetailContent({ id, message, membership }: ProfileD
                           학력 / 이상형
                         </p>
                         <p className="mt-2 text-sm leading-6 text-slate-600">
-                          {[candidate.education || "학력 미입력", candidate.ideal_type || "이상형 미입력"].join(
-                            " · ",
-                          )}
+                          {[
+                            candidate.education || "학력 미입력",
+                            candidate.ideal_type || "이상형 미입력",
+                          ].join(" · ")}
                         </p>
                       </article>
                     </div>
@@ -353,7 +349,8 @@ export async function ProfileDetailContent({ id, message, membership }: ProfileD
                     과거 매칭 이력
                   </h2>
                   <p className="mt-2 text-sm leading-6 text-slate-500">
-                    커플로 이어지지 않고 종료된 만남만 모아, 다음 주선 시 참고할 수 있게 정리했습니다.
+                    커플로 이어지지 않고 종료된 만남만 모아, 다음 주선 시 참고할 수 있게
+                    정리했습니다.
                   </p>
                 </div>
 
@@ -373,7 +370,8 @@ export async function ProfileDetailContent({ id, message, membership }: ProfileD
                 소개 판단 메모
               </h3>
               <p className="mt-2 text-sm text-slate-500">
-                사진은 상단 프로필 갤러리에서 썸네일로 전환하고, 메인 사진을 누르면 전체 화면으로 감상할 수 있습니다.
+                사진은 상단 프로필 갤러리에서 썸네일로 전환하고, 메인 사진을 누르면 전체 화면으로
+                감상할 수 있습니다.
                 {galleryImageUrls.length > 0 ? ` (등록 ${galleryImageUrls.length}장)` : null}
               </p>
               <div className="mt-5 grid gap-3 sm:grid-cols-2">

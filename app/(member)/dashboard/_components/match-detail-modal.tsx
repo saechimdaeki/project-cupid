@@ -17,19 +17,27 @@ import {
 
 function matchOutcomeLabel(outcome: MatchOutcome) {
   switch (outcome) {
-    case "intro_sent":    return "소개 시작";
-    case "first_meeting": return "첫 만남";
-    case "dating":        return "후속 진행";
-    case "couple":        return "커플완성";
-    case "closed":        return "종료";
+    case "intro_sent":
+      return "소개 시작";
+    case "first_meeting":
+      return "첫 만남";
+    case "dating":
+      return "후속 진행";
+    case "couple":
+      return "커플완성";
+    case "closed":
+      return "종료";
   }
 }
 
 function outcomeBadgeClass(outcome: MatchOutcome) {
   switch (outcome) {
-    case "couple": return "border-orange-200/80 bg-orange-50 text-orange-700";
-    case "closed": return "border-border bg-muted text-muted-foreground";
-    default:       return "border-rose-200/80 bg-rose-50 text-rose-600";
+    case "couple":
+      return "border-orange-200/80 bg-orange-50 text-orange-700";
+    case "closed":
+      return "border-border bg-muted text-muted-foreground";
+    default:
+      return "border-rose-200/80 bg-rose-50 text-rose-600";
   }
 }
 
@@ -38,8 +46,8 @@ function orderPair(
   directory: Map<string, Candidate>,
 ): [Candidate | null, Candidate | null] {
   if (!ids.length) return [null, null];
-  const a = ids[0] ? directory.get(ids[0]) ?? null : null;
-  const b = ids.length > 1 && ids[1] ? directory.get(ids[1]) ?? null : null;
+  const a = ids[0] ? (directory.get(ids[0]) ?? null) : null;
+  const b = ids.length > 1 && ids[1] ? (directory.get(ids[1]) ?? null) : null;
   if (!a && !b) return [null, null];
   if (a && !b) return [a, null];
   if (!a && b) return [b, null];
@@ -60,20 +68,14 @@ function PersonChip({ person, resolvedImageUrl }: PersonChipProps) {
   const imageUrl = resolvedImageUrl !== undefined ? resolvedImageUrl : person?.image_url;
   const isValidUrl = Boolean(
     imageUrl &&
-      (imageUrl.startsWith("/") ||
-        imageUrl.startsWith("http://") ||
-        imageUrl.startsWith("https://")),
+    (imageUrl.startsWith("/") || imageUrl.startsWith("http://") || imageUrl.startsWith("https://")),
   );
 
-  const age = person?.birth_year
-    ? new Date().getFullYear() - person.birth_year + 1
-    : null;
+  const age = person?.birth_year ? new Date().getFullYear() - person.birth_year + 1 : null;
 
-  const meta = [
-    age ? `${age}세` : null,
-    person?.region,
-    person?.occupation,
-  ].filter(Boolean).join(" · ");
+  const meta = [age ? `${age}세` : null, person?.region, person?.occupation]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
     <div className="flex flex-1 flex-col items-center gap-3">
@@ -96,9 +98,7 @@ function PersonChip({ person, resolvedImageUrl }: PersonChipProps) {
           <p className="text-sm font-semibold text-foreground">
             {getCandidateGalleryLabel(person)}
           </p>
-          {meta ? (
-            <p className="mt-0.5 text-xs text-muted-foreground">{meta}</p>
-          ) : null}
+          {meta ? <p className="mt-0.5 text-xs text-muted-foreground">{meta}</p> : null}
           {person.mbti ? (
             <p className="mt-1">
               <Badge variant="secondary" className="rounded-full text-xs">
@@ -123,7 +123,9 @@ type MatchDetailModalProps = {
 };
 
 export function MatchDetailModal({ event, candidateById, onClose }: MatchDetailModalProps) {
-  const [resolvedImages, setResolvedImages] = useState<Record<string, string | null | undefined>>({});
+  const [resolvedImages, setResolvedImages] = useState<Record<string, string | null | undefined>>(
+    {},
+  );
   const pendingKeyRef = useRef<string>("");
 
   useEffect(() => {
@@ -149,7 +151,12 @@ export function MatchDetailModal({ event, candidateById, onClose }: MatchDetailM
   const [userA, userB] = orderPair(event.candidate_ids, candidateById);
 
   return (
-    <ResponsiveModal open={Boolean(event)} onOpenChange={(open) => { if (!open) onClose(); }}>
+    <ResponsiveModal
+      open={Boolean(event)}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
       <ResponsiveModalContent className="max-w-sm">
         <ResponsiveModalHeader className="pr-8">
           <ResponsiveModalTitle className="text-base">{event.title}</ResponsiveModalTitle>
@@ -169,7 +176,9 @@ export function MatchDetailModal({ event, candidateById, onClose }: MatchDetailM
             person={userA}
             resolvedImageUrl={userA ? resolvedImages[userA.id] : undefined}
           />
-          <div className="mt-8 shrink-0 text-rose-300 text-lg" aria-hidden>♥</div>
+          <div className="mt-8 shrink-0 text-rose-300 text-lg" aria-hidden>
+            ♥
+          </div>
           <PersonChip
             person={userB}
             resolvedImageUrl={userB ? resolvedImages[userB.id] : undefined}

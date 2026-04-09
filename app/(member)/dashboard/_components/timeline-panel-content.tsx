@@ -15,10 +15,7 @@ type TimelinePanelContentProps = {
   onSelectEvent: (event: TimelineEvent) => void;
 };
 
-export function TimelinePanelContent({
-  events,
-  onSelectEvent,
-}: TimelinePanelContentProps) {
+export function TimelinePanelContent({ events, onSelectEvent }: TimelinePanelContentProps) {
   const [historyListOpen, setHistoryListOpen] = useState(false);
 
   const preview = events.slice(0, RECENT_MATCH_LIMIT);

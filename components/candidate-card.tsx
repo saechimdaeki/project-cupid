@@ -43,17 +43,20 @@ export function CandidateCard({ candidate, role = "viewer" }: CandidateCardProps
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 {candidate.full_name.trim() ? (
-                  <p className="text-sm font-bold text-rose-500">
-                    {candidate.full_name.trim()}
-                  </p>
+                  <p className="text-sm font-bold text-rose-500">{candidate.full_name.trim()}</p>
                 ) : null}
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  {[birthYearText, candidate.region, candidate.occupation].filter(Boolean).join(" · ")}
+                  {[birthYearText, candidate.region, candidate.occupation]
+                    .filter(Boolean)
+                    .join(" · ")}
                 </p>
               </div>
               <Badge
                 variant="outline"
-                className={cn("shrink-0 rounded-full px-2 py-0.5 text-xs font-medium", getStatusBadgeClass(candidate.status))}
+                className={cn(
+                  "shrink-0 rounded-full px-2 py-0.5 text-xs font-medium",
+                  getStatusBadgeClass(candidate.status),
+                )}
               >
                 {getStatusLabel(candidate.status)}
               </Badge>

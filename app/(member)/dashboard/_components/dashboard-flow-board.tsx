@@ -2,13 +2,7 @@
 
 import { useEffect, useId, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import {
-  DndContext,
-  DragOverlay,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from "@dnd-kit/core";
+import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import type { DragEndEvent, DragOverEvent, DragStartEvent } from "@dnd-kit/core";
 import { moveCandidatePairStatus, moveCandidateStatus } from "@/lib/admin-actions";
 import { formatCandidateBrief } from "@/lib/candidate-display";
@@ -103,11 +97,7 @@ function getEligiblePairOptions(
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function DashboardFlowBoard({
-  candidates,
-  allCandidates,
-  role,
-}: DashboardFlowBoardProps) {
+export function DashboardFlowBoard({ candidates, allCandidates, role }: DashboardFlowBoardProps) {
   const router = useRouter();
   const [items, setItems] = useState(candidates);
   const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -233,7 +223,11 @@ export function DashboardFlowBoard({
       setNotice("상대 후보를 선택해야 합니다.");
       return;
     }
-    executePairMove(pairComposer.candidateId, pairComposer.counterpartId, pairComposer.targetStatus);
+    executePairMove(
+      pairComposer.candidateId,
+      pairComposer.counterpartId,
+      pairComposer.targetStatus,
+    );
   };
 
   // ── DnD handlers ───────────────────────────────────────────────────────────
@@ -298,7 +292,7 @@ export function DashboardFlowBoard({
 
   const draggingCandidate = draggingId ? candidateDirectory.get(draggingId) : null;
   const draggingPartner = draggingCandidate?.paired_candidate_id
-    ? candidateDirectory.get(draggingCandidate.paired_candidate_id) ?? null
+    ? (candidateDirectory.get(draggingCandidate.paired_candidate_id) ?? null)
     : null;
 
   const sharedLaneProps = {
@@ -332,11 +326,7 @@ export function DashboardFlowBoard({
           {...sharedLaneProps}
         />
 
-        <FlowBoardDesktopView
-          items={items}
-          dropTarget={dropTarget}
-          {...sharedLaneProps}
-        />
+        <FlowBoardDesktopView items={items} dropTarget={dropTarget} {...sharedLaneProps} />
 
         {/* 페어 매칭 다이얼로그 */}
         <PairMatchDialog
@@ -345,14 +335,16 @@ export function DashboardFlowBoard({
           targetStatus={pairComposer?.targetStatus ?? "matched"}
           candidateName={
             pairComposer
-              ? (candidateDirectory.get(pairComposer.candidateId)
-                  ? formatCandidateBrief(candidateDirectory.get(pairComposer.candidateId)!)
-                  : "")
+              ? candidateDirectory.get(pairComposer.candidateId)
+                ? formatCandidateBrief(candidateDirectory.get(pairComposer.candidateId)!)
+                : ""
               : ""
           }
           counterpartId={pairComposer?.counterpartId ?? ""}
           onCounterpartChange={(id) =>
-            setPairComposer((current) => (current ? { ...current, counterpartId: id ?? "" } : current))
+            setPairComposer((current) =>
+              current ? { ...current, counterpartId: id ?? "" } : current,
+            )
           }
           pairOptions={pairOptions}
           isPending={isPending}

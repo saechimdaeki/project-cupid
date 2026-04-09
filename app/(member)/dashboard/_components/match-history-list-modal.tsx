@@ -20,13 +20,25 @@ type MatchHistoryListModalProps = {
   onPick: (event: TimelineEvent) => void;
 };
 
-export function MatchHistoryListModal({ open, events, onClose, onPick }: MatchHistoryListModalProps) {
+export function MatchHistoryListModal({
+  open,
+  events,
+  onClose,
+  onPick,
+}: MatchHistoryListModalProps) {
   return (
-    <ResponsiveModal open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
+    <ResponsiveModal
+      open={open}
+      onOpenChange={(isOpen) => {
+        if (!isOpen) onClose();
+      }}
+    >
       <ResponsiveModalContent>
         <ResponsiveModalHeader>
           <ResponsiveModalTitle>전체 매칭 기록</ResponsiveModalTitle>
-          <ResponsiveModalDescription>항목을 눌러 두 사람의 디테일을 확인할 수 있어요.</ResponsiveModalDescription>
+          <ResponsiveModalDescription>
+            항목을 눌러 두 사람의 디테일을 확인할 수 있어요.
+          </ResponsiveModalDescription>
         </ResponsiveModalHeader>
 
         <div className="max-h-[60vh] overflow-y-auto px-4">
@@ -48,10 +60,16 @@ export function MatchHistoryListModal({ open, events, onClose, onPick }: MatchHi
                     />
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-start justify-between gap-2">
-                        <strong className="text-sm font-semibold text-foreground">{event.title}</strong>
-                        <span className="shrink-0 text-xs text-muted-foreground">{event.happened_on}</span>
+                        <strong className="text-sm font-semibold text-foreground">
+                          {event.title}
+                        </strong>
+                        <span className="shrink-0 text-xs text-muted-foreground">
+                          {event.happened_on}
+                        </span>
                       </div>
-                      <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{event.summary}</p>
+                      <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                        {event.summary}
+                      </p>
                     </div>
                   </div>
                 </button>
@@ -65,7 +83,9 @@ export function MatchHistoryListModal({ open, events, onClose, onPick }: MatchHi
         </div>
 
         <ResponsiveModalFooter>
-          <Button variant="outline" onClick={onClose}>닫기</Button>
+          <Button variant="outline" onClick={onClose}>
+            닫기
+          </Button>
         </ResponsiveModalFooter>
       </ResponsiveModalContent>
     </ResponsiveModal>

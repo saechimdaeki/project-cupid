@@ -26,7 +26,7 @@ type SakuraPetal = {
 function createSakuraPetals(count: number) {
   return Array.from({ length: count }, (_, index) => {
     const width = 12 + ((index * 5) % 14);
-    const left = `${((index * 7.3) + ((index * 11) % 19)) % 100}%`;
+    const left = `${(index * 7.3 + ((index * 11) % 19)) % 100}%`;
     const fallDuration = 15 + ((index * 3) % 16);
     const fallDelay = -((index * 1.4) % 24);
     const swayDuration = 4 + ((index * 5) % 5);

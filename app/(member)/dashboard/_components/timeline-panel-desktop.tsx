@@ -20,10 +20,7 @@ export function TimelinePanelDesktop({
         className,
       )}
     >
-      <TimelinePanelContent
-        events={events}
-        onSelectEvent={onSelectEvent}
-      />
+      <TimelinePanelContent events={events} onSelectEvent={onSelectEvent} />
     </aside>
   );
 }

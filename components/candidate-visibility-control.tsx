@@ -46,12 +46,8 @@ export function CandidateVisibilityControl({
     return (
       <div className="flex items-center justify-end gap-3">
         <div className="text-right">
-          <p className="text-xs font-semibold text-slate-700">
-            {isVisible ? "활성" : "비활성화"}
-          </p>
-          <p className="text-[11px] text-slate-400">
-            비활성화 시 대시보드에서 숨김
-          </p>
+          <p className="text-xs font-semibold text-slate-700">{isVisible ? "활성" : "비활성화"}</p>
+          <p className="text-[11px] text-slate-400">비활성화 시 대시보드에서 숨김</p>
         </div>
         <button
           type="button"
@@ -78,9 +74,7 @@ export function CandidateVisibilityControl({
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
             Listing Visibility
           </p>
-          <h3 className="mt-2 text-sm font-semibold text-slate-800">
-            대시보드 노출
-          </h3>
+          <h3 className="mt-2 text-sm font-semibold text-slate-800">대시보드 노출</h3>
           <p className="mt-1 text-sm leading-6 text-slate-500">
             비활성화하면 대시보드와 비교 리스트에서 숨겨집니다.
           </p>
@@ -118,9 +112,7 @@ export function CandidateVisibilityControl({
         )}
       </div>
 
-      {feedback ? (
-        <p className="mt-3 text-sm text-slate-500">{feedback}</p>
-      ) : null}
+      {feedback ? <p className="mt-3 text-sm text-slate-500">{feedback}</p> : null}
     </div>
   );
 }

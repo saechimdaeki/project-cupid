@@ -49,9 +49,7 @@ export function LandingFeatures() {
                 {feature.label}
               </p>
               <h3 className="mt-3 text-foreground">{feature.title}</h3>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                {feature.description}
-              </p>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">{feature.description}</p>
             </CardContent>
           </Card>
         ))}

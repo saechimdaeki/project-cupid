@@ -66,12 +66,17 @@ function PendingMemberCard({ member }: { member: Membership }) {
         </div>
 
         <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-500">
-          <span className="rounded-full bg-slate-100 px-3 py-1">{member.created_at.slice(0, 10)} 등록</span>
+          <span className="rounded-full bg-slate-100 px-3 py-1">
+            {member.created_at.slice(0, 10)} 등록
+          </span>
           <span className="rounded-full bg-slate-100 px-3 py-1">요청 권한 {member.role}</span>
         </div>
 
         <div className="mt-4 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
-          <form action={updateMembershipRole} className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+          <form
+            action={updateMembershipRole}
+            className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]"
+          >
             <input type="hidden" name="userId" value={member.user_id} />
             <input type="hidden" name="status" value="approved" />
             <select
@@ -83,7 +88,10 @@ function PendingMemberCard({ member }: { member: Membership }) {
               <option value="admin">admin</option>
               <option value="super_admin">super_admin</option>
             </select>
-            <Button type="submit" className="h-11 rounded-full bg-rose-500 px-4 font-semibold text-white">
+            <Button
+              type="submit"
+              className="h-11 rounded-full bg-rose-500 px-4 font-semibold text-white"
+            >
               승인
             </Button>
           </form>
@@ -99,13 +107,7 @@ function PendingMemberCard({ member }: { member: Membership }) {
   );
 }
 
-function DirectoryRow({
-  member,
-  currentUserId,
-}: {
-  member: Membership;
-  currentUserId: string;
-}) {
+function DirectoryRow({ member, currentUserId }: { member: Membership; currentUserId: string }) {
   const isCurrentUser = member.user_id === currentUserId;
 
   return (
@@ -182,7 +184,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                     회원 승인 및 권한 관리
                   </h1>
                   <p className="mt-3 text-sm text-slate-500">
-                    승인 대기 인원과 운영 권한을 한 화면에서 빠르게 정리할 수 있도록 단순한 데이터 뷰로 재구성했습니다.
+                    승인 대기 인원과 운영 권한을 한 화면에서 빠르게 정리할 수 있도록 단순한 데이터
+                    뷰로 재구성했습니다.
                   </p>
                 </div>
               </div>
@@ -231,7 +234,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
               <div className="mt-5 grid gap-4">
                 {pendingUsers.length ? (
-                  pendingUsers.map((member) => <PendingMemberCard key={member.user_id} member={member} />)
+                  pendingUsers.map((member) => (
+                    <PendingMemberCard key={member.user_id} member={member} />
+                  ))
                 ) : (
                   <div className="rounded-xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
                     현재 승인 대기 중인 계정이 없습니다.

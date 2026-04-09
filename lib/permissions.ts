@@ -24,29 +24,30 @@ export {
   roleLabel,
 };
 
-export const getCurrentMembership = cache(async function getCurrentMembership(): Promise<Membership | null> {
-  const supabase = await createClient();
+export const getCurrentMembership = cache(
+  async function getCurrentMembership(): Promise<Membership | null> {
+    const supabase = await createClient();
 
-  if (!supabase) {
-    return mockMemberships[0] ?? null;
-  }
+    if (!supabase) {
+      return mockMemberships[0] ?? null;
+    }
 
-  const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
-  const userId =
-    !claimsError && claimsData?.claims?.sub ? String(claimsData.claims.sub) : null;
+    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
+    const userId = !claimsError && claimsData?.claims?.sub ? String(claimsData.claims.sub) : null;
 
-  if (!userId) {
-    return null;
-  }
+    if (!userId) {
+      return null;
+    }
 
-  const { data } = await supabase
-    .from("cupid_memberships")
-    .select("user_id, username, full_name, role, status, approved_by, approved_at, created_at")
-    .eq("user_id", userId)
-    .maybeSingle();
+    const { data } = await supabase
+      .from("cupid_memberships")
+      .select("user_id, username, full_name, role, status, approved_by, approved_at, created_at")
+      .eq("user_id", userId)
+      .maybeSingle();
 
-  return (data as Membership | null) ?? null;
-});
+    return (data as Membership | null) ?? null;
+  },
+);
 
 export async function requireApprovedMembership() {
   const membership = await getCurrentMembership();

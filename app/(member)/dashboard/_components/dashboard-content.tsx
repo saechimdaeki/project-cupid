@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  DashboardFlowBoard,
-  type DashboardBoardCandidate,
-} from "./dashboard-flow-board";
+import { DashboardFlowBoard, type DashboardBoardCandidate } from "./dashboard-flow-board";
 import { DashboardInventoryView } from "./dashboard-inventory-view";
 import { canEditCandidates } from "@/lib/role-utils";
 import { DashboardViewMode } from "@/lib/types";
