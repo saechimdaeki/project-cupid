@@ -5,7 +5,7 @@ import { useDraggable } from "@dnd-kit/core";
 import { Heart, Link2 } from "lucide-react";
 import { CandidateAvatarThumb } from "@/components/candidate-avatar-thumb";
 import { cn } from "@/lib/cn";
-import { canAccessCandidateDetail } from "@/lib/role-utils";
+import { canAccessCandidateDetail, canManageRoles } from "@/lib/role-utils";
 import { Badge } from "@/components/ui/badge";
 import type { AppRole } from "@/lib/types";
 import type { DashboardBoardCandidate } from "./dashboard-flow-board";
@@ -195,7 +195,8 @@ export function FlowBoardPairCard({ row, role, canOperate, pendingCandidateIds }
   const isPending =
     (row.male ? pendingCandidateIds.has(row.male.id) : false) ||
     (row.female ? pendingCandidateIds.has(row.female.id) : false);
-  const draggableDisabled = !canOperate || isCoupled || isPending || !primaryCandidate;
+  const isCoupleLocked = isCoupled && !canManageRoles(role);
+  const draggableDisabled = !canOperate || isCoupleLocked || isPending || !primaryCandidate;
 
   return (
     <DraggableWrapper

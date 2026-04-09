@@ -12,7 +12,7 @@ import {
 import type { DragEndEvent, DragOverEvent, DragStartEvent } from "@dnd-kit/core";
 import { moveCandidatePairStatus, moveCandidateStatus } from "@/lib/admin-actions";
 import { formatCandidateBrief } from "@/lib/candidate-display";
-import { canEditCandidates } from "@/lib/role-utils";
+import { canEditCandidates, canManageRoles } from "@/lib/role-utils";
 import type { AppRole, Candidate, CandidateStatus } from "@/lib/types";
 import { PairMatchDialog } from "./pair-match-dialog";
 import { FlowBoardCardBody } from "./flow-board-card";
@@ -121,6 +121,7 @@ export function DashboardFlowBoard({
   );
   const dndContextId = useId();
   const canOperate = canEditCandidates(role);
+  const canReopenCouple = canManageRoles(role);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -264,7 +265,7 @@ export function DashboardFlowBoard({
 
     const candidate = candidateDirectory.get(candidateId);
     if (!candidate) return;
-    if (candidate.status === "couple") return;
+    if (candidate.status === "couple" && !canReopenCouple) return;
     if (candidate.status === targetStatus) return;
 
     if (targetStatus === "matched" || targetStatus === "couple") {
