@@ -33,10 +33,7 @@ export function DashboardTimelinePanel({
         onSelectEvent={handleSelectEvent}
         className={className}
       />
-      <TimelinePanelMobile
-        events={events}
-        onSelectEvent={handleSelectEvent}
-      />
+      <TimelinePanelMobile events={events} onSelectEvent={handleSelectEvent} />
 
       <MatchDetailModal
         event={selectedEvent}

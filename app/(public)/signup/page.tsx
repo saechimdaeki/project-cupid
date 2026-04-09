@@ -28,8 +28,8 @@ export default async function SignupPage() {
         <div className="w-full text-center">
           <h2 className="text-foreground">사랑이 피어나는 스튜디오</h2>
           <p className="mx-auto mt-3 max-w-[50ch] text-[15px] leading-7 text-muted-foreground">
-            믿을 수 있는 지인만 등록하고, 승인된 운영자가 비공개로 매칭을 설계하는 공간입니다.
-            더 따뜻하고 신중한 연결을 위해 만들어졌습니다.
+            믿을 수 있는 지인만 등록하고, 승인된 운영자가 비공개로 매칭을 설계하는 공간입니다. 더
+            따뜻하고 신중한 연결을 위해 만들어졌습니다.
           </p>
         </div>
 

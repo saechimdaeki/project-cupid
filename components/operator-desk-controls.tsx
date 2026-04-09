@@ -120,7 +120,9 @@ export function OperatorDeskControls({
   // 종료 확정: isPending으로 더블클릭 방지 (form ref에서 FormData 직접 생성)
   const handleCloseMatch = () => {
     if (isPending || !closureFormRef.current) return;
-    const closureReason = (closureFormRef.current.elements.namedItem("closureReason") as HTMLTextAreaElement)?.value?.trim();
+    const closureReason = (
+      closureFormRef.current.elements.namedItem("closureReason") as HTMLTextAreaElement
+    )?.value?.trim();
     if (!closureReason) return;
     const formData = new FormData();
     formData.set("candidateId", candidateId);

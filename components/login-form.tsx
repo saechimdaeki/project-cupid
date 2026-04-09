@@ -10,12 +10,7 @@ import { loginSchema, type LoginInput } from "@/lib/schemas/auth";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 
 export function LoginForm() {
   const [isPending, startTransition] = useTransition();
@@ -43,8 +38,7 @@ export function LoginForm() {
   }
 
   function handleInvalid(formErrors: FieldErrors<LoginInput>) {
-    const firstMessage =
-      formErrors.username?.message ?? formErrors.password?.message;
+    const firstMessage = formErrors.username?.message ?? formErrors.password?.message;
     if (firstMessage) toast.error(firstMessage);
   }
 

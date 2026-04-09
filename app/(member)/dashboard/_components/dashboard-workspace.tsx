@@ -38,7 +38,13 @@ export function DashboardWorkspace({
 
   const isInventoryView = view === DashboardViewMode.INVENTORY;
 
-  const updateUrl = (next: { view: DashboardViewMode; search: string; status: string; gender: string; religion: string }) => {
+  const updateUrl = (next: {
+    view: DashboardViewMode;
+    search: string;
+    status: string;
+    gender: string;
+    religion: string;
+  }) => {
     const params = new URLSearchParams();
     if (next.view !== DashboardViewMode.FLOW) params.set("view", next.view);
     if (next.search) params.set("search", next.search);
@@ -71,15 +77,18 @@ export function DashboardWorkspace({
   };
 
   const statusOptions = useMemo(
-    () => Array.from(new Set(candidates.map((candidate) => candidate.status).filter(Boolean))).sort(),
+    () =>
+      Array.from(new Set(candidates.map((candidate) => candidate.status).filter(Boolean))).sort(),
     [candidates],
   );
   const genderOptions = useMemo(
-    () => Array.from(new Set(candidates.map((candidate) => candidate.gender).filter(Boolean))).sort(),
+    () =>
+      Array.from(new Set(candidates.map((candidate) => candidate.gender).filter(Boolean))).sort(),
     [candidates],
   );
   const religionOptions = useMemo(
-    () => Array.from(new Set(candidates.map((candidate) => candidate.religion).filter(Boolean))).sort(),
+    () =>
+      Array.from(new Set(candidates.map((candidate) => candidate.religion).filter(Boolean))).sort(),
     [candidates],
   );
 
@@ -101,10 +110,16 @@ export function DashboardWorkspace({
         if (!query) return true;
       }
       const haystack = [
-        candidate.full_name, candidate.occupation, candidate.region,
-        candidate.work_summary, candidate.personality_summary, candidate.notes_private,
+        candidate.full_name,
+        candidate.occupation,
+        candidate.region,
+        candidate.work_summary,
+        candidate.personality_summary,
+        candidate.notes_private,
         ...candidate.highlight_tags,
-      ].join(" ").toLowerCase();
+      ]
+        .join(" ")
+        .toLowerCase();
       return haystack.includes(query);
     });
   }, [candidates, deferredSearch, isInventoryView, status, gender, religion]);

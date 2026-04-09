@@ -12,15 +12,7 @@ type GlobalNavProps = {
   active?: "dashboard" | "candidates" | "profile" | "admin";
 };
 
-function NavLink({
-  href,
-  label,
-  isActive,
-}: {
-  href: string;
-  label: string;
-  isActive: boolean;
-}) {
+function NavLink({ href, label, isActive }: { href: string; label: string; isActive: boolean }) {
   return (
     <Link
       href={href}
@@ -69,11 +61,7 @@ export function GlobalNav({ membership, active = "dashboard" }: GlobalNavProps) 
               label="대시보드"
               isActive={active === "dashboard" || active === "candidates"}
             />
-            <NavLink
-              href="/admin"
-              label="승인·권한 관리"
-              isActive={active === "admin"}
-            />
+            <NavLink href="/admin" label="승인·권한 관리" isActive={active === "admin"} />
           </nav>
         ) : null}
 

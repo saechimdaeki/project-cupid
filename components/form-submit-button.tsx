@@ -10,11 +10,7 @@ type FormSubmitButtonProps = {
   className?: string;
 };
 
-export function FormSubmitButton({
-  idleLabel,
-  pendingLabel,
-  className,
-}: FormSubmitButtonProps) {
+export function FormSubmitButton({ idleLabel, pendingLabel, className }: FormSubmitButtonProps) {
   const { pending } = useFormStatus();
 
   return (

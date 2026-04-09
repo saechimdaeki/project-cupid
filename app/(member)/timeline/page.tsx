@@ -57,7 +57,8 @@ export default async function TimelinePage() {
             전체 매칭 타임라인
           </h1>
           <p className="mt-3 max-w-[64ch] text-[15px] leading-7 text-[#6d5961] sm:text-base">
-            같은 이벤트가 양쪽 후보에 각각 저장되더라도, 전체 보기에서는 한 번만 읽히도록 정리했습니다.
+            같은 이벤트가 양쪽 후보에 각각 저장되더라도, 전체 보기에서는 한 번만 읽히도록
+            정리했습니다.
           </p>
 
           <div className="mt-6 grid gap-4">
@@ -74,7 +75,9 @@ export default async function TimelinePage() {
                       </h3>
                       <p className="mt-3 text-sm leading-7 text-[#6d5961]">{event.summary}</p>
                     </div>
-                    <span className="text-sm font-semibold text-[#a16a4c]">{event.happened_on}</span>
+                    <span className="text-sm font-semibold text-[#a16a4c]">
+                      {event.happened_on}
+                    </span>
                   </div>
                 </article>
               ))

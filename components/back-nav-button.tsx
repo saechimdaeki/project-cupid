@@ -7,9 +7,7 @@ type BackNavButtonProps = {
   fallbackHref?: string;
 };
 
-export function BackNavButton({
-  fallbackHref = "/dashboard",
-}: BackNavButtonProps) {
+export function BackNavButton({ fallbackHref = "/dashboard" }: BackNavButtonProps) {
   const router = useRouter();
 
   return (

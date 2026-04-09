@@ -10,19 +10,19 @@ type DashboardStatBarProps = {
 };
 
 const STATS_CONFIG = [
-  { key: "active",  label: "적극검토" },
+  { key: "active", label: "적극검토" },
   { key: "matched", label: "매칭중" },
-  { key: "couple",  label: "커플" },
-  { key: "record",  label: "매칭기록" },
+  { key: "couple", label: "커플" },
+  { key: "record", label: "매칭기록" },
 ] as const;
 
 export function DashboardStatBar({ candidates, timelineEvents }: DashboardStatBarProps) {
   const values = useMemo(
     () => ({
-      active:  candidates.filter((candidate) => candidate.status === "active").length,
+      active: candidates.filter((candidate) => candidate.status === "active").length,
       matched: candidates.filter((candidate) => candidate.status === "matched").length,
-      couple:  candidates.filter((candidate) => candidate.status === "couple").length,
-      record:  timelineEvents.length,
+      couple: candidates.filter((candidate) => candidate.status === "couple").length,
+      record: timelineEvents.length,
     }),
     [candidates, timelineEvents.length],
   );

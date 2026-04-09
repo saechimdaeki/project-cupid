@@ -2,12 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import {
-  loginSchema,
-  signupSchema,
-  type LoginInput,
-  type SignupInput,
-} from "@/lib/schemas/auth";
+import { loginSchema, signupSchema, type LoginInput, type SignupInput } from "@/lib/schemas/auth";
 
 type ActionResult = { error: string; field?: string } | { success: true };
 

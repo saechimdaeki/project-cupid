@@ -28,7 +28,9 @@ export async function createSignedUrlMapForStoragePaths(
 
   for (let i = 0; i < unique.length; i += BATCH_CHUNK_SIZE) {
     const chunk = unique.slice(i, i + BATCH_CHUNK_SIZE);
-    const { data, error } = await supabase.storage.from(bucketId).createSignedUrls(chunk, expiresIn);
+    const { data, error } = await supabase.storage
+      .from(bucketId)
+      .createSignedUrls(chunk, expiresIn);
 
     if (error || !data) {
       for (const path of chunk) {

@@ -20,9 +20,7 @@ export function AppShell({ membership, children }: AppShellProps) {
               <span>Private Matchmaking Desk</span>
             </div>
           </div>
-          <p className="muted">
-            신뢰 가능한 중매자만 접근하는 비공개 소개팅 운영 공간
-          </p>
+          <p className="muted">신뢰 가능한 중매자만 접근하는 비공개 소개팅 운영 공간</p>
         </div>
 
         <nav className="nav">

@@ -22,9 +22,7 @@ export function LandingHowItWorks() {
       <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
         How It Works
       </p>
-      <h2 className="text-center text-foreground">
-        행복한 연결을 다정하게 설계합니다
-      </h2>
+      <h2 className="text-center text-foreground">행복한 연결을 다정하게 설계합니다</h2>
 
       <div className="mt-4 grid w-full grid-cols-1 gap-6 sm:grid-cols-3">
         {STEPS.map((item) => (

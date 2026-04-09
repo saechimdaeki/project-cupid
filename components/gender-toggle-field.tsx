@@ -25,9 +25,7 @@ export function GenderToggleField({
           variant="secondary"
           className={cn(
             "rounded-full px-2 py-0.5 text-[11px] font-semibold",
-            required
-              ? "bg-secondary text-primary"
-              : "bg-muted text-muted-foreground",
+            required ? "bg-secondary text-primary" : "bg-muted text-muted-foreground",
           )}
         >
           {required ? "[필수]" : "[선택]"}

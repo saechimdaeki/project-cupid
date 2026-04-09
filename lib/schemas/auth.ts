@@ -4,10 +4,7 @@ const usernameField = z
   .string()
   .trim()
   .toLowerCase()
-  .regex(
-    /^[a-z0-9._-]{4,20}$/,
-    "아이디는 영문 소문자, 숫자, ., _, - 조합 4-20자로 입력해주세요.",
-  );
+  .regex(/^[a-z0-9._-]{4,20}$/, "아이디는 영문 소문자, 숫자, ., _, - 조합 4-20자로 입력해주세요.");
 
 export const loginSchema = z.object({
   username: usernameField,

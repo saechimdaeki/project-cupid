@@ -61,9 +61,7 @@ export function PendingInviteView({
               <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-primary">
                 Private invitation
               </p>
-              <h2 className="mt-3 text-foreground">
-                승인 대기 중입니다 💌
-              </h2>
+              <h2 className="mt-3 text-foreground">승인 대기 중입니다 💌</h2>
               <p className="mt-5 text-[15px] leading-7 text-muted-foreground">
                 가입이 완료되었습니다!
                 <br />
@@ -78,7 +76,8 @@ export function PendingInviteView({
                 >
                   {contactLabel}
                   <CopyIcon className="size-4 shrink-0 opacity-50" />
-                </button> 님에게 카톡이나 개인 연락으로 승인을 요청해 주세요.
+                </button>{" "}
+                님에게 카톡이나 개인 연락으로 승인을 요청해 주세요.
                 <br />
                 승인 완료 후 프라이빗 보드에 입장하실 수 있습니다.
               </p>
@@ -97,7 +96,10 @@ export function PendingInviteView({
               {[
                 { title: "회원가입 완료", body: "아이디와 이름으로 접근 요청이 등록되었습니다." },
                 { title: "운영진 승인", body: "담당자가 권한 범위를 확인한 뒤 승인을 진행합니다." },
-                { title: "프라이빗 보드 입장", body: "승인이 완료되면 매물 보드와 상세 이력을 이용하실 수 있어요." },
+                {
+                  title: "프라이빗 보드 입장",
+                  body: "승인이 완료되면 매물 보드와 상세 이력을 이용하실 수 있어요.",
+                },
               ].map((step, index) => (
                 <li
                   key={step.title}

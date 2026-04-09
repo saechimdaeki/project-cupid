@@ -29,8 +29,7 @@ export default async function PendingPage({ searchParams }: PendingPageProps) {
       ? "아직 계정 승인이 끝나지 않았습니다. 승인 완료 후 다시 자동으로 입장할 수 있습니다."
       : null;
 
-  const contactLabel =
-    process.env.NEXT_PUBLIC_CUPID_APPROVAL_CONTACT?.trim() || "saechimdaeki";
+  const contactLabel = process.env.NEXT_PUBLIC_CUPID_APPROVAL_CONTACT?.trim() || "saechimdaeki";
 
   return (
     <PendingInviteView

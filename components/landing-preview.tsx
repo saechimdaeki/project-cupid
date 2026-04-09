@@ -2,8 +2,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PersonPreview } from "@/components/person-preview";
 import { cn } from "@/lib/cn";
 
-const FEMALE = { imageUrl: "/99년생 여자 기획자.png", label: "96년생 · 서울 마포", subtitle: "브랜드 마케터 · 뷰티 스타트업" };
-const MALE   = { imageUrl: "/94년생 남자 개발자.png",  label: "92년생 · 판교",     subtitle: "백엔드 개발자 · 핀테크 스타트업" };
+const FEMALE = {
+  imageUrl: "/99년생 여자 기획자.png",
+  label: "96년생 · 서울 마포",
+  subtitle: "브랜드 마케터 · 뷰티 스타트업",
+};
+const MALE = {
+  imageUrl: "/94년생 남자 개발자.png",
+  label: "92년생 · 판교",
+  subtitle: "백엔드 개발자 · 핀테크 스타트업",
+};
 
 function ProfileCard({
   imageUrl,
@@ -48,12 +56,9 @@ export function LandingPreview() {
       <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
         Cupid Preview
       </p>
-      <h2 className="text-center text-foreground">
-        더 따뜻하고 더 설레는 무드 속에서
-      </h2>
+      <h2 className="text-center text-foreground">더 따뜻하고 더 설레는 무드 속에서</h2>
       <p className="max-w-[50ch] text-center text-[15px] leading-7 text-muted-foreground">
-        한 사람의 행복한 만남을 정성스럽게 준비합니다.
-        실제 프로필이 이렇게 보입니다.
+        한 사람의 행복한 만남을 정성스럽게 준비합니다. 실제 프로필이 이렇게 보입니다.
       </p>
 
       <div className="relative mt-4 flex w-full items-center justify-center">

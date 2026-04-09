@@ -1,10 +1,7 @@
 "use client";
 
 import { deleteMatchRecord } from "@/lib/admin-actions";
-import {
-  filterMatchRecordsForColumn,
-  type MatchFlowColumnKey,
-} from "@/lib/match-flow-columns";
+import { filterMatchRecordsForColumn, type MatchFlowColumnKey } from "@/lib/match-flow-columns";
 import type { MatchOutcome, MatchRecord } from "@/lib/types";
 import { useMatchRecords } from "@/components/match-records-provider";
 import { Badge } from "@/components/ui/badge";

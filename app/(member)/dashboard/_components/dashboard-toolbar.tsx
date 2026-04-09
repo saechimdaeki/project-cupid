@@ -41,7 +41,12 @@ function FilterSelect({
   return (
     <div className="relative">
       <Select value={value} onValueChange={(next) => onChange(next ?? "")}>
-        <SelectTrigger className={cn("h-8 min-w-0 rounded-lg border-rose-100/80 bg-white/90 px-2.5 text-xs", value && "pr-6")}>
+        <SelectTrigger
+          className={cn(
+            "h-8 min-w-0 rounded-lg border-rose-100/80 bg-white/90 px-2.5 text-xs",
+            value && "pr-6",
+          )}
+        >
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent side="bottom" align="start" alignItemWithTrigger={false}>
@@ -58,7 +63,10 @@ function FilterSelect({
       {value ? (
         <button
           type="button"
-          onClick={(e) => { e.stopPropagation(); onChange(""); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onChange("");
+          }}
           className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-slate-400 hover:text-slate-600"
         >
           <X className="size-3" />
@@ -98,10 +106,25 @@ export function DashboardToolbar({
       {/* 필터 */}
       <div className="flex items-center gap-2">
         {isInventoryView ? (
-          <FilterSelect value={status} options={statusOptions} placeholder="상태" onChange={onStatusChange} />
+          <FilterSelect
+            value={status}
+            options={statusOptions}
+            placeholder="상태"
+            onChange={onStatusChange}
+          />
         ) : null}
-        <FilterSelect value={gender} options={genderOptions} placeholder="성별" onChange={onGenderChange} />
-        <FilterSelect value={religion} options={religionOptions} placeholder="종교" onChange={onReligionChange} />
+        <FilterSelect
+          value={gender}
+          options={genderOptions}
+          placeholder="성별"
+          onChange={onGenderChange}
+        />
+        <FilterSelect
+          value={religion}
+          options={religionOptions}
+          placeholder="종교"
+          onChange={onReligionChange}
+        />
       </div>
     </div>
   );

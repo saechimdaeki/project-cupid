@@ -32,13 +32,26 @@ export function CupidLogo({ className, size = 28 }: CupidLogoProps) {
         strokeLinecap="round"
       />
       {/* 화살촉 */}
-      <polygon
-        points="90,16 76,14 84,28"
-        fill="currentColor"
-      />
+      <polygon points="90,16 76,14 84,28" fill="currentColor" />
       {/* 화살 깃 */}
-      <line x1="10" y1="76" x2="20" y2="82" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-      <line x1="10" y1="76" x2="4" y2="66" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+      <line
+        x1="10"
+        y1="76"
+        x2="20"
+        y2="82"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+      <line
+        x1="10"
+        y1="76"
+        x2="4"
+        y2="66"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }

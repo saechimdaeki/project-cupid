@@ -10,12 +10,7 @@ import { signupSchema, type SignupInput } from "@/lib/schemas/auth";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 
 export function SignupForm() {
   const [isPending, startTransition] = useTransition();
@@ -44,9 +39,7 @@ export function SignupForm() {
 
   function handleInvalid(formErrors: FieldErrors<SignupInput>) {
     const firstMessage =
-      formErrors.username?.message ??
-      formErrors.fullName?.message ??
-      formErrors.password?.message;
+      formErrors.username?.message ?? formErrors.fullName?.message ?? formErrors.password?.message;
     if (firstMessage) toast.error(firstMessage);
   }
 

@@ -55,25 +55,26 @@ function PairHalfContent({ candidate, genderPlaceholder, isCoupled }: PairHalfCo
     );
   }
 
-  const birthYearText = candidate.birth_year ? `${String(candidate.birth_year).slice(-2)}년생` : null;
-  const specLine = [
-    candidate.height_text ?? null,
-    candidate.religion || null,
-  ].filter(Boolean).join(" · ");
+  const birthYearText = candidate.birth_year
+    ? `${String(candidate.birth_year).slice(-2)}년생`
+    : null;
+  const specLine = [candidate.height_text ?? null, candidate.religion || null]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
     <div className="flex h-full min-h-0 flex-col p-3.5 transition-colors hover:bg-white/40">
       <div className="flex items-start gap-2.5">
-        <CandidateAvatarThumb imageUrl={candidate.image_url} gender={candidate.gender} className="h-14 w-14 shrink-0" />
+        <CandidateAvatarThumb
+          imageUrl={candidate.image_url}
+          gender={candidate.gender}
+          className="h-14 w-14 shrink-0"
+        />
         <div className="min-w-0 flex-1">
           {candidate.full_name.trim() ? (
-            <p className="text-base font-bold text-rose-500">
-              {candidate.full_name.trim()}
-            </p>
+            <p className="text-base font-bold text-rose-500">{candidate.full_name.trim()}</p>
           ) : null}
-          {birthYearText ? (
-            <p className="mt-0.5 text-xs text-slate-400">{birthYearText}</p>
-          ) : null}
+          {birthYearText ? <p className="mt-0.5 text-xs text-slate-400">{birthYearText}</p> : null}
           {candidate.region ? (
             <p className="mt-0.5 text-xs text-slate-400">{candidate.region}</p>
           ) : null}
@@ -89,9 +90,7 @@ function PairHalfContent({ candidate, genderPlaceholder, isCoupled }: PairHalfCo
         </p>
       ) : null}
 
-      {specLine ? (
-        <p className="mt-1.5 text-xs text-slate-400">{specLine}</p>
-      ) : null}
+      {specLine ? <p className="mt-1.5 text-xs text-slate-400">{specLine}</p> : null}
 
       {candidate.highlight_tags.length > 0 ? (
         <div className="mt-2.5 flex flex-wrap gap-1.5">
@@ -108,9 +107,7 @@ function PairHalfContent({ candidate, genderPlaceholder, isCoupled }: PairHalfCo
 
       {candidate.notes_private ? (
         <div className="mt-2.5 rounded-xl border border-rose-100/50 bg-rose-50/50 px-2.5 py-2">
-          <p className="line-clamp-2 text-xs leading-5 text-slate-500">
-            {candidate.notes_private}
-          </p>
+          <p className="line-clamp-2 text-xs leading-5 text-slate-500">{candidate.notes_private}</p>
         </div>
       ) : null}
     </div>
@@ -126,11 +123,26 @@ type FlowBoardPairHalfProps = {
   role: AppRole;
 };
 
-function FlowBoardPairHalf({ candidate, genderPlaceholder, isCoupled, role }: FlowBoardPairHalfProps) {
-  const content = <PairHalfContent candidate={candidate} genderPlaceholder={genderPlaceholder} isCoupled={isCoupled} />;
+function FlowBoardPairHalf({
+  candidate,
+  genderPlaceholder,
+  isCoupled,
+  role,
+}: FlowBoardPairHalfProps) {
+  const content = (
+    <PairHalfContent
+      candidate={candidate}
+      genderPlaceholder={genderPlaceholder}
+      isCoupled={isCoupled}
+    />
+  );
 
   if (candidate && canAccessCandidateDetail(role)) {
-    return <Link href={`/profiles/${candidate.id}`} className="block h-full">{content}</Link>;
+    return (
+      <Link href={`/profiles/${candidate.id}`} className="block h-full">
+        {content}
+      </Link>
+    );
   }
   return content;
 }
@@ -189,7 +201,12 @@ function PairCardShell({ isCoupled, left, right, className }: PairCardShellProps
 
 // ── FlowBoardPairCard — 드래그 가능한 페어 카드 ───────────────────────────────
 
-export function FlowBoardPairCard({ row, role, canOperate, pendingCandidateIds }: FlowBoardPairCardProps) {
+export function FlowBoardPairCard({
+  row,
+  role,
+  canOperate,
+  pendingCandidateIds,
+}: FlowBoardPairCardProps) {
   const isCoupled = (row.male ?? row.female)?.status === "couple";
   const primaryCandidate = row.male ?? row.female;
   const isPending =
@@ -206,8 +223,22 @@ export function FlowBoardPairCard({ row, role, canOperate, pendingCandidateIds }
     >
       <PairCardShell
         isCoupled={isCoupled}
-        left={<FlowBoardPairHalf candidate={row.male} genderPlaceholder="남" isCoupled={isCoupled} role={role} />}
-        right={<FlowBoardPairHalf candidate={row.female} genderPlaceholder="여" isCoupled={isCoupled} role={role} />}
+        left={
+          <FlowBoardPairHalf
+            candidate={row.male}
+            genderPlaceholder="남"
+            isCoupled={isCoupled}
+            role={role}
+          />
+        }
+        right={
+          <FlowBoardPairHalf
+            candidate={row.female}
+            genderPlaceholder="여"
+            isCoupled={isCoupled}
+            role={role}
+          />
+        }
       />
     </DraggableWrapper>
   );
@@ -227,12 +258,8 @@ export function FlowBoardPairCardOverlay({ male, female }: FlowBoardPairCardOver
     <PairCardShell
       isCoupled={isCoupled}
       className="rotate-1 shadow-[0_24px_60px_rgb(244,114,182,0.22)]"
-      left={
-        <PairHalfContent candidate={male} genderPlaceholder="남" isCoupled={isCoupled} />
-      }
-      right={
-        <PairHalfContent candidate={female} genderPlaceholder="여" isCoupled={isCoupled} />
-      }
+      left={<PairHalfContent candidate={male} genderPlaceholder="남" isCoupled={isCoupled} />}
+      right={<PairHalfContent candidate={female} genderPlaceholder="여" isCoupled={isCoupled} />}
     />
   );
 }

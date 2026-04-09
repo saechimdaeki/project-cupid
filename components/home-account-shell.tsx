@@ -104,11 +104,18 @@ export function HomeAccountShell() {
               @{membership.username} · {getRoleLabel(membership.role)}
             </span>
             <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-              <Button className="min-h-12 w-full rounded-full bg-gradient-to-r from-accent to-primary shadow-[0_10px_24px_rgba(198,132,99,0.18)] transition hover:-translate-y-0.5" render={<Link href="/dashboard" />}>
+              <Button
+                className="min-h-12 w-full rounded-full bg-gradient-to-r from-accent to-primary shadow-[0_10px_24px_rgba(198,132,99,0.18)] transition hover:-translate-y-0.5"
+                render={<Link href="/dashboard" />}
+              >
                 대시보드
               </Button>
               {membership.role === "super_admin" ? (
-                <Button variant="outline" className="min-h-12 w-full rounded-full transition hover:-translate-y-0.5" render={<Link href="/admin" />}>
+                <Button
+                  variant="outline"
+                  className="min-h-12 w-full rounded-full transition hover:-translate-y-0.5"
+                  render={<Link href="/admin" />}
+                >
                   승인 관리
                 </Button>
               ) : null}
@@ -131,10 +138,17 @@ export function HomeAccountShell() {
 
   return (
     <div className="flex w-full flex-col gap-2 sm:flex-row lg:w-auto">
-      <Button variant="outline" className="min-h-12 w-full rounded-full transition hover:-translate-y-0.5 lg:w-auto" render={<Link href="/login" />}>
+      <Button
+        variant="outline"
+        className="min-h-12 w-full rounded-full transition hover:-translate-y-0.5 lg:w-auto"
+        render={<Link href="/login" />}
+      >
         회원가입 / 로그인
       </Button>
-      <Button className="min-h-12 w-full rounded-full bg-gradient-to-r from-accent to-primary shadow-[0_10px_24px_rgba(198,132,99,0.18)] transition hover:-translate-y-0.5 lg:w-auto" render={<Link href="/dashboard" />}>
+      <Button
+        className="min-h-12 w-full rounded-full bg-gradient-to-r from-accent to-primary shadow-[0_10px_24px_rgba(198,132,99,0.18)] transition hover:-translate-y-0.5 lg:w-auto"
+        render={<Link href="/dashboard" />}
+      >
         보드 열기
       </Button>
     </div>

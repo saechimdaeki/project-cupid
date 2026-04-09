@@ -23,20 +23,8 @@ const ALLOWED_UPLOAD_TYPES = new Set([
   "image/heic",
   "image/heif",
 ]);
-const CANDIDATE_STATUS_VALUES = new Set([
-  "active",
-  "matched",
-  "couple",
-  "graduated",
-  "archived",
-]);
-const MATCH_OUTCOME_VALUES = new Set([
-  "intro_sent",
-  "first_meeting",
-  "dating",
-  "couple",
-  "closed",
-]);
+const CANDIDATE_STATUS_VALUES = new Set(["active", "matched", "couple", "graduated", "archived"]);
+const MATCH_OUTCOME_VALUES = new Set(["intro_sent", "first_meeting", "dating", "couple", "closed"]);
 const PAIR_REQUIRED_STATUS_VALUES = new Set(["matched", "couple"]);
 const GENDER_VALUES = new Set(["남", "여"]);
 
@@ -77,9 +65,7 @@ function cleanText(value: FormDataEntryValue | null) {
 }
 
 function isUuid(value: string) {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-    value,
-  );
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
 function safeFileName(fileName: string) {
@@ -286,7 +272,9 @@ export async function createCandidate(formData: FormData) {
   let existingCandidateId: string | null = null;
 
   if (cleanText(formData.get("photoUploadState")) === "uploading") {
-    redirect(`/candidates/new?message=${encodeURIComponent("사진 업로드가 끝난 뒤 다시 등록해주세요.")}`);
+    redirect(
+      `/candidates/new?message=${encodeURIComponent("사진 업로드가 끝난 뒤 다시 등록해주세요.")}`,
+    );
   }
 
   try {
@@ -339,9 +327,7 @@ export async function createCandidate(formData: FormData) {
         throw new Error("출생연도는 1960-2010 사이로 입력해주세요.");
       }
 
-      const { error: candidateError } = await supabase
-        .from("cupid_candidates")
-        .insert(payload);
+      const { error: candidateError } = await supabase.from("cupid_candidates").insert(payload);
 
       if (candidateError) {
         const duplicateInsert =
@@ -383,16 +369,12 @@ export async function createCandidate(formData: FormData) {
       await supabase.storage.from(CANDIDATE_PHOTOS_BUCKET).remove(uploadedPaths);
     }
 
-    if (
-      error instanceof Error &&
-      error.message === "__DUPLICATE_CANDIDATE_SUBMISSION__"
-    ) {
+    if (error instanceof Error && error.message === "__DUPLICATE_CANDIDATE_SUBMISSION__") {
       revalidateDashboardCaches([candidateId]);
       redirect(`/profiles/${candidateId}`);
     }
 
-    const message =
-      error instanceof Error ? error.message : "등록에 실패했습니다.";
+    const message = error instanceof Error ? error.message : "등록에 실패했습니다.";
     redirect(`/candidates/new?message=${encodeURIComponent(message)}`);
   }
 
@@ -425,9 +407,7 @@ export async function updateCandidate(formData: FormData) {
     .map((tag) => tag.trim())
     .filter(Boolean);
   const uploadedPaths = normalizeUploadedPhotoPaths(formData);
-  const removedPhotoIds = new Set(
-    formData.getAll("removedPhotoIds").map((value) => String(value)),
-  );
+  const removedPhotoIds = new Set(formData.getAll("removedPhotoIds").map((value) => String(value)));
   const primaryPhoto = cleanText(formData.get("primaryPhoto"));
 
   if (cleanText(formData.get("photoUploadState")) === "uploading") {
@@ -437,10 +417,7 @@ export async function updateCandidate(formData: FormData) {
   }
 
   try {
-    const {
-      data: existingPhotos,
-      error: existingPhotosError,
-    } = await supabase
+    const { data: existingPhotos, error: existingPhotosError } = await supabase
       .from("cupid_candidate_photos")
       .select("id, image_url, is_primary, sort_order")
       .eq("candidate_id", candidateId)
@@ -535,16 +512,14 @@ export async function updateCandidate(formData: FormData) {
 
     if (uploadedPaths.length) {
       const sortOrderBase = remainingPhotos.length;
-      const { error: insertPhotosError } = await supabase
-        .from("cupid_candidate_photos")
-        .insert(
-          uploadedPaths.map((imagePath, index) => ({
-            candidate_id: candidateId,
-            image_url: imagePath,
-            sort_order: sortOrderBase + index,
-            is_primary: false,
-          })),
-        );
+      const { error: insertPhotosError } = await supabase.from("cupid_candidate_photos").insert(
+        uploadedPaths.map((imagePath, index) => ({
+          candidate_id: candidateId,
+          image_url: imagePath,
+          sort_order: sortOrderBase + index,
+          is_primary: false,
+        })),
+      );
 
       if (insertPhotosError) {
         throw new Error(insertPhotosError.message);
@@ -568,11 +543,8 @@ export async function updateCandidate(formData: FormData) {
       await supabase.storage.from(CANDIDATE_PHOTOS_BUCKET).remove(uploadedPaths);
     }
 
-    const message =
-      error instanceof Error ? error.message : "수정에 실패했습니다.";
-    redirect(
-      `/profiles/${candidateId}/edit?message=${encodeURIComponent(message)}`,
-    );
+    const message = error instanceof Error ? error.message : "수정에 실패했습니다.";
+    redirect(`/profiles/${candidateId}/edit?message=${encodeURIComponent(message)}`);
   }
 
   revalidateDashboardCaches([candidateId]);
@@ -596,39 +568,32 @@ export async function updateCandidateStatus(formData: FormData) {
   }
 
   if (PAIR_REQUIRED_STATUS_VALUES.has(status)) {
-    redirect(`/profiles/${candidateId}?message=${encodeURIComponent("매칭진행중/커플완성은 대시보드에서 상대 후보를 선택해 변경해주세요.")}`);
+    redirect(
+      `/profiles/${candidateId}?message=${encodeURIComponent("매칭진행중/커플완성은 대시보드에서 상대 후보를 선택해 변경해주세요.")}`,
+    );
   }
 
-  const {
-    data: candidate,
-    error: candidateError,
-  } = await supabase
+  const { data: candidate, error: candidateError } = await supabase
     .from("cupid_candidates")
     .select("id, paired_candidate_id")
     .eq("id", candidateId)
     .maybeSingle();
 
   if (candidateError || !candidate) {
-    redirect(`/profiles/${candidateId}?message=${encodeURIComponent(candidateError?.message ?? "후보 정보를 찾지 못했습니다.")}`);
+    redirect(
+      `/profiles/${candidateId}?message=${encodeURIComponent(candidateError?.message ?? "후보 정보를 찾지 못했습니다.")}`,
+    );
   }
 
   const pairIds = candidate.paired_candidate_id
     ? [candidateId, candidate.paired_candidate_id]
     : [candidateId];
-  const payload =
-    status === "active"
-      ? { status, paired_candidate_id: null }
-      : { status };
+  const payload = status === "active" ? { status, paired_candidate_id: null } : { status };
 
-  const { error } = await supabase
-    .from("cupid_candidates")
-    .update(payload)
-    .in("id", pairIds);
+  const { error } = await supabase.from("cupid_candidates").update(payload).in("id", pairIds);
 
   if (error) {
-    redirect(
-      `/profiles/${candidateId}?message=${encodeURIComponent(error.message)}`,
-    );
+    redirect(`/profiles/${candidateId}?message=${encodeURIComponent(error.message)}`);
   }
 
   revalidateDashboardCaches(pairIds);
@@ -664,10 +629,7 @@ export async function moveCandidateStatus(
     };
   }
 
-  const {
-    data: candidate,
-    error: candidateError,
-  } = await supabase
+  const { data: candidate, error: candidateError } = await supabase
     .from("cupid_candidates")
     .select("id, full_name, status, paired_candidate_id")
     .eq("id", candidateId)
@@ -687,10 +649,7 @@ export async function moveCandidateStatus(
     normalizedStatus === "active"
       ? { status: normalizedStatus, paired_candidate_id: null }
       : { status: normalizedStatus };
-  const { error } = await supabase
-    .from("cupid_candidates")
-    .update(payload)
-    .in("id", pairIds);
+  const { error } = await supabase.from("cupid_candidates").update(payload).in("id", pairIds);
 
   if (error) {
     return { ok: false, message: error.message };
@@ -885,7 +844,9 @@ export async function createMatchRecord(formData: FormData) {
       .maybeSingle();
 
     if (existing) {
-      redirect(`/profiles/${candidateId}?message=${encodeURIComponent("이미 동일한 결과 기록이 존재합니다.")}`);
+      redirect(
+        `/profiles/${candidateId}?message=${encodeURIComponent("이미 동일한 결과 기록이 존재합니다.")}`,
+      );
     }
   }
 
@@ -901,9 +862,7 @@ export async function createMatchRecord(formData: FormData) {
   });
 
   if (error) {
-    redirect(
-      `/profiles/${candidateId}?message=${encodeURIComponent(error.message)}`,
-    );
+    redirect(`/profiles/${candidateId}?message=${encodeURIComponent(error.message)}`);
   }
 
   if (nextStatus && nextStatus !== "keep") {
@@ -942,9 +901,7 @@ export async function deleteMatchRecord(formData: FormData) {
     .eq("candidate_id", candidateId);
 
   if (error) {
-    redirect(
-      `/profiles/${candidateId}?message=${encodeURIComponent(error.message)}`,
-    );
+    redirect(`/profiles/${candidateId}?message=${encodeURIComponent(error.message)}`);
   }
 
   revalidateDashboardCaches([candidateId]);
@@ -974,10 +931,7 @@ export async function closeMatchWithRecord(formData: FormData) {
     redirect(`/profiles/${candidateId}?message=${encodeURIComponent("종료 사유를 입력해주세요.")}`);
   }
 
-  const {
-    data: source,
-    error: sourceError,
-  } = await supabase
+  const { data: source, error: sourceError } = await supabase
     .from("cupid_candidates")
     .select("id, full_name, birth_year, region, occupation, paired_candidate_id")
     .eq("id", candidateId)
@@ -995,10 +949,7 @@ export async function closeMatchWithRecord(formData: FormData) {
     );
   }
 
-  const {
-    data: counterpart,
-    error: counterpartError,
-  } = await supabase
+  const { data: counterpart, error: counterpartError } = await supabase
     .from("cupid_candidates")
     .select("id, full_name, birth_year, region, occupation")
     .eq("id", source.paired_candidate_id)
@@ -1098,9 +1049,7 @@ export async function setStatusFromDesk(
   if (!supabase) return { ok: false, error: "Supabase 환경변수가 없습니다." };
   if (!candidateId) return { ok: false, error: "후보 정보를 찾지 못했습니다." };
 
-  const normalizedStatus = CANDIDATE_STATUS_VALUES.has(status)
-    ? (status as string)
-    : "active";
+  const normalizedStatus = CANDIDATE_STATUS_VALUES.has(status) ? (status as string) : "active";
 
   if (PAIR_REQUIRED_STATUS_VALUES.has(normalizedStatus)) {
     return {
@@ -1187,13 +1136,7 @@ export async function setCandidateVisibility(
     return { ok: false, error: "후보 정보를 찾지 못했습니다." };
   }
 
-  if (
-    !canManageCandidateVisibility(
-      membership.role,
-      membership.user_id,
-      candidate.created_by,
-    )
-  ) {
+  if (!canManageCandidateVisibility(membership.role, membership.user_id, candidate.created_by)) {
     return { ok: false, error: "등록자 본인 또는 슈퍼어드민만 변경할 수 있습니다." };
   }
 

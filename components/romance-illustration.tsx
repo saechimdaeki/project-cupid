@@ -31,9 +31,29 @@ export function RomanceIllustration({ variant }: RomanceIllustrationProps) {
             <stop offset="100%" stopColor="#ffeadd" />
           </linearGradient>
         </defs>
-        <rect x="14" y="18" width="92" height="60" rx="18" fill="url(#letter-bg)" stroke="#efcfbb" />
-        <path d="M20 28 60 58 100 28" fill="none" stroke="#e4b79c" strokeWidth="3" strokeLinecap="round" />
-        <path d="M20 70 48 46M100 70 72 46" fill="none" stroke="#f0cdb8" strokeWidth="2.5" strokeLinecap="round" />
+        <rect
+          x="14"
+          y="18"
+          width="92"
+          height="60"
+          rx="18"
+          fill="url(#letter-bg)"
+          stroke="#efcfbb"
+        />
+        <path
+          d="M20 28 60 58 100 28"
+          fill="none"
+          stroke="#e4b79c"
+          strokeWidth="3"
+          strokeLinecap="round"
+        />
+        <path
+          d="M20 70 48 46M100 70 72 46"
+          fill="none"
+          stroke="#f0cdb8"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+        />
         <circle cx="60" cy="46" r="10" fill="#fff3ec" stroke="#efcbb8" />
         <path
           d="M60 52c-4-3-6-5-6-9 0-3 2-5 4-5 1 0 2 1 2 2 0-1 1-2 2-2 2 0 4 2 4 5 0 4-2 6-6 9Z"
@@ -52,10 +72,7 @@ export function RomanceIllustration({ variant }: RomanceIllustrationProps) {
         </radialGradient>
       </defs>
       <circle cx="44" cy="44" r="28" fill="url(#spark-bg)" stroke="#f0d1a5" />
-      <path
-        d="M44 24 49 39 64 44 49 49 44 64 39 49 24 44 39 39Z"
-        fill="#e7b96e"
-      />
+      <path d="M44 24 49 39 64 44 49 49 44 64 39 49 24 44 39 39Z" fill="#e7b96e" />
     </svg>
   );
 }

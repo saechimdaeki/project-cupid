@@ -148,7 +148,7 @@ async function attachBatchSignedImageUrlsToCandidates(
     image_url: candidate.image_url
       ? isDirectImageUrl(candidate.image_url)
         ? candidate.image_url
-        : signedMap.get(candidate.image_url) ?? null
+        : (signedMap.get(candidate.image_url) ?? null)
       : null,
   }));
 }
@@ -272,14 +272,19 @@ type GetCandidatesOptions =
 
 export async function getCandidates(options?: GetCandidatesOptions) {
   const filter = typeof options === "string" ? options : options?.filter;
-  const includeImages = typeof options === "string" ? true : options?.includeImages ?? true;
+  const includeImages = typeof options === "string" ? true : (options?.includeImages ?? true);
   const supabase = await createClient();
 
   if (!supabase) {
-    return filter ? mockCandidates.filter((candidate) => candidate.status === filter) : mockCandidates;
+    return filter
+      ? mockCandidates.filter((candidate) => candidate.status === filter)
+      : mockCandidates;
   }
 
-  let query = supabase.from("cupid_candidates").select("*").order("created_at", { ascending: false });
+  let query = supabase
+    .from("cupid_candidates")
+    .select("*")
+    .order("created_at", { ascending: false });
 
   if (filter) {
     query = query.eq("status", filter);
@@ -288,7 +293,9 @@ export async function getCandidates(options?: GetCandidatesOptions) {
   const { data, error } = await query;
 
   if (error || !data) {
-    return filter ? mockCandidates.filter((candidate) => candidate.status === filter) : mockCandidates;
+    return filter
+      ? mockCandidates.filter((candidate) => candidate.status === filter)
+      : mockCandidates;
   }
 
   if (!includeImages) {
@@ -306,7 +313,7 @@ export async function getCandidates(options?: GetCandidatesOptions) {
     image_url: candidate.image_url
       ? isDirectImageUrl(candidate.image_url)
         ? candidate.image_url
-        : signedImageMap.get(candidate.image_url) ?? null
+        : (signedImageMap.get(candidate.image_url) ?? null)
       : null,
   }));
 
@@ -417,11 +424,10 @@ async function loadCandidateByIdUncached(id: string) {
 }
 
 export async function getCandidateById(id: string) {
-  return unstable_cache(
-    async () => loadCandidateByIdUncached(id),
-    ["cupid-candidate-detail", id],
-    { tags: [candidateProfileTag(id)], revalidate: 45 },
-  )();
+  return unstable_cache(async () => loadCandidateByIdUncached(id), ["cupid-candidate-detail", id], {
+    tags: [candidateProfileTag(id)],
+    revalidate: 45,
+  })();
 }
 
 /**
@@ -435,9 +441,7 @@ export async function getCandidatesBasicByIds(ids: string[]): Promise<Candidate[
   const supabase = await createClient();
 
   if (!supabase) {
-    return ids
-      .map((id) => mockCandidates.find((c) => c.id === id))
-      .filter(Boolean) as Candidate[];
+    return ids.map((id) => mockCandidates.find((c) => c.id === id)).filter(Boolean) as Candidate[];
   }
 
   const { data, error } = await supabase
@@ -448,9 +452,7 @@ export async function getCandidatesBasicByIds(ids: string[]): Promise<Candidate[
     .in("id", ids);
 
   if (error || !data) {
-    return ids
-      .map((id) => mockCandidates.find((c) => c.id === id))
-      .filter(Boolean) as Candidate[];
+    return ids.map((id) => mockCandidates.find((c) => c.id === id)).filter(Boolean) as Candidate[];
   }
 
   // image_url은 Storage path 그대로 유지 (Signed URL 발급 생략)
@@ -462,9 +464,7 @@ export async function getCandidatesBasicByIds(ids: string[]): Promise<Candidate[
  * `getCandidatesBasicByIds` + Storage 배치 서명 1회(청크당).
  * 상세 페이지의 페어/과거 상대 카드처럼 이미지가 필요할 때 사용합니다.
  */
-export async function getCandidatesBasicByIdsWithSignedImages(
-  ids: string[],
-): Promise<Candidate[]> {
+export async function getCandidatesBasicByIdsWithSignedImages(ids: string[]): Promise<Candidate[]> {
   const basic = await getCandidatesBasicByIds(ids);
   const supabase = await createClient();
   if (!supabase || !basic.length) {
@@ -704,7 +704,7 @@ async function loadCandidatePhotosUncached(candidateId: string): Promise<Candida
     ...photo,
     image_url: isDirectImageUrl(photo.image_url)
       ? photo.image_url
-      : signedImageMap.get(photo.image_url) ?? photo.image_url,
+      : (signedImageMap.get(photo.image_url) ?? photo.image_url),
   }));
 }
 
@@ -745,8 +745,7 @@ async function loadProfileGalleryImageUrlsUncached(candidateId: string): Promise
 
   const mockFallback = mockCandidates.find((c) => c.id === candidateId);
 
-  const photos =
-    !photosError && photoRows?.length ? photoRows.map((row) => mapPhoto(row)) : [];
+  const photos = !photosError && photoRows?.length ? photoRows.map((row) => mapPhoto(row)) : [];
 
   const orderedPaths: string[] = [];
   const seenPath = new Set<string>();

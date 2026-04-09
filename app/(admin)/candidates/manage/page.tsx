@@ -11,13 +11,10 @@ type ManageCandidatesPageProps = {
   searchParams: Promise<{ scope?: string }>;
 };
 
-export default async function ManageCandidatesPage({
-  searchParams,
-}: ManageCandidatesPageProps) {
+export default async function ManageCandidatesPage({ searchParams }: ManageCandidatesPageProps) {
   const membership = await requireMembershipRole(["admin", "super_admin"]);
   const { scope } = await searchParams;
-  const resolvedScope =
-    membership.role === "super_admin" && scope === "all" ? "all" : "mine";
+  const resolvedScope = membership.role === "super_admin" && scope === "all" ? "all" : "mine";
   const candidates = await getManagedCandidates(membership, resolvedScope);
 
   return (
@@ -73,9 +70,7 @@ export default async function ManageCandidatesPage({
                 <h2 className="text-lg font-semibold text-slate-800">
                   {resolvedScope === "all" ? "전체 매물" : "내가 등록한 매물"}
                 </h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  총 {candidates.length}건
-                </p>
+                <p className="mt-1 text-sm text-slate-500">총 {candidates.length}건</p>
               </div>
               <Link
                 href="/candidates/new"
@@ -104,7 +99,8 @@ export default async function ManageCandidatesPage({
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
                             <p className="truncate text-base font-semibold text-slate-800">
-                              {candidate.full_name || `${String(candidate.birth_year).slice(-2)}년생 후보`}
+                              {candidate.full_name ||
+                                `${String(candidate.birth_year).slice(-2)}년생 후보`}
                             </p>
                             <Badge
                               variant="outline"

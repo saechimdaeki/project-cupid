@@ -1,11 +1,6 @@
 export type AppRole = "super_admin" | "curator" | "member";
 export type ApprovalStatus = "pending" | "approved" | "rejected";
-export type CandidateStatus =
-  | "active"
-  | "paused"
-  | "matched"
-  | "coupled"
-  | "graduated";
+export type CandidateStatus = "active" | "paused" | "matched" | "coupled" | "graduated";
 export type MatchOutcome = "in_progress" | "closed" | "coupled";
 
 export interface ViewerProfile {
@@ -44,4 +39,3 @@ export interface MatchHistoryItem {
   outcome: MatchOutcome;
   story: string;
 }
-

@@ -140,16 +140,32 @@
 }
 
 @keyframes sakura-fall {
-  0% { opacity: 0; transform: translate3d(0, -12vh, 0); }
-  10% { opacity: inherit; }
-  78% { opacity: inherit; }
-  100% { opacity: 0; transform: translate3d(0, 112vh, 0); }
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -12vh, 0);
+  }
+  10% {
+    opacity: inherit;
+  }
+  78% {
+    opacity: inherit;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, 112vh, 0);
+  }
 }
 
 @keyframes sakura-sway {
-  0% { transform: translate3d(calc(var(--petal-sway-distance, 18px) * -1), 0, 0); }
-  50% { transform: translate3d(calc(var(--petal-sway-distance, 18px) * 0.28), 0, 0); }
-  100% { transform: translate3d(var(--petal-sway-distance, 18px), 0, 0); }
+  0% {
+    transform: translate3d(calc(var(--petal-sway-distance, 18px) * -1), 0, 0);
+  }
+  50% {
+    transform: translate3d(calc(var(--petal-sway-distance, 18px) * 0.28), 0, 0);
+  }
+  100% {
+    transform: translate3d(var(--petal-sway-distance, 18px), 0, 0);
+  }
 }
 
 @layer base {
