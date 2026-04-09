@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { CandidateVisibilityControl } from "@/components/candidate-visibility-control";
 import { MatchRecordsProvider } from "@/components/match-records-provider";
 import { OperatorDeskControls } from "@/components/operator-desk-controls";
 import { ProfileInteractiveGallery } from "@/components/profile-interactive-gallery";
@@ -14,7 +15,11 @@ import {
   getProfileGalleryImageUrls,
   getMatchRecords,
 } from "@/lib/data";
-import { canEditCandidates, canManageRoles } from "@/lib/permissions";
+import {
+  canEditCandidates,
+  canManageCandidateVisibility,
+  canManageRoles,
+} from "@/lib/permissions";
 import { getStatusBadgeClass, getStatusLabel } from "@/lib/status-ui";
 import type { Candidate, Membership } from "@/lib/types";
 
@@ -58,6 +63,8 @@ function getDeskMessage(message?: string) {
   if (message === "match-invalid") return "매칭 기록 입력값을 다시 확인해주세요.";
   if (message === "match-closed") return "매칭이 종료 처리되었고 과거 이력에 반영되었습니다.";
   if (message === "couple-confirmed") return "커플완성으로 확정되었습니다.";
+  if (message === "listing-hidden") return "매물이 비활성화되어 대시보드에서 숨겨졌습니다.";
+  if (message === "listing-restored") return "매물을 다시 활성화했습니다.";
   return message ?? null;
 }
 
@@ -107,6 +114,11 @@ export async function ProfileDetailContent({ id, message, membership }: ProfileD
 
   const canOperate = canEditCandidates(membership.role);
   const isSuperAdmin = canManageRoles(membership.role);
+  const canManageVisibility = canManageCandidateVisibility(
+    membership.role,
+    membership.user_id,
+    candidate.created_by,
+  );
   const counterpartHeroUrl =
     counterpartCandidate && isRenderableImageUrl(counterpartCandidate.image_url)
       ? counterpartCandidate.image_url
@@ -228,6 +240,12 @@ export async function ProfileDetailContent({ id, message, membership }: ProfileD
                 </div>
 
                 <div className="mt-5 grid gap-3">
+                  <CandidateVisibilityControl
+                    candidateId={candidate.id}
+                    isVisible={candidate.status !== "archived"}
+                    canManage={canManageVisibility}
+                  />
+
                   {canOperate ? (
                     <Link
                       href={`/profiles/${candidate.id}/edit`}
