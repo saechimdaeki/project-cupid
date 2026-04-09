@@ -11,7 +11,7 @@ export function getStatusLabel(status: CandidateStatus) {
     case "graduated":
       return "졸업";
     case "archived":
-      return "보류";
+      return "비활성화";
   }
 }
 

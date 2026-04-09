@@ -5,7 +5,12 @@ import { formatCandidateBrief } from "@/lib/candidate-display";
 import { revalidateDashboardCaches } from "@/lib/cache-tags";
 import { createClient } from "@/lib/supabase/server";
 import { buildPairMatchRecordsOrFilter, ONGOING_MATCH_OUTCOMES } from "@/lib/match-flow-columns";
-import { canEditCandidates, canManageRoles, getCurrentMembership } from "@/lib/permissions";
+import {
+  canEditCandidates,
+  canManageCandidateVisibility,
+  canManageRoles,
+  getCurrentMembership,
+} from "@/lib/permissions";
 import type { CandidateStatus, Membership } from "@/lib/types";
 
 const CANDIDATE_PHOTOS_BUCKET = "sogaeting";
@@ -37,6 +42,12 @@ const GENDER_VALUES = new Set(["남", "여"]);
 
 function redirectWithMessage(path: string, message: string) {
   redirect(`${path}?message=${encodeURIComponent(message)}`);
+}
+
+function buildVisibilityChangeSummary(isActivating: boolean) {
+  return isActivating
+    ? "매물을 다시 활성화하여 대시보드 노출을 복구했습니다."
+    : "매물 비활성화로 인한 매칭 흐름 종료";
 }
 
 async function requireMembership(): Promise<Membership> {
@@ -86,6 +97,30 @@ function safeFileName(fileName: string) {
   const normalizedExt = ext.replace(/[^.a-z0-9]/g, "");
 
   return `${normalizedBase}${normalizedExt || ".jpg"}`;
+}
+
+type VisibilityManagedCandidate = {
+  id: string;
+  status: CandidateStatus;
+  paired_candidate_id: string | null;
+  created_by: string | null;
+};
+
+async function getVisibilityManagedCandidate(
+  supabase: SupabaseServerClient,
+  candidateId: string,
+): Promise<VisibilityManagedCandidate | null> {
+  const { data, error } = await supabase
+    .from("cupid_candidates")
+    .select("id, status, paired_candidate_id, created_by")
+    .eq("id", candidateId)
+    .maybeSingle();
+
+  if (error || !data) {
+    return null;
+  }
+
+  return data as VisibilityManagedCandidate;
 }
 
 async function uploadCandidatePhotos(
@@ -1127,6 +1162,101 @@ export async function setStatusFromDesk(
 
   revalidateDashboardCaches(pairIds);
   return { ok: true };
+}
+
+export async function setCandidateVisibility(
+  candidateId: string,
+  nextVisible: boolean,
+): Promise<{ ok: boolean; error?: string; message?: string }> {
+  const membership = await requireMembership();
+
+  if (!canEditCandidates(membership.role)) {
+    return { ok: false, error: "권한이 없습니다." };
+  }
+
+  const supabase = await createClient();
+  if (!supabase) return { ok: false, error: "Supabase 환경변수가 없습니다." };
+  if (!candidateId) return { ok: false, error: "후보 정보를 찾지 못했습니다." };
+
+  const candidate = await getVisibilityManagedCandidate(
+    supabase as SupabaseServerClient,
+    candidateId,
+  );
+
+  if (!candidate) {
+    return { ok: false, error: "후보 정보를 찾지 못했습니다." };
+  }
+
+  if (
+    !canManageCandidateVisibility(
+      membership.role,
+      membership.user_id,
+      candidate.created_by,
+    )
+  ) {
+    return { ok: false, error: "등록자 본인 또는 슈퍼어드민만 변경할 수 있습니다." };
+  }
+
+  if (nextVisible) {
+    if (candidate.status !== "archived") {
+      return { ok: true, message: "이미 활성 상태입니다." };
+    }
+
+    const { error: activateError } = await supabase
+      .from("cupid_candidates")
+      .update({ status: "active", paired_candidate_id: null })
+      .eq("id", candidateId);
+
+    if (activateError) {
+      return { ok: false, error: activateError.message };
+    }
+
+    revalidateDashboardCaches([candidateId]);
+    return { ok: true, message: buildVisibilityChangeSummary(true) };
+  }
+
+  const affectedIds = candidate.paired_candidate_id
+    ? [candidateId, candidate.paired_candidate_id]
+    : [candidateId];
+
+  if (candidate.paired_candidate_id) {
+    const pairOr = buildPairMatchRecordsOrFilter(candidateId, candidate.paired_candidate_id);
+    const happenedOn = new Date().toISOString().slice(0, 10);
+
+    await supabase
+      .from("cupid_match_records")
+      .update({
+        outcome: "closed",
+        summary: buildVisibilityChangeSummary(false),
+        happened_on: happenedOn,
+      })
+      .or(pairOr)
+      .in("outcome", [...ONGOING_MATCH_OUTCOMES, "couple"]);
+
+    const { error: counterpartError } = await supabase
+      .from("cupid_candidates")
+      .update({ status: "active", paired_candidate_id: null })
+      .eq("id", candidate.paired_candidate_id);
+
+    if (counterpartError) {
+      return { ok: false, error: counterpartError.message };
+    }
+  }
+
+  const { error: deactivateError } = await supabase
+    .from("cupid_candidates")
+    .update({ status: "archived", paired_candidate_id: null })
+    .eq("id", candidateId);
+
+  if (deactivateError) {
+    return { ok: false, error: deactivateError.message };
+  }
+
+  revalidateDashboardCaches(affectedIds);
+  return {
+    ok: true,
+    message: "매물을 비활성화했습니다. 대시보드에서는 더 이상 표시되지 않습니다.",
+  };
 }
 
 /**

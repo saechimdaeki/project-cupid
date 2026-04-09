@@ -37,6 +37,7 @@ export type Candidate = {
   image_url: string | null;
   paired_candidate_id: string | null;
   created_at: string;
+  created_by?: string | null;
   created_by_name?: string;
 };
 

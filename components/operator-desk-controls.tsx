@@ -50,6 +50,21 @@ export function OperatorDeskControls({
     return null;
   }
 
+  if (currentStatus === "archived") {
+    return (
+      <div className="mt-5 rounded-2xl border border-slate-200/70 bg-slate-50/80 p-4 backdrop-blur-sm">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+          Listing Hidden
+        </p>
+        <p className="mt-2 text-sm leading-6 text-slate-700">
+          비활성화된 매물입니다.
+          <br />
+          위의 노출 설정에서 다시 활성화하면 대시보드에 다시 표시됩니다.
+        </p>
+      </div>
+    );
+  }
+
   // 커플완성 상태에서는 상태 변경 전체 잠금 — 데이터 정합성 보호
   if (currentStatus === "couple") {
     return (
