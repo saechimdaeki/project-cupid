@@ -1,5 +1,3 @@
-import Image from "next/image";
-
 type PersonPreviewProps = {
   imageUrl?: string | null;
   gender?: string | null;
@@ -45,14 +43,15 @@ export function PersonPreview({
       aria-hidden="true"
     >
       {imageUrl ? (
-        <Image
+        <img
           src={imageUrl}
           alt=""
-          fill
-          sizes={sizes}
+          loading={loading}
+          decoding="async"
           className={`${fit === "contain" ? "object-contain" : "object-cover"} ${position === "top" ? "object-top" : "object-center"}`}
           fetchPriority={fetchPriority}
-          loading={loading}
+          sizes={sizes}
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
         />
       ) : (
         <>

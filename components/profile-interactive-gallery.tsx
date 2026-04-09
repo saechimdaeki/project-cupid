@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
@@ -162,13 +161,14 @@ export function ProfileInteractiveGallery({ images, sizes }: ProfileInteractiveG
           aria-label="전체 화면으로 사진 보기"
         >
           <div className="relative aspect-[4/5] w-full">
-            <Image
+            <img
               src={currentSrc!}
               alt=""
-              fill
+              loading={safeIndex === 0 ? "eager" : "lazy"}
+              decoding="async"
+              fetchPriority={safeIndex === 0 ? "high" : "auto"}
               sizes={sizes}
-              priority={safeIndex === 0}
-              className="object-cover object-center transition duration-300 group-hover:opacity-95"
+              className="absolute inset-0 h-full w-full object-cover object-center transition duration-300 group-hover:opacity-95"
             />
           </div>
         </button>
@@ -189,7 +189,15 @@ export function ProfileInteractiveGallery({ images, sizes }: ProfileInteractiveG
                 aria-label={`사진 ${index + 1} 선택`}
                 aria-current={index === safeIndex}
               >
-                <Image src={src} alt="" fill sizes="64px" className="object-cover object-center" />
+                <img
+                  src={src}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  fetchPriority="low"
+                  sizes="64px"
+                  className="absolute inset-0 h-full w-full object-cover object-center"
+                />
               </button>
             ))}
           </div>

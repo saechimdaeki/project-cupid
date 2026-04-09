@@ -14,7 +14,7 @@ import {
   getProfileGalleryImageUrls,
   getMatchRecords,
 } from "@/lib/data";
-import { canEditCandidates } from "@/lib/permissions";
+import { canEditCandidates, canManageRoles } from "@/lib/permissions";
 import { getStatusBadgeClass, getStatusLabel } from "@/lib/status-ui";
 import type { Candidate, Membership } from "@/lib/types";
 
@@ -106,6 +106,7 @@ export async function ProfileDetailContent({ id, message, membership }: ProfileD
   ) as Record<string, Candidate>;
 
   const canOperate = canEditCandidates(membership.role);
+  const isSuperAdmin = canManageRoles(membership.role);
   const counterpartHeroUrl =
     counterpartCandidate && isRenderableImageUrl(counterpartCandidate.image_url)
       ? counterpartCandidate.image_url
@@ -241,6 +242,7 @@ export async function ProfileDetailContent({ id, message, membership }: ProfileD
                     currentStatus={candidate.status}
                     pairedCandidateId={candidate.paired_candidate_id}
                     canOperate={canOperate}
+                    isSuperAdmin={isSuperAdmin}
                   />
                 </div>
 

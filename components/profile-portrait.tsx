@@ -1,5 +1,3 @@
-import Image from "next/image";
-
 type ProfilePortraitProps = {
   imageUrl?: string | null;
   sizes: string;
@@ -23,13 +21,14 @@ export function ProfilePortrait({
       className={`relative aspect-[3/4] w-full overflow-hidden bg-rose-50 ${roundedClassName} ${className}`.trim()}
     >
       {imageUrl ? (
-        <Image
+        <img
           src={imageUrl}
           alt=""
-          fill
+          loading={priority ? "eager" : "lazy"}
+          decoding="async"
+          fetchPriority={priority ? "high" : "auto"}
           sizes={sizes}
           className={`h-full w-full object-cover object-center ${roundedClassName}`}
-          priority={priority}
         />
       ) : (
         <div

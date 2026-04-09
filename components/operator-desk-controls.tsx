@@ -22,6 +22,7 @@ type OperatorDeskControlsProps = {
   currentStatus: CandidateStatus;
   pairedCandidateId: string | null;
   canOperate: boolean;
+  isSuperAdmin?: boolean;
 };
 
 export function OperatorDeskControls({
@@ -29,6 +30,7 @@ export function OperatorDeskControls({
   currentStatus,
   pairedCandidateId,
   canOperate,
+  isSuperAdmin = false,
 }: OperatorDeskControlsProps) {
   const hasPair = Boolean(pairedCandidateId);
   const [selectValue, setSelectValue] = useState<string>(currentStatus);
@@ -58,7 +60,9 @@ export function OperatorDeskControls({
         <p className="mt-2 text-sm leading-6 text-orange-800">
           커플완성 상태에서는 상태 변경이 잠깁니다.
           <br />
-          변경이 필요하면 대시보드에서 카드를 직접 이동해 주세요.
+          {isSuperAdmin
+            ? "슈퍼어드민만 대시보드에서 카드를 직접 이동해 변경할 수 있습니다."
+            : "변경이 필요하면 슈퍼어드민에게 대시보드에서 카드 이동을 요청해 주세요."}
         </p>
       </div>
     );

@@ -5,7 +5,7 @@ import { useDraggable } from "@dnd-kit/core";
 import { CandidateAvatarThumb } from "@/components/candidate-avatar-thumb";
 import { formatCandidateBrief } from "@/lib/candidate-display";
 import { cn } from "@/lib/cn";
-import { canAccessCandidateDetail } from "@/lib/role-utils";
+import { canAccessCandidateDetail, canManageRoles } from "@/lib/role-utils";
 import { getStatusTopBorderClass } from "@/lib/status-ui";
 import { Badge } from "@/components/ui/badge";
 import type { AppRole } from "@/lib/types";
@@ -169,7 +169,7 @@ export function FlowBoardCard({
   pendingCandidateIds,
   fillRowHeight = false,
 }: FlowBoardCardProps) {
-  const isCoupleLocked = candidate.status === "couple";
+  const isCoupleLocked = candidate.status === "couple" && !canManageRoles(role);
   const draggableDisabled = !canOperate || isCoupleLocked || pendingCandidateIds.has(candidate.id);
 
   const body = (
