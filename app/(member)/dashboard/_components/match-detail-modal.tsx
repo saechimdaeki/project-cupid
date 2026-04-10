@@ -114,6 +114,13 @@ function PersonChip({ person, resolvedImageUrl }: PersonChipProps) {
   );
 }
 
+function isRenderableImageUrl(value: string | null | undefined) {
+  return Boolean(
+    value &&
+      (value.startsWith("/") || value.startsWith("http://") || value.startsWith("https://")),
+  );
+}
+
 // ── MatchDetailModal ──────────────────────────────────────────────────────────
 
 type MatchDetailModalProps = {
@@ -130,7 +137,14 @@ export function MatchDetailModal({ event, candidateById, onClose }: MatchDetailM
 
   useEffect(() => {
     if (!event) return;
-    const ids = event.candidate_ids.filter(Boolean);
+    const ids = event.candidate_ids.filter(Boolean).filter((candidateId) => {
+      if (resolvedImages[candidateId] !== undefined) {
+        return false;
+      }
+
+      const candidate = candidateById.get(candidateId);
+      return !isRenderableImageUrl(candidate?.image_url);
+    });
     if (!ids.length) return;
 
     const key = [...ids].sort().join(",");

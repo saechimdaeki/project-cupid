@@ -34,7 +34,8 @@ supabase/      # 스키마, 마이그레이션
 
 - 모든 테이블 prefix: `cupid_` (예: `cupid_candidates`, `cupid_match_records`)
 - Supabase Storage 버킷: `sogaeting`
-- 이미지는 Storage path로 저장 → 조회 시 signed URL 변환 (TTL: 1시간)
+- 이미지는 Storage path로 저장 → 조회 시 signed URL 변환 (현재 TTL: 24시간)
+- 리스트/보드/모달에서는 원본 대신 transform이 적용된 썸네일 URL을 우선 사용
 
 ## 데이터 패칭 패턴
 

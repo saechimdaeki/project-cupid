@@ -275,6 +275,7 @@ export default async function EditCandidatePage({ params, searchParams }: EditCa
                           src={photo.image_url}
                           alt=""
                           fill
+                          unoptimized
                           sizes="(min-width: 1280px) 20vw, (min-width: 768px) 33vw, 100vw"
                           className="object-cover"
                         />
