@@ -1,14 +1,24 @@
 import Link from "next/link";
 import { AccountPanel } from "@/components/account-panel";
 import { WorkspaceDecorations } from "@/components/workspace-decorations";
-import { getTimelineEvents } from "@/lib/data";
+import { getTimelinePageData } from "@/lib/data";
 import { requireApprovedMembership, roleLabel } from "@/lib/permissions";
 
-export default async function TimelinePage() {
-  const [membership, timelineEvents] = await Promise.all([
+type TimelinePageProps = {
+  searchParams: Promise<{ page?: string }>;
+};
+
+export default async function TimelinePage({ searchParams }: TimelinePageProps) {
+  const params = await searchParams;
+  const page = Number(params.page ?? "1");
+
+  const [membership, timelineData] = await Promise.all([
     requireApprovedMembership(),
-    getTimelineEvents(),
+    getTimelinePageData(page),
   ]);
+  const timelineEvents = timelineData.events;
+  const totalPages = Math.max(1, Math.ceil(timelineData.totalCount / timelineData.pageSize));
+  const currentPage = Math.min(Math.max(1, timelineData.page), totalPages);
 
   return (
     <main className="workspacePage min-h-screen bg-[linear-gradient(180deg,#fff8f2_0%,#fff3ec_42%,#fffaf6_100%)] text-[#24161c]">
@@ -87,6 +97,39 @@ export default async function TimelinePage() {
               </div>
             )}
           </div>
+
+          {totalPages > 1 ? (
+            <div className="mt-6 flex flex-col items-center justify-between gap-3 rounded-[24px] border border-[#ead8cf] bg-white/80 px-4 py-4 text-sm text-[#6d5961] shadow-[0_12px_28px_rgba(143,95,89,0.06)] sm:flex-row">
+              <p>
+                페이지 <span className="font-semibold text-[#24161c]">{currentPage}</span> /{" "}
+                <span className="font-semibold text-[#24161c]">{totalPages}</span>
+              </p>
+              <div className="flex gap-2">
+                <Link
+                  href={currentPage > 1 ? `/timeline?page=${currentPage - 1}` : "/timeline"}
+                  className={`inline-flex min-h-11 items-center justify-center rounded-full px-4 font-semibold transition ${
+                    currentPage > 1
+                      ? "border border-[#ead8cf] bg-white text-[#24161c] hover:-translate-y-0.5"
+                      : "cursor-not-allowed border border-[#f2e5de] bg-[#fff8f3] text-[#b79a90]"
+                  }`}
+                  aria-disabled={currentPage <= 1}
+                >
+                  이전
+                </Link>
+                <Link
+                  href={`/timeline?page=${currentPage + 1}`}
+                  className={`inline-flex min-h-11 items-center justify-center rounded-full px-4 font-semibold transition ${
+                    currentPage < totalPages
+                      ? "border border-[#ead8cf] bg-white text-[#24161c] hover:-translate-y-0.5"
+                      : "pointer-events-none cursor-not-allowed border border-[#f2e5de] bg-[#fff8f3] text-[#b79a90]"
+                  }`}
+                  aria-disabled={currentPage >= totalPages}
+                >
+                  다음
+                </Link>
+              </div>
+            </div>
+          ) : null}
         </section>
       </div>
     </main>

@@ -468,7 +468,7 @@ export async function getCandidatesBasicByIdsWithSignedImages(ids: string[]): Pr
   if (!supabase || !basic.length) {
     return basic;
   }
-  return attachBatchSignedImageUrlsToCandidates(supabase, basic);
+  return attachTransformedImageUrlsToCandidates(supabase, basic, "thumb");
 }
 
 async function loadMatchRecordsForCandidateUncached(candidateId: string): Promise<MatchRecord[]> {
@@ -640,14 +640,111 @@ export function buildTimelineEvents(
   return events;
 }
 
-export async function getTimelineEvents() {
-  const [records, candidates] = await Promise.all([
-    getMatchRecords(),
-    getCandidates({ includeImages: false }),
-  ]);
+async function loadTimelineEventsUncached(): Promise<TimelineEvent[]> {
+  const records = await getMatchRecords();
+  const candidateIds = Array.from(
+    new Set(
+      records.flatMap((record) =>
+        [record.candidate_id, record.counterpart_candidate_id].filter(
+          (candidateId): candidateId is string => Boolean(candidateId),
+        ),
+      ),
+    ),
+  );
+  const candidates = await getCandidatesBasicByIds(candidateIds);
   const candidateDirectory = new Map(candidates.map((candidate) => [candidate.id, candidate]));
 
   return buildTimelineEvents(records, candidateDirectory);
+}
+
+export async function getTimelineEvents(): Promise<TimelineEvent[]> {
+  return unstable_cache(loadTimelineEventsUncached, ["cupid-timeline-events"], {
+    revalidate: 120,
+    tags: [TAG_DASHBOARD_TIMELINE, TAG_DASHBOARD_CANDIDATES],
+  })();
+}
+
+async function loadTimelinePageDataUncached(page: number): Promise<{
+  events: TimelineEvent[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+}> {
+  const safePage = Number.isFinite(page) && page > 0 ? Math.floor(page) : 1;
+  const from = (safePage - 1) * TIMELINE_PAGE_SIZE;
+  const to = from + TIMELINE_PAGE_SIZE - 1;
+  const supabase = await createClient();
+
+  if (!supabase) {
+    const records = mockMatchRecords.slice(from, from + TIMELINE_PAGE_SIZE);
+    const candidateIds = Array.from(
+      new Set(
+        records.flatMap((record) =>
+          [record.candidate_id, record.counterpart_candidate_id].filter(
+            (candidateId): candidateId is string => Boolean(candidateId),
+          ),
+        ),
+      ),
+    );
+    const candidates = mockCandidates.filter((candidate) => candidateIds.includes(candidate.id));
+    const candidateDirectory = new Map(candidates.map((candidate) => [candidate.id, candidate]));
+
+    return {
+      events: buildTimelineEvents(records, candidateDirectory),
+      totalCount: mockMatchRecords.length,
+      page: safePage,
+      pageSize: TIMELINE_PAGE_SIZE,
+    };
+  }
+
+  const { data, error, count } = await supabase
+    .from("cupid_match_records")
+    .select(
+      "id, candidate_id, counterpart_label, counterpart_candidate_id, matchmaker_name, outcome, summary, happened_on",
+      { count: "exact" },
+    )
+    .order("happened_on", { ascending: false })
+    .range(from, to);
+
+  if (error || !data) {
+    return {
+      events: [],
+      totalCount: 0,
+      page: safePage,
+      pageSize: TIMELINE_PAGE_SIZE,
+    };
+  }
+
+  const records = data.map(mapMatchRecord);
+  const candidateIds = Array.from(
+    new Set(
+      records.flatMap((record) =>
+        [record.candidate_id, record.counterpart_candidate_id].filter(
+          (candidateId): candidateId is string => Boolean(candidateId),
+        ),
+      ),
+    ),
+  );
+  const candidates = await getCandidatesBasicByIds(candidateIds);
+  const candidateDirectory = new Map(candidates.map((candidate) => [candidate.id, candidate]));
+
+  return {
+    events: buildTimelineEvents(records, candidateDirectory),
+    totalCount: count ?? records.length,
+    page: safePage,
+    pageSize: TIMELINE_PAGE_SIZE,
+  };
+}
+
+export async function getTimelinePageData(page: number) {
+  return unstable_cache(
+    async () => loadTimelinePageDataUncached(page),
+    ["cupid-timeline-page", String(page)],
+    {
+      revalidate: 120,
+      tags: [TAG_DASHBOARD_TIMELINE, TAG_DASHBOARD_CANDIDATES],
+    },
+  )();
 }
 
 async function loadCandidatePhotosUncached(candidateId: string): Promise<CandidatePhoto[]> {
