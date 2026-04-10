@@ -10,36 +10,55 @@ import { mockCandidates, mockMatchRecords, mockMemberships } from "@/lib/mock-da
 import {
   CANDIDATE_PHOTOS_BUCKET,
   CANDIDATE_PHOTOS_SIGNED_URL_TTL_SECONDS,
-  createSignedUrlMapForStoragePaths,
 } from "@/lib/storage-signed-urls";
 import { createClient } from "@/lib/supabase/server";
 import type {
   Candidate,
+  CandidateGalleryImage,
   CandidatePhoto,
   MatchRecord,
   Membership,
   TimelineEvent,
 } from "@/lib/types";
 
-const DASHBOARD_TIMELINE_FETCH_LIMIT = 80;
+const DASHBOARD_TIMELINE_FETCH_LIMIT = 40;
+const TIMELINE_PAGE_SIZE = 40;
 const IMAGE_TRANSFORMS = {
+  thumb: {
+    height: 240,
+    quality: 52,
+    resize: "cover" as const,
+    width: 240,
+  },
   card: {
-    height: 720,
+    height: 560,
+    quality: 60,
+    resize: "cover" as const,
+    width: 420,
+  },
+  detail: {
+    height: 1280,
     quality: 68,
+    resize: "cover" as const,
+    width: 960,
+  },
+  gallery: {
+    height: 720,
+    quality: 60,
     resize: "cover" as const,
     width: 560,
   },
-  detail: {
-    height: 1600,
-    quality: 76,
+  galleryThumb: {
+    height: 140,
+    quality: 44,
     resize: "cover" as const,
-    width: 1200,
+    width: 112,
   },
-  gallery: {
-    height: 960,
-    quality: 72,
+  editorThumb: {
+    height: 400,
+    quality: 52,
     resize: "cover" as const,
-    width: 720,
+    width: 320,
   },
 };
 
@@ -114,42 +133,23 @@ async function resolveCandidateImage(
   return data.signedUrl;
 }
 
-async function resolveSignedImageMap(
-  supabase: NonNullable<Awaited<ReturnType<typeof createClient>>>,
-  values: Array<string | null | undefined>,
-) {
-  const paths = Array.from(
-    new Set(values.filter((value): value is string => Boolean(value) && !isDirectImageUrl(value))),
-  );
-
-  if (!paths.length) {
-    return new Map<string, string | null>();
-  }
-
-  return createSignedUrlMapForStoragePaths(
-    supabase,
-    CANDIDATE_PHOTOS_BUCKET,
-    paths,
-    CANDIDATE_PHOTOS_SIGNED_URL_TTL_SECONDS,
-  );
-}
-
-async function attachBatchSignedImageUrlsToCandidates(
+async function attachTransformedImageUrlsToCandidates(
   supabase: NonNullable<Awaited<ReturnType<typeof createClient>>>,
   candidates: Candidate[],
+  variant: keyof typeof IMAGE_TRANSFORMS,
 ): Promise<Candidate[]> {
-  const signedMap = await resolveSignedImageMap(
-    supabase,
-    candidates.map((c) => c.image_url),
+  const resolvedEntries = await Promise.all(
+    candidates.map(async (candidate) => [
+      candidate.id,
+      await resolveCandidateImage(supabase, candidate.image_url, variant),
+    ] as const),
   );
+
+  const resolvedById = new Map(resolvedEntries);
 
   return candidates.map((candidate) => ({
     ...candidate,
-    image_url: candidate.image_url
-      ? isDirectImageUrl(candidate.image_url)
-        ? candidate.image_url
-        : (signedMap.get(candidate.image_url) ?? null)
-      : null,
+    image_url: resolvedById.get(candidate.id) ?? null,
   }));
 }
 
@@ -303,19 +303,11 @@ export async function getCandidates(options?: GetCandidatesOptions) {
   }
 
   const candidates = data.map((row) => mapCandidate(row));
-  const signedImageMap = await resolveSignedImageMap(
+  const resolvedCandidates = await attachTransformedImageUrlsToCandidates(
     supabase,
-    candidates.map((candidate) => candidate.image_url),
+    candidates,
+    "card",
   );
-
-  const resolvedCandidates = candidates.map((candidate) => ({
-    ...candidate,
-    image_url: candidate.image_url
-      ? isDirectImageUrl(candidate.image_url)
-        ? candidate.image_url
-        : (signedImageMap.get(candidate.image_url) ?? null)
-      : null,
-  }));
 
   return mergeCandidates(
     resolvedCandidates,
@@ -343,8 +335,14 @@ async function loadDashboardCandidatesUncached(): Promise<Candidate[]> {
   }
 
   const mapped = data.map((row) => mapDashboardCandidate(row));
-  return mergeCandidates(
+  const withThumbs = await attachTransformedImageUrlsToCandidates(
+    supabase,
     mapped,
+    "thumb",
+  );
+
+  return mergeCandidates(
+    withThumbs,
     mockCandidates.filter((candidate) => candidate.status !== "archived"),
   );
 }
@@ -389,7 +387,7 @@ export async function getManagedCandidates(
   }
 
   const candidates = data.map((row) => mapDashboardCandidate(row));
-  return attachBatchSignedImageUrlsToCandidates(supabase, candidates);
+  return attachTransformedImageUrlsToCandidates(supabase, candidates, "thumb");
 }
 
 async function loadCandidateByIdUncached(id: string) {
@@ -470,7 +468,7 @@ export async function getCandidatesBasicByIdsWithSignedImages(ids: string[]): Pr
   if (!supabase || !basic.length) {
     return basic;
   }
-  return attachBatchSignedImageUrlsToCandidates(supabase, basic);
+  return attachTransformedImageUrlsToCandidates(supabase, basic, "thumb");
 }
 
 async function loadMatchRecordsForCandidateUncached(candidateId: string): Promise<MatchRecord[]> {
@@ -642,14 +640,111 @@ export function buildTimelineEvents(
   return events;
 }
 
-export async function getTimelineEvents() {
-  const [records, candidates] = await Promise.all([
-    getMatchRecords(),
-    getCandidates({ includeImages: false }),
-  ]);
+async function loadTimelineEventsUncached(): Promise<TimelineEvent[]> {
+  const records = await getMatchRecords();
+  const candidateIds = Array.from(
+    new Set(
+      records.flatMap((record) =>
+        [record.candidate_id, record.counterpart_candidate_id].filter(
+          (candidateId): candidateId is string => Boolean(candidateId),
+        ),
+      ),
+    ),
+  );
+  const candidates = await getCandidatesBasicByIds(candidateIds);
   const candidateDirectory = new Map(candidates.map((candidate) => [candidate.id, candidate]));
 
   return buildTimelineEvents(records, candidateDirectory);
+}
+
+export async function getTimelineEvents(): Promise<TimelineEvent[]> {
+  return unstable_cache(loadTimelineEventsUncached, ["cupid-timeline-events"], {
+    revalidate: 120,
+    tags: [TAG_DASHBOARD_TIMELINE, TAG_DASHBOARD_CANDIDATES],
+  })();
+}
+
+async function loadTimelinePageDataUncached(page: number): Promise<{
+  events: TimelineEvent[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+}> {
+  const safePage = Number.isFinite(page) && page > 0 ? Math.floor(page) : 1;
+  const from = (safePage - 1) * TIMELINE_PAGE_SIZE;
+  const to = from + TIMELINE_PAGE_SIZE - 1;
+  const supabase = await createClient();
+
+  if (!supabase) {
+    const records = mockMatchRecords.slice(from, from + TIMELINE_PAGE_SIZE);
+    const candidateIds = Array.from(
+      new Set(
+        records.flatMap((record) =>
+          [record.candidate_id, record.counterpart_candidate_id].filter(
+            (candidateId): candidateId is string => Boolean(candidateId),
+          ),
+        ),
+      ),
+    );
+    const candidates = mockCandidates.filter((candidate) => candidateIds.includes(candidate.id));
+    const candidateDirectory = new Map(candidates.map((candidate) => [candidate.id, candidate]));
+
+    return {
+      events: buildTimelineEvents(records, candidateDirectory),
+      totalCount: mockMatchRecords.length,
+      page: safePage,
+      pageSize: TIMELINE_PAGE_SIZE,
+    };
+  }
+
+  const { data, error, count } = await supabase
+    .from("cupid_match_records")
+    .select(
+      "id, candidate_id, counterpart_label, counterpart_candidate_id, matchmaker_name, outcome, summary, happened_on",
+      { count: "exact" },
+    )
+    .order("happened_on", { ascending: false })
+    .range(from, to);
+
+  if (error || !data) {
+    return {
+      events: [],
+      totalCount: 0,
+      page: safePage,
+      pageSize: TIMELINE_PAGE_SIZE,
+    };
+  }
+
+  const records = data.map(mapMatchRecord);
+  const candidateIds = Array.from(
+    new Set(
+      records.flatMap((record) =>
+        [record.candidate_id, record.counterpart_candidate_id].filter(
+          (candidateId): candidateId is string => Boolean(candidateId),
+        ),
+      ),
+    ),
+  );
+  const candidates = await getCandidatesBasicByIds(candidateIds);
+  const candidateDirectory = new Map(candidates.map((candidate) => [candidate.id, candidate]));
+
+  return {
+    events: buildTimelineEvents(records, candidateDirectory),
+    totalCount: count ?? records.length,
+    page: safePage,
+    pageSize: TIMELINE_PAGE_SIZE,
+  };
+}
+
+export async function getTimelinePageData(page: number) {
+  return unstable_cache(
+    async () => loadTimelinePageDataUncached(page),
+    ["cupid-timeline-page", String(page)],
+    {
+      revalidate: 120,
+      tags: [TAG_DASHBOARD_TIMELINE, TAG_DASHBOARD_CANDIDATES],
+    },
+  )();
 }
 
 async function loadCandidatePhotosUncached(candidateId: string): Promise<CandidatePhoto[]> {
@@ -695,16 +790,19 @@ async function loadCandidatePhotosUncached(candidateId: string): Promise<Candida
   }
 
   const photos = data.map((row) => mapPhoto(row));
-  const signedImageMap = await resolveSignedImageMap(
-    supabase,
-    photos.map((photo) => photo.image_url),
+  const resolvedEntries = await Promise.all(
+    photos.map(async (photo) => [
+      photo.id,
+      isDirectImageUrl(photo.image_url)
+        ? photo.image_url
+        : await resolveCandidateImage(supabase, photo.image_url, "editorThumb"),
+    ] as const),
   );
+  const resolvedById = new Map(resolvedEntries);
 
   return photos.map((photo) => ({
     ...photo,
-    image_url: isDirectImageUrl(photo.image_url)
-      ? photo.image_url
-      : (signedImageMap.get(photo.image_url) ?? photo.image_url),
+    image_url: resolvedById.get(photo.id) ?? photo.image_url,
   }));
 }
 
@@ -723,13 +821,15 @@ export async function getCandidatePhotos(candidateId: string) {
  * `getCandidatePhotos`의 동일 파일은 배치 서명 URL이라 문자열이 달라 Set으로는 중복이 안 잡힙니다.
  * 여기서는 DB의 원본 경로를 기준으로 한 번만 넣은 뒤, 배치 서명으로 통일합니다.
  */
-async function loadProfileGalleryImageUrlsUncached(candidateId: string): Promise<string[]> {
+async function loadProfileGalleryImagesUncached(candidateId: string): Promise<CandidateGalleryImage[]> {
   const supabase = await createClient();
 
   if (!supabase) {
     const mock = mockCandidates.find((c) => c.id === candidateId);
     const u = mock?.image_url;
-    return u && isDirectImageUrl(u) ? [u] : [];
+    return u && isDirectImageUrl(u)
+      ? [{ id: `${candidateId}-primary`, main_url: u, thumb_url: u }]
+      : [];
   }
 
   const [{ data: candidateRow, error: candidateError }, { data: photoRows, error: photosError }] =
@@ -770,26 +870,45 @@ async function loadProfileGalleryImageUrlsUncached(candidateId: string): Promise
 
   if (!orderedPaths.length) {
     const m = mockFallback?.image_url;
-    return m && isDirectImageUrl(m) ? [m] : [];
+    return m && isDirectImageUrl(m)
+      ? [{ id: `${candidateId}-fallback`, main_url: m, thumb_url: m }]
+      : [];
   }
 
-  const signedMap = await resolveSignedImageMap(supabase, orderedPaths);
+  const resolved = await Promise.all(
+    orderedPaths.map(async (path, index) => {
+      if (isDirectImageUrl(path)) {
+        return {
+          id: `${candidateId}-gallery-${index}`,
+          main_url: path,
+          thumb_url: path,
+        } satisfies CandidateGalleryImage;
+      }
 
-  const resolved = orderedPaths
-    .map((p) => {
-      if (isDirectImageUrl(p)) return p;
-      const signed = signedMap.get(p);
-      return signed && isDirectImageUrl(signed) ? signed : null;
-    })
-    .filter((u): u is string => u != null);
+      const [mainUrl, thumbUrl] = await Promise.all([
+        resolveCandidateImage(supabase, path, "gallery"),
+        resolveCandidateImage(supabase, path, "galleryThumb"),
+      ]);
 
-  return resolved;
+      if (!mainUrl || !thumbUrl) {
+        return null;
+      }
+
+      return {
+        id: `${candidateId}-gallery-${index}`,
+        main_url: mainUrl,
+        thumb_url: thumbUrl,
+      } satisfies CandidateGalleryImage;
+    }),
+  );
+
+  return resolved.filter((image): image is CandidateGalleryImage => image != null);
 }
 
-export async function getProfileGalleryImageUrls(candidateId: string): Promise<string[]> {
+export async function getProfileGalleryImages(candidateId: string): Promise<CandidateGalleryImage[]> {
   return unstable_cache(
-    async () => loadProfileGalleryImageUrlsUncached(candidateId),
-    ["cupid-profile-gallery-urls", candidateId],
+    async () => loadProfileGalleryImagesUncached(candidateId),
+    ["cupid-profile-gallery-images", candidateId],
     { tags: [candidateProfileTag(candidateId)], revalidate: 45 },
   )();
 }

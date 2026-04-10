@@ -1,19 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { signOut } from "@/server/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import type { Membership } from "@/lib/types";
 
-type HomeMembershipState = {
-  username: string;
-  full_name: string;
-  role: "super_admin" | "admin" | "viewer";
-  status: "pending" | "approved" | "rejected";
-};
-
-function getRoleLabel(role: HomeMembershipState["role"]) {
+function getRoleLabel(role: Membership["role"]) {
   switch (role) {
     case "super_admin":
       return "슈퍼어드민";
@@ -24,71 +17,7 @@ function getRoleLabel(role: HomeMembershipState["role"]) {
   }
 }
 
-export function HomeAccountShell() {
-  const supabase = useMemo(() => createClient(), []);
-  const [membership, setMembership] = useState<HomeMembershipState | null>(null);
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    let active = true;
-
-    async function loadMembership() {
-      try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-
-        if (!user || !active) {
-          setLoaded(true);
-          return;
-        }
-
-        const { data } = await supabase
-          .from("cupid_memberships")
-          .select("username, full_name, role, status")
-          .eq("user_id", user.id)
-          .eq("status", "approved")
-          .maybeSingle();
-
-        if (!active) {
-          return;
-        }
-
-        setMembership((data as HomeMembershipState | null) ?? null);
-      } finally {
-        if (active) {
-          setLoaded(true);
-        }
-      }
-    }
-
-    void loadMembership();
-
-    return () => {
-      active = false;
-    };
-  }, [supabase]);
-
-  async function handleSignOut() {
-    await supabase.auth.signOut();
-    window.location.replace("/");
-  }
-
-  if (!loaded) {
-    return (
-      <div className="flex w-full flex-col gap-3 lg:w-auto lg:min-w-[320px]">
-        <Card className="rounded-[28px] border-border bg-gradient-to-br from-card to-secondary p-5 shadow-[0_14px_40px_rgba(143,95,89,0.1)]">
-          <CardContent className="p-0">
-            <div className="h-3 w-20 rounded-full bg-muted" />
-            <div className="mt-4 h-9 w-40 rounded-full bg-secondary" />
-            <div className="mt-3 h-5 w-32 rounded-full bg-muted" />
-            <div className="mt-5 h-12 rounded-full bg-background" />
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
+export function HomeAccountShell({ membership }: { membership: Membership | null }) {
   if (membership) {
     return (
       <div className="flex w-full flex-col gap-3 lg:w-auto lg:min-w-[320px]">
@@ -120,16 +49,15 @@ export function HomeAccountShell() {
                 </Button>
               ) : null}
             </div>
-            <Button
-              variant="outline"
-              className="mt-3 min-h-12 w-full rounded-full transition hover:-translate-y-0.5"
-              type="button"
-              onClick={() => {
-                void handleSignOut();
-              }}
-            >
-              로그아웃
-            </Button>
+            <form action={signOut} className="mt-3">
+              <Button
+                variant="outline"
+                className="min-h-12 w-full rounded-full transition hover:-translate-y-0.5"
+                type="submit"
+              >
+                로그아웃
+              </Button>
+            </form>
           </CardContent>
         </Card>
       </div>

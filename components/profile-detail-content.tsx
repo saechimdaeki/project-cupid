@@ -12,7 +12,7 @@ import { getCandidateCardTitle, getCandidateGalleryLabel } from "@/lib/candidate
 import {
   getCandidateById,
   getCandidatesBasicByIdsWithSignedImages,
-  getProfileGalleryImageUrls,
+  getProfileGalleryImages,
   getMatchRecords,
 } from "@/lib/data";
 import { canEditCandidates, canManageCandidateVisibility, canManageRoles } from "@/lib/permissions";
@@ -62,10 +62,10 @@ function getDeskMessage(message?: string) {
 }
 
 export async function ProfileDetailContent({ id, message, membership }: ProfileDetailContentProps) {
-  const [candidate, records, galleryImageUrls] = await Promise.all([
+  const [candidate, records, galleryImages] = await Promise.all([
     getCandidateById(id),
     getMatchRecords(id),
-    getProfileGalleryImageUrls(id),
+    getProfileGalleryImages(id),
   ]);
 
   if (!candidate) {
@@ -137,7 +137,7 @@ export async function ProfileDetailContent({ id, message, membership }: ProfileD
                       </p>
                       <div className="relative w-full">
                         <ProfileInteractiveGallery
-                          images={galleryImageUrls}
+                          images={galleryImages}
                           sizes="(max-width: 1024px) 100vw, 48vw"
                         />
                       </div>
@@ -372,7 +372,7 @@ export async function ProfileDetailContent({ id, message, membership }: ProfileD
               <p className="mt-2 text-sm text-slate-500">
                 사진은 상단 프로필 갤러리에서 썸네일로 전환하고, 메인 사진을 누르면 전체 화면으로
                 감상할 수 있습니다.
-                {galleryImageUrls.length > 0 ? ` (등록 ${galleryImageUrls.length}장)` : null}
+                {galleryImages.length > 0 ? ` (등록 ${galleryImages.length}장)` : null}
               </p>
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
                 {[

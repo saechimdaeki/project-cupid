@@ -2,45 +2,46 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 
 export function PendingStatusGuard() {
   const router = useRouter();
 
   useEffect(() => {
-    const supabase = createClient();
-
     let isActive = true;
+    let intervalId: number | null = null;
 
     async function syncStatus() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const response = await fetch("/api/membership-status", {
+        cache: "no-store",
+        credentials: "same-origin",
+      });
 
-      if (!user || !isActive) {
+      if (!response.ok || !isActive) {
         return;
       }
 
-      const { data: membership } = await supabase
-        .from("cupid_memberships")
-        .select("status")
-        .eq("user_id", user.id)
-        .maybeSingle();
+      const payload = (await response.json()) as { status: string | null };
 
       if (!isActive) {
         return;
       }
 
-      if (membership?.status === "approved") {
+      if (payload.status === "approved") {
         router.replace("/dashboard");
         router.refresh();
       }
     }
 
     void syncStatus();
+    intervalId = window.setInterval(() => {
+      void syncStatus();
+    }, 15000);
 
     return () => {
       isActive = false;
+      if (intervalId !== null) {
+        window.clearInterval(intervalId);
+      }
     };
   }, [router]);
 

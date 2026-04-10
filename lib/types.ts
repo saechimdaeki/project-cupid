@@ -40,6 +40,12 @@ export type CandidatePhoto = {
   created_at: string;
 };
 
+export type CandidateGalleryImage = {
+  id: string;
+  main_url: string;
+  thumb_url: string;
+};
+
 export type MatchRecord = {
   id: string;
   candidate_id: string;

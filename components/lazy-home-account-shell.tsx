@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import type { Membership } from "@/lib/types";
 
 function HomeAccountShellSkeleton() {
   return (
@@ -23,6 +24,6 @@ const HomeAccountShell = dynamic(
   },
 );
 
-export function LazyHomeAccountShell() {
-  return <HomeAccountShell />;
+export function LazyHomeAccountShell({ membership }: { membership: Membership | null }) {
+  return <HomeAccountShell membership={membership} />;
 }

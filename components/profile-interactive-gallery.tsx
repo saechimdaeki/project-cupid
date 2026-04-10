@@ -4,9 +4,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
+import type { CandidateGalleryImage } from "@/lib/types";
 
 type ProfileInteractiveGalleryProps = {
-  images: string[];
+  images: CandidateGalleryImage[];
   sizes: string;
 };
 
@@ -17,9 +18,9 @@ export function ProfileInteractiveGallery({ images, sizes }: ProfileInteractiveG
 
   const displayImages = useMemo(() => {
     const seen = new Set<string>();
-    return images.filter((src) => {
-      if (!src || seen.has(src)) return false;
-      seen.add(src);
+    return images.filter((image) => {
+      if (!image.main_url || seen.has(image.main_url)) return false;
+      seen.add(image.main_url);
       return true;
     });
   }, [images]);
@@ -31,7 +32,8 @@ export function ProfileInteractiveGallery({ images, sizes }: ProfileInteractiveG
   const safeIndex = displayImages.length
     ? Math.min(currentImageIndex, displayImages.length - 1)
     : 0;
-  const currentSrc = displayImages.length ? displayImages[safeIndex] : null;
+  const currentImage = displayImages.length ? displayImages[safeIndex] : null;
+  const currentSrc = currentImage?.main_url ?? null;
 
   useEffect(() => {
     if (currentImageIndex >= displayImages.length && displayImages.length > 0) {
@@ -177,9 +179,9 @@ export function ProfileInteractiveGallery({ images, sizes }: ProfileInteractiveG
 
         {showNav ? (
           <div className="mt-4 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {displayImages.map((src, index) => (
+            {displayImages.map((image, index) => (
               <button
-                key={src}
+                key={image.id}
                 type="button"
                 onClick={() => setCurrentImageIndex(index)}
                 className={cn(
@@ -192,7 +194,7 @@ export function ProfileInteractiveGallery({ images, sizes }: ProfileInteractiveG
                 aria-current={index === safeIndex}
               >
                 <img
-                  src={src}
+                  src={image.thumb_url}
                   alt=""
                   loading="lazy"
                   decoding="async"

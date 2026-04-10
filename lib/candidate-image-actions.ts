@@ -1,5 +1,7 @@
 "use server";
 
+import { unstable_cache } from "next/cache";
+import { candidateProfileTag } from "@/lib/cache-tags";
 import { isDirectImageUrl } from "@/lib/image-url-utils";
 import {
   CANDIDATE_PHOTOS_BUCKET,
@@ -9,6 +11,13 @@ import {
 import { createClient } from "@/lib/supabase/server";
 
 const DASHBOARD_IMAGE_PATHS_MAX = 500;
+const DASHBOARD_PROFILE_IMAGE_TRANSFORM = {
+  width: 240,
+  height: 240,
+  quality: 54,
+  resize: "cover" as const,
+};
+const PROFILE_IMAGE_CACHE_SECONDS = 60 * 30;
 
 /**
  * 대시보드용: Storage path 목록을 서버 세션으로 배치 서명합니다.
@@ -53,41 +62,48 @@ export async function resolveProfileImages(
   const uniqueIds = [...new Set(candidateIds.filter(Boolean))];
   if (!uniqueIds.length) return {};
 
-  const supabase = await createClient();
-  if (!supabase) return Object.fromEntries(uniqueIds.map((id) => [id, null]));
+  const resolvedEntries = await Promise.all(
+    uniqueIds.map(async (candidateId) => [
+      candidateId,
+      await unstable_cache(
+        async () => {
+          const supabase = await createClient();
+          if (!supabase) return null;
 
-  const { data, error } = await supabase
-    .from("cupid_candidates")
-    .select("id, image_url")
-    .in("id", uniqueIds);
+          const { data, error } = await supabase
+            .from("cupid_candidates")
+            .select("image_url")
+            .eq("id", candidateId)
+            .maybeSingle();
 
-  if (error || !data) return Object.fromEntries(uniqueIds.map((id) => [id, null]));
+          if (error || !data?.image_url) {
+            return null;
+          }
 
-  const rowsById = new Map(data.map((row) => [row.id, row]));
-  const storagePaths = [
-    ...new Set(
-      data
-        .map((row) => row.image_url)
-        .filter((url): url is string => Boolean(url) && !isDirectImageUrl(url)),
-    ),
-  ];
+          if (isDirectImageUrl(data.image_url)) {
+            return data.image_url;
+          }
 
-  const signedByPath =
-    storagePaths.length > 0
-      ? await createSignedUrlMapForStoragePaths(
-          supabase,
-          CANDIDATE_PHOTOS_BUCKET,
-          storagePaths,
-          CANDIDATE_PHOTOS_SIGNED_URL_TTL_SECONDS,
-        )
-      : new Map<string, string | null>();
+          const { data: signed, error: signedError } = await supabase.storage
+            .from(CANDIDATE_PHOTOS_BUCKET)
+            .createSignedUrl(data.image_url, CANDIDATE_PHOTOS_SIGNED_URL_TTL_SECONDS, {
+              transform: DASHBOARD_PROFILE_IMAGE_TRANSFORM,
+            });
 
-  return Object.fromEntries(
-    uniqueIds.map((id) => {
-      const row = rowsById.get(id);
-      if (!row?.image_url) return [id, null] as const;
-      if (isDirectImageUrl(row.image_url)) return [id, row.image_url] as const;
-      return [id, signedByPath.get(row.image_url) ?? null] as const;
-    }),
+          if (signedError || !signed?.signedUrl) {
+            return null;
+          }
+
+          return signed.signedUrl;
+        },
+        ["cupid-dashboard-profile-image", candidateId],
+        {
+          revalidate: PROFILE_IMAGE_CACHE_SECONDS,
+          tags: [candidateProfileTag(candidateId)],
+        },
+      )(),
+    ] as const),
   );
+
+  return Object.fromEntries(resolvedEntries);
 }
