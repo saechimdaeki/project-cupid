@@ -6,13 +6,13 @@ import { createClient } from "@/lib/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { cn } from "@/lib/cn";
 
 const CANDIDATE_PHOTOS_BUCKET = "sogaeting";
-const MAX_TOTAL_UPLOAD_BYTES = 45 * 1024 * 1024;
-const MAX_SINGLE_UPLOAD_BYTES = 10 * 1024 * 1024;
-const MAX_IMAGE_DIMENSION = 1800;
-const MIN_COMPRESSION_TARGET_BYTES = 1.5 * 1024 * 1024;
+const MAX_TOTAL_UPLOAD_BYTES = 24 * 1024 * 1024;
+const MAX_SINGLE_UPLOAD_BYTES = 6 * 1024 * 1024;
+const MAX_IMAGE_DIMENSION = 1280;
+const MIN_COMPRESSION_TARGET_BYTES = 512 * 1024;
+const STORAGE_CACHE_CONTROL_SECONDS = 60 * 60 * 24 * 30;
 const ALLOWED_UPLOAD_TYPES = new Set([
   "image/jpeg",
   "image/png",
@@ -64,6 +64,13 @@ function safeFileName(fileName: string) {
   const normalizedExt = ext.replace(/[^.a-z0-9]/g, "");
 
   return `${normalizedBase}${normalizedExt || ".jpg"}`;
+}
+
+function getOptimizedFileName(fileName: string) {
+  const trimmed = fileName.trim();
+  const dotIndex = trimmed.lastIndexOf(".");
+  const base = dotIndex >= 0 ? trimmed.slice(0, dotIndex) : trimmed;
+  return `${base || "photo"}.webp`;
 }
 
 async function loadImage(file: File) {
@@ -118,7 +125,7 @@ async function optimizeImageFile(file: File) {
     context.drawImage(image, 0, 0, targetWidth, targetHeight);
 
     const optimizedBlob = await new Promise<Blob | null>((resolve) => {
-      canvas.toBlob(resolve, "image/webp", 0.82);
+      canvas.toBlob(resolve, "image/webp", 0.76);
     });
 
     if (!optimizedBlob || optimizedBlob.size >= file.size) {
@@ -128,8 +135,7 @@ async function optimizeImageFile(file: File) {
       };
     }
 
-    const optimizedName = file.name.replace(/\.[^.]+$/, "") || "photo";
-    const optimizedFile = new File([optimizedBlob], `${optimizedName}.webp`, {
+    const optimizedFile = new File([optimizedBlob], getOptimizedFileName(file.name), {
       type: "image/webp",
       lastModified: file.lastModified,
     });
@@ -146,14 +152,6 @@ async function optimizeImageFile(file: File) {
   }
 }
 
-function isMobileUploadFallback() {
-  if (typeof navigator === "undefined") {
-    return false;
-  }
-
-  return /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent);
-}
-
 export function PhotoUploadField({
   storageFolderId,
   inputName = "uploadedPhotoPaths",
@@ -163,7 +161,6 @@ export function PhotoUploadField({
   const [previews, setPreviews] = useState<UploadedPreviewItem[]>([]);
   const [message, setMessage] = useState("여러 장을 첨부하면 첫 사진이 대표 사진이 됩니다.");
   const [isUploading, setIsUploading] = useState(false);
-  const [nativeMode, setNativeMode] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -209,35 +206,24 @@ export function PhotoUploadField({
     setIsUploading(true);
 
     try {
-      const useNativeMode = nativeMode || isMobileUploadFallback();
-
-      if (useNativeMode && !nativeMode) {
-        setNativeMode(true);
-      }
-
       for (const file of selectedFiles) {
         if (!ALLOWED_UPLOAD_TYPES.has(file.type)) {
           throw new Error("JPG, PNG, WEBP, HEIC, HEIF 형식만 업로드할 수 있습니다.");
         }
 
         if (file.size > MAX_SINGLE_UPLOAD_BYTES) {
-          throw new Error("사진 한 장은 10MB 이하만 업로드할 수 있습니다.");
+          throw new Error("사진 한 장은 6MB 이하만 업로드할 수 있습니다.");
         }
       }
 
-      const processedFiles: ProcessedFile[] = useNativeMode
-        ? selectedFiles.map((file) => ({
-            file,
-            helperText: `${formatBytes(file.size)} · 원본 유지`,
-          }))
-        : await Promise.all(selectedFiles.map(optimizeImageFile));
+      const processedFiles: ProcessedFile[] = await Promise.all(selectedFiles.map(optimizeImageFile));
 
       const totalBytes =
         previews.reduce((sum, item) => sum + item.size, 0) +
         processedFiles.reduce((sum, item) => sum + item.file.size, 0);
 
       if (totalBytes > MAX_TOTAL_UPLOAD_BYTES) {
-        throw new Error("사진 총 용량은 45MB 이하로 맞춰주세요.");
+        throw new Error("사진 총 용량은 24MB 이하로 맞춰주세요.");
       }
 
       const uploadedItems: UploadedPreviewItem[] = [];
@@ -248,6 +234,7 @@ export function PhotoUploadField({
           const { error } = await supabase.storage
             .from(CANDIDATE_PHOTOS_BUCKET)
             .upload(path, item.file, {
+              cacheControl: String(STORAGE_CACHE_CONTROL_SECONDS),
               contentType: item.file.type || "application/octet-stream",
               upsert: false,
             });
@@ -279,9 +266,7 @@ export function PhotoUploadField({
 
       setPreviews((current) => [...current, ...uploadedItems]);
 
-      if (nativeMode || useNativeMode) {
-        setMessage(`모바일 원본 업로드 완료 · 총 ${previews.length + uploadedItems.length}장`);
-      } else if (processedFiles.some((item) => item.file.type === "image/webp")) {
+      if (processedFiles.some((item) => item.helperText.includes("->"))) {
         setMessage(`자동 최적화 후 업로드 완료 · 총 ${previews.length + uploadedItems.length}장`);
       } else {
         setMessage(`업로드 완료 · 총 ${previews.length + uploadedItems.length}장`);
@@ -308,8 +293,8 @@ export function PhotoUploadField({
           <Badge variant="secondary">[선택]</Badge>
         </span>
         <span className="text-sm leading-7 text-muted-foreground">
-          선택 사항입니다. 사진은 브라우저에서 바로 안전하게 업로드됩니다. 모바일에서는 원본
-          업로드를 우선 사용합니다.
+          선택 사항입니다. 사진은 업로드 전에 브라우저에서 최대 1280px로 줄이고, 가능한 경우
+          WEBP로 압축합니다.
         </span>
         <span className="inline-flex min-h-11 w-full items-center justify-center rounded-full border border-border bg-card px-4 text-sm font-semibold text-secondary-foreground sm:w-fit">
           사진 선택하기

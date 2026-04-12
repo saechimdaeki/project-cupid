@@ -12,12 +12,12 @@ import { createClient } from "@/lib/supabase/server";
 
 const DASHBOARD_IMAGE_PATHS_MAX = 500;
 const DASHBOARD_PROFILE_IMAGE_TRANSFORM = {
-  width: 240,
-  height: 240,
-  quality: 54,
+  width: 160,
+  height: 160,
+  quality: 40,
   resize: "cover" as const,
 };
-const PROFILE_IMAGE_CACHE_SECONDS = 60 * 30;
+const PROFILE_IMAGE_CACHE_SECONDS = 60 * 60 * 6;
 
 /**
  * 대시보드용: Storage path 목록을 서버 세션으로 배치 서명합니다.
