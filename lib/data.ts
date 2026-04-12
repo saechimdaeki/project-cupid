@@ -23,42 +23,44 @@ import type {
 
 const DASHBOARD_TIMELINE_FETCH_LIMIT = 40;
 const TIMELINE_PAGE_SIZE = 40;
+const DASHBOARD_CANDIDATES_CACHE_SECONDS = 60 * 15;
+const PROFILE_CONTENT_CACHE_SECONDS = 60 * 60 * 6;
 const IMAGE_TRANSFORMS = {
   thumb: {
-    height: 240,
-    quality: 52,
+    height: 160,
+    quality: 40,
     resize: "cover" as const,
-    width: 240,
+    width: 160,
   },
   card: {
-    height: 560,
-    quality: 60,
+    height: 480,
+    quality: 48,
     resize: "cover" as const,
-    width: 420,
+    width: 360,
   },
   detail: {
-    height: 1280,
-    quality: 68,
+    height: 960,
+    quality: 58,
     resize: "cover" as const,
-    width: 960,
+    width: 720,
   },
   gallery: {
-    height: 720,
-    quality: 60,
-    resize: "cover" as const,
-    width: 560,
-  },
-  galleryThumb: {
-    height: 140,
-    quality: 44,
-    resize: "cover" as const,
-    width: 112,
-  },
-  editorThumb: {
-    height: 400,
+    height: 640,
     quality: 52,
     resize: "cover" as const,
-    width: 320,
+    width: 480,
+  },
+  galleryThumb: {
+    height: 120,
+    quality: 36,
+    resize: "cover" as const,
+    width: 96,
+  },
+  editorThumb: {
+    height: 320,
+    quality: 42,
+    resize: "cover" as const,
+    width: 240,
   },
 };
 
@@ -350,7 +352,7 @@ async function loadDashboardCandidatesUncached(): Promise<Candidate[]> {
 export async function getDashboardCandidates(): Promise<Candidate[]> {
   return unstable_cache(loadDashboardCandidatesUncached, ["cupid-dashboard-candidates-data"], {
     tags: [TAG_DASHBOARD_CANDIDATES],
-    revalidate: 90,
+    revalidate: DASHBOARD_CANDIDATES_CACHE_SECONDS,
   })();
 }
 
@@ -424,7 +426,7 @@ async function loadCandidateByIdUncached(id: string) {
 export async function getCandidateById(id: string) {
   return unstable_cache(async () => loadCandidateByIdUncached(id), ["cupid-candidate-detail", id], {
     tags: [candidateProfileTag(id)],
-    revalidate: 45,
+    revalidate: PROFILE_CONTENT_CACHE_SECONDS,
   })();
 }
 
@@ -518,7 +520,7 @@ export async function getMatchRecords(candidateId?: string) {
     return unstable_cache(
       async () => loadMatchRecordsForCandidateUncached(candidateId),
       ["cupid-match-records-candidate", candidateId],
-      { tags: [candidateProfileTag(candidateId)], revalidate: 45 },
+      { tags: [candidateProfileTag(candidateId)], revalidate: PROFILE_CONTENT_CACHE_SECONDS },
     )();
   }
   return loadMatchRecordsAllUncached();
@@ -810,7 +812,7 @@ export async function getCandidatePhotos(candidateId: string) {
   return unstable_cache(
     async () => loadCandidatePhotosUncached(candidateId),
     ["cupid-candidate-photos", candidateId],
-    { tags: [candidateProfileTag(candidateId)], revalidate: 45 },
+    { tags: [candidateProfileTag(candidateId)], revalidate: PROFILE_CONTENT_CACHE_SECONDS },
   )();
 }
 
@@ -909,7 +911,7 @@ export async function getProfileGalleryImages(candidateId: string): Promise<Cand
   return unstable_cache(
     async () => loadProfileGalleryImagesUncached(candidateId),
     ["cupid-profile-gallery-images", candidateId],
-    { tags: [candidateProfileTag(candidateId)], revalidate: 45 },
+    { tags: [candidateProfileTag(candidateId)], revalidate: PROFILE_CONTENT_CACHE_SECONDS },
   )();
 }
 

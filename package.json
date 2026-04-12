@@ -11,7 +11,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
-    "clean": "rimraf .next tsconfig.tsbuildinfo"
+    "clean": "rimraf .next tsconfig.tsbuildinfo",
+    "storage:optimize-images": "node scripts/optimize-supabase-storage-images.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.3.0",
