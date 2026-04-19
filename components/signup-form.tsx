@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { signUpWithPassword } from "@/server/actions/auth";
 import { signupSchema, type SignupInput } from "@/lib/schemas/auth";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/password-input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
@@ -83,10 +84,9 @@ export function SignupForm() {
 
             <Field data-invalid={errors.password ? true : undefined}>
               <FieldLabel htmlFor="signup-password">비밀번호</FieldLabel>
-              <Input
+              <PasswordInput
                 id="signup-password"
                 className="h-12 rounded-xl border-border/50 bg-card/60"
-                type="password"
                 placeholder="6자 이상"
                 autoComplete="new-password"
                 aria-invalid={errors.password ? true : undefined}

@@ -1,6 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/cn";
 import type { AppRole } from "@/lib/types";
 import type { DashboardBoardCandidate } from "./dashboard-flow-board";
 import { FlowBoardCard } from "./flow-board-card";
@@ -55,19 +54,6 @@ export function FlowBoardActiveLaneContent({
 
   return (
     <div className="mt-4 flex min-h-0 flex-1 flex-col overflow-y-auto -mx-5 px-5 -mb-5 pb-5 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-rose-200/60">
-      <div className="grid grid-cols-2 gap-x-3">
-        <p
-          className={cn(
-            "mb-2 flex shrink-0 items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-400/80",
-          )}
-        >
-          <span>🤵</span> 남성
-        </p>
-        <p className="mb-2 flex shrink-0 items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-rose-400/80">
-          <span>👰</span> 여성
-        </p>
-      </div>
-
       <div className="grid min-w-0 gap-3">
         {rows.length ? (
           rows.map((row, index) => (
