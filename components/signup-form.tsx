@@ -12,6 +12,7 @@ import { PasswordInput } from "@/components/password-input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { GoogleLoginButton } from "@/components/google-login-button";
 
 export function SignupForm() {
   const [isPending, startTransition] = useTransition();
@@ -100,6 +101,14 @@ export function SignupForm() {
             </Button>
           </FieldGroup>
         </form>
+
+        <div className="relative my-6 flex items-center">
+          <div className="flex-1 border-t border-border/40" />
+          <span className="px-3 text-xs text-muted-foreground">또는</span>
+          <div className="flex-1 border-t border-border/40" />
+        </div>
+
+        <GoogleLoginButton label="Google로 가입하기" nextPath="/pending" />
 
         <div className="mt-6 text-center">
           <p className="text-sm text-muted-foreground">
