@@ -74,7 +74,7 @@ export function FlowBoardPairedLaneContent({
   const pairedRows = buildPairedLaneRows(items);
 
   return (
-    <div className="mt-4 flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto -mx-5 px-5 -mb-5 pb-5 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-rose-200/60">
+    <div className="mt-4 flex flex-col gap-3">
       {pairedRows.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-rose-200/60 bg-white/50 px-3 py-8 text-center text-xs text-slate-400">
           매칭된 후보가 없습니다

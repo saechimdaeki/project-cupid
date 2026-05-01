@@ -176,6 +176,7 @@ export function FlowBoardCard({
   const inner = canAccessCandidateDetail(role) ? (
     <Link
       href={`/profiles/${candidate.id}`}
+      prefetch={false}
       className={cn("block", fillRowHeight && "flex h-full flex-col")}
     >
       {body}

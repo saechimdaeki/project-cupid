@@ -131,7 +131,7 @@ export function DashboardWorkspace({
   return (
     <>
       {/* Stat + Toolbar — 하나의 카드 */}
-      <div className="overflow-hidden rounded-2xl border border-white/60 bg-white/80 shadow-sm backdrop-blur-md">
+      <div className="overflow-hidden rounded-2xl border border-white/60 bg-white/80 shadow-sm backdrop-blur-md xl:sticky xl:top-[calc(4.25rem+0.75rem)] xl:z-20">
         <DashboardStatBar candidates={candidates} timelineEvents={timelineEvents} />
         <div className="border-t border-slate-100">
           <DashboardToolbar
