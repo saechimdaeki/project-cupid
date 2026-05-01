@@ -118,7 +118,7 @@ export function CandidateCard({ candidate, role = "viewer" }: CandidateCardProps
   }
 
   return (
-    <Link href={`/profiles/${candidate.id}`} className="block">
+    <Link href={`/profiles/${candidate.id}`} prefetch={false} className="block">
       {body}
     </Link>
   );

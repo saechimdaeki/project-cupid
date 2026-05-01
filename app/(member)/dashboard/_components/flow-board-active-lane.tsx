@@ -53,51 +53,49 @@ export function FlowBoardActiveLaneContent({
   );
 
   return (
-    <div className="mt-4 flex min-h-0 flex-1 flex-col overflow-y-auto -mx-5 px-5 -mb-5 pb-5 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-rose-200/60">
-      <div className="grid min-w-0 gap-3">
-        {rows.length ? (
-          rows.map((row, index) => (
-            <div key={`active-row-${index}`} className="grid grid-cols-2 items-stretch gap-3">
-              <div className="min-w-0">
-                {row.male ? (
-                  <FlowBoardCard
-                    key={row.male.id}
-                    candidate={row.male}
-                    candidateDirectory={candidateDirectory}
-                    role={role}
-                    canOperate={canOperate}
-                    pendingCandidateIds={pendingCandidateIds}
-                    fillRowHeight
-                  />
-                ) : (
-                  emptySlot("남")
-                )}
-              </div>
-
-              <div className="min-w-0">
-                {row.female ? (
-                  <FlowBoardCard
-                    key={row.female.id}
-                    candidate={row.female}
-                    candidateDirectory={candidateDirectory}
-                    role={role}
-                    canOperate={canOperate}
-                    pendingCandidateIds={pendingCandidateIds}
-                    fillRowHeight
-                  />
-                ) : (
-                  emptySlot("여")
-                )}
-              </div>
+    <div className="mt-4 grid min-w-0 gap-3">
+      {rows.length ? (
+        rows.map((row, index) => (
+          <div key={`active-row-${index}`} className="grid grid-cols-2 items-stretch gap-3">
+            <div className="min-w-0">
+              {row.male ? (
+                <FlowBoardCard
+                  key={row.male.id}
+                  candidate={row.male}
+                  candidateDirectory={candidateDirectory}
+                  role={role}
+                  canOperate={canOperate}
+                  pendingCandidateIds={pendingCandidateIds}
+                  fillRowHeight
+                />
+              ) : (
+                emptySlot("남")
+              )}
             </div>
-          ))
-        ) : (
-          <div className="grid grid-cols-2 gap-3">
-            <div className="min-w-0">{emptySlot("남")}</div>
-            <div className="min-w-0">{emptySlot("여")}</div>
+
+            <div className="min-w-0">
+              {row.female ? (
+                <FlowBoardCard
+                  key={row.female.id}
+                  candidate={row.female}
+                  candidateDirectory={candidateDirectory}
+                  role={role}
+                  canOperate={canOperate}
+                  pendingCandidateIds={pendingCandidateIds}
+                  fillRowHeight
+                />
+              ) : (
+                emptySlot("여")
+              )}
+            </div>
           </div>
-        )}
-      </div>
+        ))
+      ) : (
+        <div className="grid grid-cols-2 gap-3">
+          <div className="min-w-0">{emptySlot("남")}</div>
+          <div className="min-w-0">{emptySlot("여")}</div>
+        </div>
+      )}
     </div>
   );
 }

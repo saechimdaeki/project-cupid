@@ -139,7 +139,7 @@ function FlowBoardPairHalf({
 
   if (candidate && canAccessCandidateDetail(role)) {
     return (
-      <Link href={`/profiles/${candidate.id}`} className="block h-full">
+      <Link href={`/profiles/${candidate.id}`} prefetch={false} className="block h-full">
         {content}
       </Link>
     );

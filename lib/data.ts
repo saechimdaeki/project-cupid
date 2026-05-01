@@ -23,7 +23,8 @@ import type {
 
 const DASHBOARD_TIMELINE_FETCH_LIMIT = 40;
 const TIMELINE_PAGE_SIZE = 40;
-const DASHBOARD_CANDIDATES_CACHE_SECONDS = 60 * 15;
+const SIGNED_IMAGE_URL_CACHE_SECONDS = 60 * 60 * 22;
+const DASHBOARD_CANDIDATES_CACHE_SECONDS = SIGNED_IMAGE_URL_CACHE_SECONDS;
 const PROFILE_CONTENT_CACHE_SECONDS = 60 * 60 * 6;
 const IMAGE_TRANSFORMS = {
   thumb: {
@@ -135,6 +136,22 @@ async function resolveCandidateImage(
   return data.signedUrl;
 }
 
+async function resolveCandidateImageCached(
+  supabase: NonNullable<Awaited<ReturnType<typeof createClient>>>,
+  value: string | null,
+  variant: keyof typeof IMAGE_TRANSFORMS = "card",
+) {
+  if (!value || isDirectImageUrl(value)) {
+    return resolveCandidateImage(supabase, value, variant);
+  }
+
+  return unstable_cache(
+    async () => resolveCandidateImage(supabase, value, variant),
+    ["candidate-image-signed-url", value, variant],
+    { revalidate: SIGNED_IMAGE_URL_CACHE_SECONDS },
+  )();
+}
+
 async function attachTransformedImageUrlsToCandidates(
   supabase: NonNullable<Awaited<ReturnType<typeof createClient>>>,
   candidates: Candidate[],
@@ -143,7 +160,7 @@ async function attachTransformedImageUrlsToCandidates(
   const resolvedEntries = await Promise.all(
     candidates.map(async (candidate) => [
       candidate.id,
-      await resolveCandidateImage(supabase, candidate.image_url, variant),
+      await resolveCandidateImageCached(supabase, candidate.image_url, variant),
     ] as const),
   );
 
@@ -412,7 +429,7 @@ async function loadCandidateByIdUncached(id: string) {
   const candidate = mapCandidate(data);
 
   const [image_url, creatorName] = await Promise.all([
-    resolveCandidateImage(supabase, candidate.image_url, "detail"),
+    resolveCandidateImageCached(supabase, candidate.image_url, "detail"),
     getMembershipFullNameByUserId(supabase, data.created_by),
   ]);
 
@@ -797,7 +814,7 @@ async function loadCandidatePhotosUncached(candidateId: string): Promise<Candida
       photo.id,
       isDirectImageUrl(photo.image_url)
         ? photo.image_url
-        : await resolveCandidateImage(supabase, photo.image_url, "editorThumb"),
+        : await resolveCandidateImageCached(supabase, photo.image_url, "editorThumb"),
     ] as const),
   );
   const resolvedById = new Map(resolvedEntries);
@@ -888,8 +905,8 @@ async function loadProfileGalleryImagesUncached(candidateId: string): Promise<Ca
       }
 
       const [mainUrl, thumbUrl] = await Promise.all([
-        resolveCandidateImage(supabase, path, "gallery"),
-        resolveCandidateImage(supabase, path, "galleryThumb"),
+        resolveCandidateImageCached(supabase, path, "gallery"),
+        resolveCandidateImageCached(supabase, path, "galleryThumb"),
       ]);
 
       if (!mainUrl || !thumbUrl) {

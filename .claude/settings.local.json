@@ -4,7 +4,9 @@
       "Bash(npm run:*)",
       "Bash(git add:*)",
       "Bash(git commit -m ':*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(grep -E \"\\\\.tsx$|^d\")",
+      "Bash(xargs ls *)"
     ]
   }
 }

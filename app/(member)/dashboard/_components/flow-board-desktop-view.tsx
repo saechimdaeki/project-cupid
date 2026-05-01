@@ -27,7 +27,7 @@ export function FlowBoardDesktopView({
   candidateDirectory,
 }: FlowBoardDesktopViewProps) {
   return (
-    <div className="hidden gap-5 lg:grid lg:grid-cols-3 lg:h-[calc(100dvh-22rem)] xl:gap-6">
+    <div className="hidden gap-5 lg:grid lg:grid-cols-3 xl:gap-6">
       {PRIMARY_LANES.map((lane) => (
         <FlowBoardLane
           key={lane.key}
