@@ -2,11 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
-import {
-  closeMatchWithRecord,
-  promoteToCoupleFromDesk,
-  setStatusFromDesk,
-} from "@/lib/admin-actions";
+import Link from "next/link";
+import { closeMatchWithRecord, setStatusFromDesk } from "@/lib/admin-actions";
 import type { CandidateStatus } from "@/lib/types";
 import { getStatusLabel } from "@/lib/status-ui";
 import { Button } from "@/components/ui/button";
@@ -14,8 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 
 const CLOSURE_SELECT_VALUE = "__match_closure__";
 
-// '졸업(graduated)' 제거
-const STATUS_OPTIONS: CandidateStatus[] = ["active", "matched", "couple"];
+// 매칭진행중·커플완성 전환은 대시보드 칸반 전용 — 상세에서는 노출 중(active)과 종료만 다룸
+const STATUS_OPTIONS: CandidateStatus[] = ["active"];
 
 type OperatorDeskControlsProps = {
   candidateId: string;
@@ -46,6 +43,20 @@ export function OperatorDeskControls({
     setInlineError(null);
   }, [currentStatus]);
 
+  const handleCloseMatch = () => {
+    if (isPending || !closureFormRef.current) return;
+    const closureReason = (
+      closureFormRef.current.elements.namedItem("closureReason") as HTMLTextAreaElement
+    )?.value?.trim();
+    if (!closureReason) return;
+    const formData = new FormData();
+    formData.set("candidateId", candidateId);
+    formData.set("closureReason", closureReason);
+    startTransition(async () => {
+      await closeMatchWithRecord(formData);
+    });
+  };
+
   if (!canOperate) {
     return null;
   }
@@ -73,19 +84,111 @@ export function OperatorDeskControls({
           Couple Locked
         </p>
         <p className="mt-2 text-sm leading-6 text-orange-800">
-          커플완성 상태에서는 상태 변경이 잠깁니다.
+          커플완성 단계 조정은 대시보드 칸반에서만 할 수 있습니다.
           <br />
           {isSuperAdmin
-            ? "슈퍼어드민만 대시보드에서 카드를 직접 이동해 변경할 수 있습니다."
+            ? "슈퍼어드민은 대시보드에서 카드를 직접 이동할 수 있습니다."
             : "변경이 필요하면 슈퍼어드민에게 대시보드에서 카드 이동을 요청해 주세요."}
         </p>
       </div>
     );
   }
 
-  const showCouplePanel = selectValue === "couple" && !closureMode;
+  // 매칭 진행 중: 단계 이동·커플 확정은 칸반 전용, 상세에서는 종료 기록만 가능
+  if (currentStatus === "matched") {
+    const showMatchedClosurePanel = closureMode;
+    return (
+      <div className="mt-5 grid gap-3">
+        <div className="rounded-2xl border border-rose-100/70 bg-rose-50/60 p-4 backdrop-blur-sm">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-rose-500/90">
+            Matching In Progress
+          </p>
+          <p className="mt-2 text-sm leading-6 text-slate-800">
+            진행 단계 이동과 커플 확정은 대시보드 칸반에서만 할 수 있습니다.
+          </p>
+          <Link
+            href="/dashboard"
+            className="mt-3 inline-flex h-10 items-center rounded-full border border-rose-200/80 bg-white/90 px-4 text-sm font-medium text-rose-700 shadow-sm transition hover:bg-rose-50"
+          >
+            대시보드 열기
+          </Link>
+        </div>
+
+        {!showMatchedClosurePanel ? (
+          <Button
+            type="button"
+            variant="outline"
+            disabled={isPending}
+            onClick={() => {
+              setClosureMode(true);
+              setInlineError(null);
+            }}
+            className="h-11 w-full rounded-full border-rose-200/80 bg-white/90 text-sm font-medium text-slate-700 shadow-sm hover:bg-rose-50 sm:w-auto"
+          >
+            매칭 종료(실패) 기록 남기기
+          </Button>
+        ) : null}
+
+        {inlineError ? (
+          <p className="rounded-xl border border-amber-200/70 bg-amber-50/60 px-3 py-2 text-xs font-medium text-amber-800">
+            {inlineError}
+          </p>
+        ) : null}
+
+        {showMatchedClosurePanel ? (
+          <div className="rounded-2xl border border-rose-200/70 bg-rose-50/50 p-4 backdrop-blur-sm">
+            {!hasPair ? (
+              <p className="text-sm text-amber-800">
+                현재 연결된 상대(Current Pair)가 없으면 매칭 종료 기록을 남길 수 없습니다. 먼저
+                대시보드에서 매칭을 연결해 주세요.
+              </p>
+            ) : (
+              <form ref={closureFormRef} onSubmit={(e) => e.preventDefault()} className="grid gap-3">
+                <label className="grid gap-1.5">
+                  <span className="text-xs font-semibold text-rose-600/90">
+                    종료 사유 (예: 성향 차이, 연락 두절 등)
+                  </span>
+                  <Textarea
+                    name="closureReason"
+                    required
+                    rows={4}
+                    disabled={isPending}
+                    placeholder="주선자 비공개 메모로 PAST RECORDS에 저장됩니다."
+                    className="min-h-[6rem] rounded-xl border-rose-100/80 bg-white/95 px-3 py-2 text-sm text-slate-700 shadow-sm focus:border-rose-200 focus:ring-2 focus:ring-rose-100"
+                  />
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    onClick={handleCloseMatch}
+                    disabled={isPending}
+                    className="h-11 rounded-full bg-slate-700 px-5 text-sm font-semibold text-white shadow-sm hover:bg-slate-800"
+                  >
+                    {isPending ? "처리 중…" : "종료 확정"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={isPending}
+                    className="h-11 rounded-full border-rose-200/80 bg-white/90 px-5 text-sm font-medium text-slate-600 hover:bg-white"
+                    onClick={() => {
+                      setClosureMode(false);
+                      setInlineError(null);
+                    }}
+                  >
+                    취소
+                  </Button>
+                </div>
+              </form>
+            )}
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
   const showClosurePanel = closureMode && selectValue === CLOSURE_SELECT_VALUE;
-  const showDefaultButton = !showCouplePanel && !showClosurePanel;
+  const showDefaultButton = !showClosurePanel;
 
   const handleStatusChange = () => {
     if (isPending) return;
@@ -97,38 +200,6 @@ export function OperatorDeskControls({
       } else {
         setInlineError(result.error ?? "상태 변경에 실패했습니다.");
       }
-    });
-  };
-
-  // 커플 확정: non-redirecting 방식 → router.push로 이동 (303 버그 완전 제거)
-  const handleCoupleConfirm = () => {
-    if (isPending) return;
-    setInlineError(null);
-    const formData = new FormData();
-    formData.set("candidateId", candidateId);
-    formData.set("counterpartId", pairedCandidateId ?? "");
-    startTransition(async () => {
-      const result = await promoteToCoupleFromDesk(formData);
-      if (result.ok) {
-        router.push(`/profiles/${candidateId}?message=couple-confirmed`);
-      } else {
-        setInlineError(result.error ?? "커플 확정에 실패했습니다.");
-      }
-    });
-  };
-
-  // 종료 확정: isPending으로 더블클릭 방지 (form ref에서 FormData 직접 생성)
-  const handleCloseMatch = () => {
-    if (isPending || !closureFormRef.current) return;
-    const closureReason = (
-      closureFormRef.current.elements.namedItem("closureReason") as HTMLTextAreaElement
-    )?.value?.trim();
-    if (!closureReason) return;
-    const formData = new FormData();
-    formData.set("candidateId", candidateId);
-    formData.set("closureReason", closureReason);
-    startTransition(async () => {
-      await closeMatchWithRecord(formData);
     });
   };
 
@@ -178,43 +249,6 @@ export function OperatorDeskControls({
         <p className="rounded-xl border border-amber-200/70 bg-amber-50/60 px-3 py-2 text-xs font-medium text-amber-800">
           {inlineError}
         </p>
-      ) : null}
-
-      {/* 커플완성 확정 패널 */}
-      {showCouplePanel ? (
-        <div className="rounded-2xl border border-orange-200/70 bg-orange-50/50 p-4 backdrop-blur-sm">
-          {!hasPair ? (
-            <p className="text-sm text-amber-800">
-              연결된 상대(Current Pair)가 없으면 커플완성 처리를 할 수 없습니다. 먼저 대시보드에서
-              매칭을 연결해 주세요.
-            </p>
-          ) : (
-            <div className="grid gap-3">
-              <p className="text-sm font-medium text-orange-800">
-                현재 연결된 상대와의 매칭을 커플완성으로 확정합니다.
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  type="button"
-                  onClick={handleCoupleConfirm}
-                  disabled={isPending}
-                  className="h-11 rounded-full bg-orange-500 px-5 text-sm font-semibold text-white shadow-sm hover:bg-orange-600"
-                >
-                  {isPending ? "처리 중…" : "커플 확정"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={isPending}
-                  className="h-11 rounded-full border-rose-200/80 bg-white/90 px-5 text-sm font-medium text-slate-600 hover:bg-white"
-                  onClick={() => setSelectValue(currentStatus)}
-                >
-                  취소
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
       ) : null}
 
       {/* 매칭 종료(실패) 패널 */}

@@ -16,6 +16,8 @@ const FLOW_COLUMNS: Array<{
   { key: "terminated", label: "종료" },
 ];
 
+const DEFAULT_FLOW_COLUMNS: MatchFlowColumnKey[] = ["progress", "completed", "terminated"];
+
 function getOutcomeLabel(outcome: MatchOutcome) {
   switch (outcome) {
     case "intro_sent":
@@ -47,9 +49,15 @@ function getOutcomeBadgeClass(outcome: MatchOutcome) {
 type ProfileMatchKanbanProps = {
   candidateId: string;
   canOperate: boolean;
+  /** 기본: 진행·커플·종료 전부. 매물 상세 등에서는 `["terminated"]`만 두고 대시보드 칸반과 역할을 나눕니다. */
+  columns?: MatchFlowColumnKey[];
 };
 
-export function ProfileMatchKanban({ candidateId, canOperate }: ProfileMatchKanbanProps) {
+export function ProfileMatchKanban({
+  candidateId,
+  canOperate,
+  columns = DEFAULT_FLOW_COLUMNS,
+}: ProfileMatchKanbanProps) {
   const { matchRecords } = useMatchRecords();
 
   const columnRecords: Record<MatchFlowColumnKey, MatchRecord[]> = {
@@ -58,9 +66,17 @@ export function ProfileMatchKanban({ candidateId, canOperate }: ProfileMatchKanb
     terminated: filterMatchRecordsForColumn(matchRecords, "terminated"),
   };
 
+  const visibleColumns = FLOW_COLUMNS.filter((col) => columns.includes(col.key));
+  const gridColsClass =
+    visibleColumns.length >= 3
+      ? "lg:grid-cols-3"
+      : visibleColumns.length === 2
+        ? "lg:grid-cols-2"
+        : "lg:grid-cols-1";
+
   return (
-    <div className="mt-6 grid gap-5 lg:grid-cols-3">
-      {FLOW_COLUMNS.map((col) => {
+    <div className={`mt-6 grid gap-5 ${gridColsClass}`}>
+      {visibleColumns.map((col) => {
         const group = columnRecords[col.key];
         return (
           <article
