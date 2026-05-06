@@ -332,12 +332,20 @@ export async function ProfileDetailContent({ id, message, membership }: ProfileD
                       Match Flow
                     </p>
                     <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-slate-800">
-                      칸반 흐름
+                      종료된 매칭
                     </h2>
+                    <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">
+                      진행 중·커플 완성 단계는 대시보드 칸반에서만 다룹니다. 여기서는 종료 처리된 건만
+                      확인할 수 있습니다.
+                    </p>
                   </div>
                 </div>
 
-                <ProfileMatchKanban candidateId={candidate.id} canOperate={canOperate} />
+                <ProfileMatchKanban
+                  candidateId={candidate.id}
+                  canOperate={canOperate}
+                  columns={["terminated"]}
+                />
               </div>
 
               <aside className="rounded-3xl border border-slate-200/90 bg-slate-50 p-6 shadow-lg shadow-slate-200/30 backdrop-blur-md sm:p-8">
