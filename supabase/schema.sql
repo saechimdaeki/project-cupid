@@ -215,6 +215,27 @@ as $$
   );
 $$;
 
+create or replace function public.cupid_find_masked_usernames_by_full_name(input_full_name text)
+returns table(masked_username text)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select
+    case
+      when char_length(username) <= 2 then repeat('*', char_length(username))
+      when char_length(username) <= 4 then
+        left(username, 1) || repeat('*', char_length(username) - 2) || right(username, 1)
+      else
+        left(username, 2) || repeat('*', char_length(username) - 4) || right(username, 2)
+    end as masked_username
+  from public.cupid_memberships
+  where lower(trim(full_name)) = lower(trim(input_full_name))
+  order by created_at desc
+  limit 20;
+$$;
+
 create or replace function public.cupid_can_view_candidate_detail()
 returns boolean
 language sql

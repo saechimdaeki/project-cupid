@@ -12,6 +12,7 @@ import { PasswordInput } from "@/components/password-input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { FindUsernameDialog } from "@/components/find-username-dialog";
 
 export function LoginForm() {
   const [isPending, startTransition] = useTransition();
@@ -87,7 +88,8 @@ export function LoginForm() {
           </FieldGroup>
         </form>
 
-        <div className="mt-6 text-center">
+        <div className="mt-6 flex flex-col items-center gap-2 text-center">
+          <FindUsernameDialog />
           <p className="text-sm text-muted-foreground">
             아직 계정이 없으신가요?{" "}
             <Link href="/signup" className="font-medium text-primary hover:text-primary/80">

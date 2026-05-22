@@ -13,6 +13,12 @@ export const loginSchema = z.object({
 
 export type LoginInput = z.infer<typeof loginSchema>;
 
+export const findUsernameSchema = z.object({
+  fullName: z.string().trim().min(2, "이름을 2자 이상 입력해주세요.").max(50),
+});
+
+export type FindUsernameInput = z.infer<typeof findUsernameSchema>;
+
 export const signupSchema = z.object({
   username: usernameField,
   fullName: z.string().trim().min(2, "이름을 2자 이상 입력해주세요.").max(50),
