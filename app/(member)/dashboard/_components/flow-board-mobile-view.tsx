@@ -3,6 +3,7 @@
 import { cn } from "@/lib/cn";
 import { getStatusBadgeClass } from "@/lib/status-ui";
 import { Button } from "@/components/ui/button";
+import type { ActiveMatchPair } from "@/lib/match-flow-columns";
 import type { AppRole, CandidateStatus } from "@/lib/types";
 import type { DashboardBoardCandidate } from "./dashboard-flow-board";
 import { PRIMARY_LANES } from "./dashboard-flow-board";
@@ -12,6 +13,7 @@ import { FlowBoardLane, groupCandidatesByStatus } from "./flow-board-lane";
 
 type FlowBoardMobileViewProps = {
   items: DashboardBoardCandidate[];
+  activeMatchPairs: ActiveMatchPair[];
   mobileLane: CandidateStatus;
   onMobileLaneChange: (lane: CandidateStatus) => void;
   dropTarget: CandidateStatus | null;
@@ -25,6 +27,7 @@ type FlowBoardMobileViewProps = {
 
 export function FlowBoardMobileView({
   items,
+  activeMatchPairs,
   mobileLane,
   onMobileLaneChange,
   dropTarget,
@@ -73,6 +76,7 @@ export function FlowBoardMobileView({
         description={PRIMARY_LANES.find((lane) => lane.key === mobileLane)?.description ?? ""}
         compact
         items={groupCandidatesByStatus(items, mobileLane)}
+        activeMatchPairs={activeMatchPairs}
         isDropTarget={dropTarget === mobileLane}
         role={role}
         canOperate={canOperate}

@@ -1,5 +1,6 @@
 "use client";
 
+import type { ActiveMatchPair } from "@/lib/match-flow-columns";
 import type { AppRole, CandidateStatus } from "@/lib/types";
 import type { DashboardBoardCandidate } from "./dashboard-flow-board";
 import { PRIMARY_LANES } from "./dashboard-flow-board";
@@ -9,6 +10,7 @@ import { FlowBoardLane, groupCandidatesByStatus } from "./flow-board-lane";
 
 type FlowBoardDesktopViewProps = {
   items: DashboardBoardCandidate[];
+  activeMatchPairs: ActiveMatchPair[];
   dropTarget: CandidateStatus | null;
   role: AppRole;
   canOperate: boolean;
@@ -20,6 +22,7 @@ type FlowBoardDesktopViewProps = {
 
 export function FlowBoardDesktopView({
   items,
+  activeMatchPairs,
   dropTarget,
   role,
   canOperate,
@@ -35,6 +38,7 @@ export function FlowBoardDesktopView({
           title={lane.title}
           description={lane.description}
           items={groupCandidatesByStatus(items, lane.key)}
+          activeMatchPairs={activeMatchPairs}
           isDropTarget={dropTarget === lane.key}
           role={role}
           canOperate={canOperate}

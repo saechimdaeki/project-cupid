@@ -4,9 +4,11 @@ import { useEffect, useId, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import type { DragEndEvent, DragOverEvent, DragStartEvent } from "@dnd-kit/core";
-import { moveCandidatePairStatus, moveCandidateStatus } from "@/lib/admin-actions";
+import { moveCandidatePairStatus, moveCandidateStatus, unmatchPair } from "@/lib/admin-actions";
 import { formatCandidateBrief } from "@/lib/candidate-display";
 import { canEditCandidates, canManageRoles } from "@/lib/role-utils";
+import { parsePairDraggableId } from "./flow-board-pair-card";
+import type { ActiveMatchPair } from "@/lib/match-flow-columns";
 import type { AppRole, Candidate, CandidateStatus } from "@/lib/types";
 import { PairMatchDialog } from "./pair-match-dialog";
 import { FlowBoardCardBody } from "./flow-board-card";
@@ -45,6 +47,7 @@ type PairComposerState = {
 type DashboardFlowBoardProps = {
   candidates: DashboardBoardCandidate[];
   allCandidates: DashboardBoardCandidate[];
+  activeMatchPairs: ActiveMatchPair[];
   role: AppRole;
 };
 
@@ -85,8 +88,8 @@ function getEligiblePairOptions(
     if (candidate.id === source.id) return false;
     if (candidate.gender === source.gender) return false;
     if (candidate.status === "graduated" || candidate.status === "archived") return false;
-    if (candidate.paired_candidate_id && candidate.paired_candidate_id !== source.id) return false;
 
+    // 1:N 매칭 허용 — 이미 다른 상대와 진행 중인 후보도 새 상대로 선택할 수 있다.
     if (targetStatus === "couple" && source.paired_candidate_id) {
       return candidate.id === source.paired_candidate_id;
     }
@@ -97,7 +100,12 @@ function getEligiblePairOptions(
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function DashboardFlowBoard({ candidates, allCandidates, role }: DashboardFlowBoardProps) {
+export function DashboardFlowBoard({
+  candidates,
+  allCandidates,
+  activeMatchPairs,
+  role,
+}: DashboardFlowBoardProps) {
   const router = useRouter();
   const [items, setItems] = useState(candidates);
   const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -218,6 +226,58 @@ export function DashboardFlowBoard({ candidates, allCandidates, role }: Dashboar
     });
   };
 
+  // 관계 단위 매칭 종료 (1:N — 한 페어 카드만 적극검토로 되돌릴 때).
+  // 남은 매칭 여부에 따른 status 재계산은 서버가 처리하므로 새로고침으로 반영한다.
+  const executeUnmatch = (candidateAId: string, candidateBId: string) => {
+    const affectedIds = new Set([candidateAId, candidateBId]);
+    setNotice(null);
+    setPendingCandidateIds(affectedIds);
+
+    startTransition(async () => {
+      const result = await unmatchPair(candidateAId, candidateBId);
+      setPendingCandidateIds(new Set());
+
+      if (!result.ok) {
+        setNotice(result.message ?? "매칭 종료에 실패했습니다.");
+        return;
+      }
+
+      router.refresh();
+    });
+  };
+
+  const handleSingleCardDrag = (
+    candidate: DashboardBoardCandidate,
+    targetStatus: CandidateStatus,
+  ) => {
+    if (candidate.status === "couple" && !canReopenCouple) return;
+    if (candidate.status === targetStatus) return;
+
+    if (targetStatus === "matched" || targetStatus === "couple") {
+      const options = getEligiblePairOptions(candidate, allCandidates, targetStatus);
+      const existingCounterpartId =
+        candidate.paired_candidate_id &&
+        options.some((option) => option.id === candidate.paired_candidate_id)
+          ? candidate.paired_candidate_id
+          : null;
+
+      // 커플완성으로 이동 시 이미 페어가 있으면 다이얼로그 없이 바로 이동
+      if (targetStatus === "couple" && existingCounterpartId) {
+        executePairMove(candidate.id, existingCounterpartId, targetStatus);
+        return;
+      }
+
+      setPairComposer({
+        candidateId: candidate.id,
+        targetStatus,
+        counterpartId: existingCounterpartId ?? "",
+      });
+      return;
+    }
+
+    moveSingleItem(candidate.id, targetStatus);
+  };
+
   const confirmPairMove = () => {
     if (!pairComposer?.counterpartId) {
       setNotice("상대 후보를 선택해야 합니다.");
@@ -252,35 +312,38 @@ export function DashboardFlowBoard({ candidates, allCandidates, role }: Dashboar
     const { active, over } = event;
     if (!over || !canOperate) return;
 
-    const candidateId = active.id as string;
     const targetStatus = over.id as CandidateStatus;
-
     if (!PRIMARY_LANES.some((lane) => lane.key === targetStatus)) return;
 
-    const candidate = candidateDirectory.get(candidateId);
-    if (!candidate) return;
-    if (candidate.status === "couple" && !canReopenCouple) return;
-    if (candidate.status === targetStatus) return;
+    // 페어 카드(매칭진행중/커플완성)는 관계(양쪽 id)를 인코딩한 draggable id를 갖는다.
+    const pairInfo = parsePairDraggableId(active.id as string);
 
-    if (targetStatus === "matched" || targetStatus === "couple") {
-      const options = getEligiblePairOptions(candidate, allCandidates, targetStatus);
-      const existingCounterpartId =
-        candidate.paired_candidate_id &&
-        options.some((option) => option.id === candidate.paired_candidate_id)
-          ? candidate.paired_candidate_id
-          : null;
+    if (pairInfo) {
+      const primary = candidateDirectory.get(pairInfo.primaryId);
+      if (!primary) return;
+      if (primary.status === "couple" && !canReopenCouple) return;
+      if (primary.status === targetStatus) return;
 
-      // 커플완성으로 이동 시 이미 페어가 있으면 다이얼로그 없이 바로 이동
-      if (targetStatus === "couple" && existingCounterpartId) {
-        executePairMove(candidateId, existingCounterpartId, targetStatus);
-        return;
+      // 짝이 있는 관계 → 관계 단위로 처리 (1:N에서 해당 관계만 종료/커플 확정)
+      if (pairInfo.partnerId) {
+        if (targetStatus === "active") {
+          executeUnmatch(pairInfo.primaryId, pairInfo.partnerId);
+          return;
+        }
+        if (targetStatus === "couple") {
+          executePairMove(pairInfo.primaryId, pairInfo.partnerId, "couple");
+          return;
+        }
       }
 
-      setPairComposer({ candidateId, targetStatus, counterpartId: existingCounterpartId ?? "" });
+      // 짝 없는 잔여 반쪽·기타(커플 재오픈 등)는 단일 후보 흐름으로 위임
+      handleSingleCardDrag(primary, targetStatus);
       return;
     }
 
-    moveSingleItem(candidateId, targetStatus);
+    const candidate = candidateDirectory.get(active.id as string);
+    if (!candidate) return;
+    handleSingleCardDrag(candidate, targetStatus);
   };
 
   const handleDragCancel = () => {
@@ -290,9 +353,13 @@ export function DashboardFlowBoard({ candidates, allCandidates, role }: Dashboar
 
   // ── Render ──────────────────────────────────────────────────────────────────
 
-  const draggingCandidate = draggingId ? candidateDirectory.get(draggingId) : null;
-  const draggingPartner = draggingCandidate?.paired_candidate_id
-    ? (candidateDirectory.get(draggingCandidate.paired_candidate_id) ?? null)
+  const draggingPairInfo = draggingId ? parsePairDraggableId(draggingId) : null;
+  const draggingPrimaryId = draggingPairInfo ? draggingPairInfo.primaryId : draggingId;
+  const draggingCandidate = draggingPrimaryId
+    ? (candidateDirectory.get(draggingPrimaryId) ?? null)
+    : null;
+  const draggingPartner = draggingPairInfo?.partnerId
+    ? (candidateDirectory.get(draggingPairInfo.partnerId) ?? null)
     : null;
 
   const sharedLaneProps = {
@@ -300,6 +367,7 @@ export function DashboardFlowBoard({ candidates, allCandidates, role }: Dashboar
     canOperate,
     pendingCandidateIds,
     candidateDirectory,
+    activeMatchPairs,
   };
 
   return (

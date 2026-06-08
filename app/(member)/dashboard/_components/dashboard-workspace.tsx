@@ -8,11 +8,13 @@ import { DashboardStatBar } from "./dashboard-stat-bar";
 import { DashboardToolbar } from "./dashboard-toolbar";
 import { DashboardViewToggle } from "./dashboard-view-toggle";
 import { DashboardViewMode } from "@/lib/types";
+import type { ActiveMatchPair } from "@/lib/match-flow-columns";
 import type { AppRole, Candidate, TimelineEvent } from "@/lib/types";
 
 type DashboardWorkspaceProps = {
   candidates: Candidate[];
   timelineEvents: TimelineEvent[];
+  activeMatchPairs: ActiveMatchPair[];
   role: AppRole;
   initialView?: DashboardViewMode;
 };
@@ -20,6 +22,7 @@ type DashboardWorkspaceProps = {
 export function DashboardWorkspace({
   candidates,
   timelineEvents,
+  activeMatchPairs,
   role,
   initialView = DashboardViewMode.FLOW,
 }: DashboardWorkspaceProps) {
@@ -162,6 +165,7 @@ export function DashboardWorkspace({
           boardCandidates={boardCandidates}
           visibleBoardCandidates={visibleBoardCandidates}
           timelineEvents={timelineEvents}
+          activeMatchPairs={activeMatchPairs}
           role={role}
         />
       </div>

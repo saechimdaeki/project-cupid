@@ -81,9 +81,20 @@ export async function ProfileDetailContent({ id, message, membership }: ProfileD
     ),
   ];
 
+  // 현재 매칭 상대는 진행중/커플(closed가 아닌) 매칭 레코드에서 도출 (1:N).
+  const currentPartnerIds = [
+    ...new Set(
+      records
+        .filter((record) => record.outcome !== "closed" && record.counterpart_candidate_id)
+        .map((record) => record.counterpart_candidate_id as string),
+    ),
+  ];
+
   const relatedCandidateIds = [
     ...new Set(
-      [candidate.paired_candidate_id, ...pastCounterpartIds].filter((x): x is string => Boolean(x)),
+      [candidate.paired_candidate_id, ...currentPartnerIds, ...pastCounterpartIds].filter(
+        (x): x is string => Boolean(x),
+      ),
     ),
   ];
 
@@ -92,9 +103,15 @@ export async function ProfileDetailContent({ id, message, membership }: ProfileD
     : [];
 
   const relatedById = new Map(relatedCandidates.map((c) => [c.id, c]));
-  const counterpartCandidate = candidate.paired_candidate_id
-    ? (relatedById.get(candidate.paired_candidate_id) ?? null)
-    : null;
+
+  const currentPartners = currentPartnerIds
+    .map((partnerId) => relatedById.get(partnerId))
+    .filter((partner): partner is (typeof relatedCandidates)[number] => Boolean(partner));
+
+  const currentPartnerOptions = currentPartners.map((partner) => ({
+    id: partner.id,
+    label: getCandidateGalleryLabel(partner),
+  }));
 
   const counterpartsById = Object.fromEntries(
     pastCounterpartIds
@@ -112,10 +129,6 @@ export async function ProfileDetailContent({ id, message, membership }: ProfileD
     membership.user_id,
     candidate.created_by,
   );
-  const counterpartHeroUrl =
-    counterpartCandidate && isRenderableImageUrl(counterpartCandidate.image_url)
-      ? counterpartCandidate.image_url
-      : null;
   const metaChips = getStudioMetaChips(candidate);
   const deskMessage = getDeskMessage(message);
 
@@ -254,40 +267,52 @@ export async function ProfileDetailContent({ id, message, membership }: ProfileD
                   <OperatorDeskControls
                     candidateId={candidate.id}
                     currentStatus={candidate.status}
-                    pairedCandidateId={candidate.paired_candidate_id}
+                    currentPartners={currentPartnerOptions}
                     canOperate={canOperate}
                     isSuperAdmin={isSuperAdmin}
                   />
                 </div>
 
-                {counterpartCandidate ? (
+                {currentPartners.length ? (
                   <div className="mt-6 rounded-2xl border border-orange-100/70 bg-orange-50/50 p-4 backdrop-blur-sm">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-orange-500/90">
-                      Current Pair · 연결 중
+                      Current Pair · 연결 중{currentPartners.length > 1 ? ` (${currentPartners.length})` : ""}
                     </p>
-                    <div className="mt-4 flex flex-col items-center gap-4 sm:flex-row sm:items-start">
-                      <div className="w-full max-w-[200px] shrink-0 border border-white/80 bg-rose-50 shadow-[0_12px_36px_rgba(251,146,60,0.2)] sm:max-w-[176px]">
-                        <ProfilePortrait
-                          imageUrl={counterpartHeroUrl}
-                          sizes="200px"
-                          roundedClassName="rounded-2xl"
-                          className="border-0"
-                        />
-                      </div>
-                      <div className="min-w-0 flex-1 text-center sm:text-left">
-                        <p className="text-base font-semibold text-slate-800">
-                          {getCandidateGalleryLabel(counterpartCandidate)}
-                        </p>
-                        <p className="mt-1 text-sm font-medium text-slate-600">
-                          {getTitle(counterpartCandidate)}
-                        </p>
-                        <Link
-                          href={`/profiles/${counterpartCandidate.id}`}
-                          className="mt-4 inline-flex text-sm font-semibold text-rose-600 underline-offset-2 hover:text-rose-700 hover:underline"
-                        >
-                          상대 상세 보기
-                        </Link>
-                      </div>
+                    <div className="mt-4 flex flex-col gap-5">
+                      {currentPartners.map((partner) => {
+                        const partnerHeroUrl = isRenderableImageUrl(partner.image_url)
+                          ? partner.image_url
+                          : null;
+                        return (
+                          <div
+                            key={partner.id}
+                            className="flex flex-col items-center gap-4 sm:flex-row sm:items-start"
+                          >
+                            <div className="w-full max-w-[200px] shrink-0 border border-white/80 bg-rose-50 shadow-[0_12px_36px_rgba(251,146,60,0.2)] sm:max-w-[176px]">
+                              <ProfilePortrait
+                                imageUrl={partnerHeroUrl}
+                                sizes="200px"
+                                roundedClassName="rounded-2xl"
+                                className="border-0"
+                              />
+                            </div>
+                            <div className="min-w-0 flex-1 text-center sm:text-left">
+                              <p className="text-base font-semibold text-slate-800">
+                                {getCandidateGalleryLabel(partner)}
+                              </p>
+                              <p className="mt-1 text-sm font-medium text-slate-600">
+                                {getTitle(partner)}
+                              </p>
+                              <Link
+                                href={`/profiles/${partner.id}`}
+                                className="mt-4 inline-flex text-sm font-semibold text-rose-600 underline-offset-2 hover:text-rose-700 hover:underline"
+                              >
+                                상대 상세 보기
+                              </Link>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 ) : null}
