@@ -14,10 +14,15 @@ const CLOSURE_SELECT_VALUE = "__match_closure__";
 // 매칭진행중·커플완성 전환은 대시보드 칸반 전용 — 상세에서는 노출 중(active)과 종료만 다룸
 const STATUS_OPTIONS: CandidateStatus[] = ["active"];
 
+type OperatorDeskPartner = {
+  id: string;
+  label: string;
+};
+
 type OperatorDeskControlsProps = {
   candidateId: string;
   currentStatus: CandidateStatus;
-  pairedCandidateId: string | null;
+  currentPartners: OperatorDeskPartner[];
   canOperate: boolean;
   isSuperAdmin?: boolean;
 };
@@ -25,13 +30,16 @@ type OperatorDeskControlsProps = {
 export function OperatorDeskControls({
   candidateId,
   currentStatus,
-  pairedCandidateId,
+  currentPartners,
   canOperate,
   isSuperAdmin = false,
 }: OperatorDeskControlsProps) {
-  const hasPair = Boolean(pairedCandidateId);
+  const hasPair = currentPartners.length > 0;
+  // currentPartners는 매 렌더 새 배열이라 첫 상대 id를 키로 사용해 동기화한다.
+  const firstPartnerId = currentPartners[0]?.id ?? "";
   const [selectValue, setSelectValue] = useState<string>(currentStatus);
   const [closureMode, setClosureMode] = useState(false);
+  const [closureCounterpartId, setClosureCounterpartId] = useState<string>(firstPartnerId);
   const [inlineError, setInlineError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const closureFormRef = useRef<HTMLFormElement>(null);
@@ -40,8 +48,9 @@ export function OperatorDeskControls({
   useEffect(() => {
     setSelectValue(currentStatus);
     setClosureMode(false);
+    setClosureCounterpartId(firstPartnerId);
     setInlineError(null);
-  }, [currentStatus]);
+  }, [currentStatus, firstPartnerId]);
 
   const handleCloseMatch = () => {
     if (isPending || !closureFormRef.current) return;
@@ -49,9 +58,14 @@ export function OperatorDeskControls({
       closureFormRef.current.elements.namedItem("closureReason") as HTMLTextAreaElement
     )?.value?.trim();
     if (!closureReason) return;
+    const counterpartId =
+      closureCounterpartId && currentPartners.some((partner) => partner.id === closureCounterpartId)
+        ? closureCounterpartId
+        : (currentPartners[0]?.id ?? "");
     const formData = new FormData();
     formData.set("candidateId", candidateId);
     formData.set("closureReason", closureReason);
+    if (counterpartId) formData.set("counterpartId", counterpartId);
     startTransition(async () => {
       await closeMatchWithRecord(formData);
     });
@@ -144,6 +158,23 @@ export function OperatorDeskControls({
               </p>
             ) : (
               <form ref={closureFormRef} onSubmit={(e) => e.preventDefault()} className="grid gap-3">
+                {currentPartners.length > 1 ? (
+                  <label className="grid gap-1.5">
+                    <span className="text-xs font-semibold text-rose-600/90">종료할 상대</span>
+                    <select
+                      value={closureCounterpartId}
+                      disabled={isPending}
+                      onChange={(event) => setClosureCounterpartId(event.target.value)}
+                      className="h-11 rounded-xl border border-rose-100/80 bg-white/95 px-3 text-sm text-slate-700 shadow-sm outline-none focus:border-rose-200 focus:ring-2 focus:ring-rose-100"
+                    >
+                      {currentPartners.map((partner) => (
+                        <option key={partner.id} value={partner.id}>
+                          {partner.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
                 <label className="grid gap-1.5">
                   <span className="text-xs font-semibold text-rose-600/90">
                     종료 사유 (예: 성향 차이, 연락 두절 등)

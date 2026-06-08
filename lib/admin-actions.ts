@@ -600,6 +600,127 @@ export async function updateCandidateStatus(formData: FormData) {
   redirect(`/profiles/${candidateId}?message=status-updated`);
 }
 
+// ── 1:N 매칭 헬퍼 ──────────────────────────────────────────────────────────
+// 현재 매칭 상대는 단일 paired_candidate_id가 아니라 closed가 아닌 매칭 레코드에서 도출한다.
+
+const UNMATCH_TO_ACTIVE_SUMMARY = "적극검토 단계로 되돌리며 매칭을 종료했습니다.";
+const COUPLE_AUTOCLOSE_SUMMARY = "커플완성 확정으로 다른 진행중 매칭을 종료했습니다.";
+
+type OpenMatchPartner = {
+  partnerId: string;
+  outcome: string;
+  happenedOn: string;
+};
+
+/** 후보가 한쪽으로 들어간 closed가 아닌 매칭의 상대 목록 (최신순, 상대별 1건) */
+async function getOpenMatchPartners(
+  supabase: SupabaseServerClient,
+  candidateId: string,
+): Promise<OpenMatchPartner[]> {
+  const { data } = await supabase
+    .from("cupid_match_records")
+    .select("candidate_id, counterpart_candidate_id, outcome, happened_on")
+    .or(`candidate_id.eq.${candidateId},counterpart_candidate_id.eq.${candidateId}`)
+    .neq("outcome", "closed")
+    .order("happened_on", { ascending: false });
+
+  if (!data) return [];
+
+  const seen = new Set<string>();
+  const partners: OpenMatchPartner[] = [];
+  for (const row of data) {
+    const partnerId =
+      row.candidate_id === candidateId ? row.counterpart_candidate_id : row.candidate_id;
+    if (!partnerId || seen.has(partnerId)) continue;
+    seen.add(partnerId);
+    partners.push({ partnerId, outcome: row.outcome, happenedOn: row.happened_on });
+  }
+  return partners;
+}
+
+/** 진행중/커플 매칭 유무로 후보 status·paired_candidate_id를 재계산 (graduated/archived는 보존) */
+async function recomputeCandidateStatus(
+  supabase: SupabaseServerClient,
+  candidateId: string,
+): Promise<void> {
+  const { data: candidate } = await supabase
+    .from("cupid_candidates")
+    .select("status")
+    .eq("id", candidateId)
+    .maybeSingle();
+
+  if (!candidate || candidate.status === "graduated" || candidate.status === "archived") {
+    return;
+  }
+
+  const partners = await getOpenMatchPartners(supabase, candidateId);
+  const couplePartner = partners.find((partner) => partner.outcome === "couple");
+  if (couplePartner) {
+    await supabase
+      .from("cupid_candidates")
+      .update({ status: "couple", paired_candidate_id: couplePartner.partnerId })
+      .eq("id", candidateId);
+    return;
+  }
+
+  const ongoingPartner = partners.find((partner) =>
+    (ONGOING_MATCH_OUTCOMES as string[]).includes(partner.outcome),
+  );
+  if (ongoingPartner) {
+    await supabase
+      .from("cupid_candidates")
+      .update({ status: "matched", paired_candidate_id: ongoingPartner.partnerId })
+      .eq("id", candidateId);
+    return;
+  }
+
+  await supabase
+    .from("cupid_candidates")
+    .update({ status: "active", paired_candidate_id: null })
+    .eq("id", candidateId);
+}
+
+/** 후보의 모든 비-closed 매칭을 종료 처리하고, 영향받은 상대 id 목록을 반환 */
+async function closeAllMatchesForCandidate(
+  supabase: SupabaseServerClient,
+  candidateId: string,
+  summary: string,
+): Promise<string[]> {
+  const partners = await getOpenMatchPartners(supabase, candidateId);
+  if (!partners.length) return [];
+
+  await supabase
+    .from("cupid_match_records")
+    .update({ outcome: "closed", summary, happened_on: new Date().toISOString().slice(0, 10) })
+    .or(`candidate_id.eq.${candidateId},counterpart_candidate_id.eq.${candidateId}`)
+    .neq("outcome", "closed");
+
+  return partners.map((partner) => partner.partnerId);
+}
+
+/** 후보의 '지정 상대 제외' 다른 비-closed 매칭을 종료하고, 영향받은 상대 id 목록을 반환 */
+async function closeOtherMatchesForCandidate(
+  supabase: SupabaseServerClient,
+  candidateId: string,
+  keepPartnerId: string,
+  summary: string,
+): Promise<string[]> {
+  const others = (await getOpenMatchPartners(supabase, candidateId))
+    .map((partner) => partner.partnerId)
+    .filter((partnerId) => partnerId !== keepPartnerId);
+  if (!others.length) return [];
+
+  const happenedOn = new Date().toISOString().slice(0, 10);
+  for (const otherId of others) {
+    await supabase
+      .from("cupid_match_records")
+      .update({ outcome: "closed", summary, happened_on: happenedOn })
+      .or(buildPairMatchRecordsOrFilter(candidateId, otherId))
+      .neq("outcome", "closed");
+  }
+  return others;
+}
+
 export async function moveCandidateStatus(
   candidateId: string,
   status: "active" | "matched" | "couple" | "graduated" | "archived",
@@ -642,14 +763,40 @@ export async function moveCandidateStatus(
     };
   }
 
+  // 적극검토 복귀: 후보의 모든 진행중/커플 매칭을 종료 이력(closed)으로 남기고
+  // 상대들의 status도 남은 매칭 기준으로 재계산한다 (1:N 안전망).
+  if (normalizedStatus === "active") {
+    const partnerIds = await closeAllMatchesForCandidate(
+      supabase,
+      candidateId,
+      UNMATCH_TO_ACTIVE_SUMMARY,
+    );
+
+    const { error: updateError } = await supabase
+      .from("cupid_candidates")
+      .update({ status: "active", paired_candidate_id: null })
+      .eq("id", candidateId);
+
+    if (updateError) {
+      return { ok: false, message: updateError.message };
+    }
+
+    for (const partnerId of partnerIds) {
+      await recomputeCandidateStatus(supabase, partnerId);
+    }
+
+    revalidateDashboardCaches([candidateId, ...partnerIds]);
+    return { ok: true, status: "active" };
+  }
+
+  // graduated / archived: 기존 동작 유지
   const pairIds = candidate.paired_candidate_id
     ? [candidateId, candidate.paired_candidate_id]
     : [candidateId];
-  const payload =
-    normalizedStatus === "active"
-      ? { status: normalizedStatus, paired_candidate_id: null }
-      : { status: normalizedStatus };
-  const { error } = await supabase.from("cupid_candidates").update(payload).in("id", pairIds);
+  const { error } = await supabase
+    .from("cupid_candidates")
+    .update({ status: normalizedStatus })
+    .in("id", pairIds);
 
   if (error) {
     return { ok: false, message: error.message };
@@ -706,18 +853,25 @@ export async function moveCandidatePairStatus(
     return { ok: false, message: "보조 레인 후보는 다시 적극매물로 되돌린 뒤 매칭해주세요." };
   }
 
-  if (source.paired_candidate_id && source.paired_candidate_id !== counterpart.id) {
-    return {
-      ok: false,
-      message: `${formatCandidateBrief(source)}은(는) 이미 다른 후보와 연결되어 있습니다.`,
-    };
-  }
-
-  if (counterpart.paired_candidate_id && counterpart.paired_candidate_id !== source.id) {
-    return {
-      ok: false,
-      message: `${formatCandidateBrief(counterpart)}은(는) 이미 다른 후보와 연결되어 있습니다.`,
-    };
+  // 1:N 매칭 허용 — 이미 다른 상대와 진행 중이어도 새 상대와 매칭할 수 있다.
+  // 단, 커플완성은 1:1이므로 양측의 '다른' 진행중 매칭을 자동 종료한다.
+  let freedPartnerIds: string[] = [];
+  if (targetStatus === "couple") {
+    const freedFromSource = await closeOtherMatchesForCandidate(
+      supabase,
+      source.id,
+      counterpart.id,
+      COUPLE_AUTOCLOSE_SUMMARY,
+    );
+    const freedFromCounterpart = await closeOtherMatchesForCandidate(
+      supabase,
+      counterpart.id,
+      source.id,
+      COUPLE_AUTOCLOSE_SUMMARY,
+    );
+    freedPartnerIds = [...new Set([...freedFromSource, ...freedFromCounterpart])].filter(
+      (id) => id !== source.id && id !== counterpart.id,
+    );
   }
 
   const { error: sourceUpdateError } = await supabase
@@ -799,12 +953,62 @@ export async function moveCandidatePairStatus(
     }
   }
 
-  revalidateDashboardCaches([source.id, counterpart.id]);
+  // 커플 확정으로 풀린 상대들의 status를 남은 매칭 기준으로 재계산
+  for (const freedPartnerId of freedPartnerIds) {
+    await recomputeCandidateStatus(supabase, freedPartnerId);
+  }
+
+  revalidateDashboardCaches([source.id, counterpart.id, ...freedPartnerIds]);
   return {
     ok: true,
     status: targetStatus as CandidateStatus,
     pair: [source.id, counterpart.id] as const,
   };
+}
+
+/**
+ * 두 후보 사이의 매칭(관계)만 종료한다. 1:N에서 한 페어 카드를 적극검토로 되돌릴 때 사용.
+ * 다른 상대와의 매칭은 유지되며, 각 후보의 status는 남은 매칭 기준으로 재계산된다.
+ */
+export async function unmatchPair(
+  candidateAId: string,
+  candidateBId: string,
+): Promise<{ ok: boolean; message?: string }> {
+  const membership = await requireMembership();
+
+  if (!canEditCandidates(membership.role)) {
+    return { ok: false, message: "권한이 없습니다." };
+  }
+
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return { ok: false, message: "Supabase 환경변수가 없습니다." };
+  }
+
+  if (!candidateAId || !candidateBId || candidateAId === candidateBId) {
+    return { ok: false, message: "후보 정보를 올바르게 선택해주세요." };
+  }
+
+  const { error: closeError } = await supabase
+    .from("cupid_match_records")
+    .update({
+      outcome: "closed",
+      summary: UNMATCH_TO_ACTIVE_SUMMARY,
+      happened_on: new Date().toISOString().slice(0, 10),
+    })
+    .or(buildPairMatchRecordsOrFilter(candidateAId, candidateBId))
+    .neq("outcome", "closed");
+
+  if (closeError) {
+    return { ok: false, message: closeError.message };
+  }
+
+  await recomputeCandidateStatus(supabase, candidateAId);
+  await recomputeCandidateStatus(supabase, candidateBId);
+
+  revalidateDashboardCaches([candidateAId, candidateBId]);
+  return { ok: true };
 }
 
 export async function createMatchRecord(formData: FormData) {
@@ -943,7 +1147,10 @@ export async function closeMatchWithRecord(formData: FormData) {
     );
   }
 
-  if (!source.paired_candidate_id) {
+  // 종료할 상대를 명시적으로 지정할 수 있다 (1:N). 미지정 시 대표 상대(paired_candidate_id) 사용.
+  const counterpartId = cleanText(formData.get("counterpartId")) || source.paired_candidate_id;
+
+  if (!counterpartId) {
     redirect(
       `/profiles/${candidateId}?message=${encodeURIComponent("연결된 상대가 없어 매칭 종료 기록을 남길 수 없습니다.")}`,
     );
@@ -952,7 +1159,7 @@ export async function closeMatchWithRecord(formData: FormData) {
   const { data: counterpart, error: counterpartError } = await supabase
     .from("cupid_candidates")
     .select("id, full_name, birth_year, region, occupation")
-    .eq("id", source.paired_candidate_id)
+    .eq("id", counterpartId)
     .maybeSingle();
 
   if (counterpartError || !counterpart) {
@@ -1017,14 +1224,10 @@ export async function closeMatchWithRecord(formData: FormData) {
     }
   }
 
-  const { error: updateError } = await supabase
-    .from("cupid_candidates")
-    .update({ status: "active", paired_candidate_id: null })
-    .in("id", [source.id, counterpart.id]);
-
-  if (updateError) {
-    redirect(`/profiles/${candidateId}?message=${encodeURIComponent(updateError.message)}`);
-  }
+  // 1:N — 종료 후 각 후보의 status를 남은 매칭 기준으로 재계산
+  // (다른 진행중 매칭이 있으면 matched 유지, 없으면 active로 복귀)
+  await recomputeCandidateStatus(supabase, source.id);
+  await recomputeCandidateStatus(supabase, counterpart.id);
 
   revalidateDashboardCaches([source.id, counterpart.id]);
   redirect(`/profiles/${candidateId}?message=match-closed`);

@@ -3,11 +3,13 @@
 import { DashboardWorkspace } from "./dashboard-workspace";
 import { SakuraRain } from "@/components/sakura-rain";
 import { DashboardViewMode } from "@/lib/types";
+import type { ActiveMatchPair } from "@/lib/match-flow-columns";
 import type { Candidate, Membership, TimelineEvent } from "@/lib/types";
 
 type ManagerDashboardProps = {
   candidates: Candidate[];
   timelineEvents: TimelineEvent[];
+  activeMatchPairs: ActiveMatchPair[];
   membership: Membership;
   initialView?: DashboardViewMode;
 };
@@ -15,6 +17,7 @@ type ManagerDashboardProps = {
 export function ManagerDashboard({
   candidates,
   timelineEvents,
+  activeMatchPairs,
   membership,
   initialView = DashboardViewMode.FLOW,
 }: ManagerDashboardProps) {
@@ -27,6 +30,7 @@ export function ManagerDashboard({
         <DashboardWorkspace
           candidates={candidates}
           timelineEvents={timelineEvents}
+          activeMatchPairs={activeMatchPairs}
           role={membership.role}
           initialView={initialView}
         />

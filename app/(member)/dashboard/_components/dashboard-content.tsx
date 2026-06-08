@@ -4,6 +4,7 @@ import { DashboardFlowBoard, type DashboardBoardCandidate } from "./dashboard-fl
 import { DashboardInventoryView } from "./dashboard-inventory-view";
 import { canEditCandidates } from "@/lib/role-utils";
 import { DashboardViewMode } from "@/lib/types";
+import type { ActiveMatchPair } from "@/lib/match-flow-columns";
 import type { AppRole, Candidate, TimelineEvent } from "@/lib/types";
 
 type DashboardContentProps = {
@@ -12,6 +13,7 @@ type DashboardContentProps = {
   boardCandidates: DashboardBoardCandidate[];
   visibleBoardCandidates: DashboardBoardCandidate[];
   timelineEvents: TimelineEvent[];
+  activeMatchPairs: ActiveMatchPair[];
   role: AppRole;
 };
 
@@ -21,6 +23,7 @@ export function DashboardContent({
   boardCandidates,
   visibleBoardCandidates,
   timelineEvents,
+  activeMatchPairs,
   role,
 }: DashboardContentProps) {
   return (
@@ -30,6 +33,7 @@ export function DashboardContent({
           <DashboardFlowBoard
             candidates={visibleBoardCandidates}
             allCandidates={boardCandidates}
+            activeMatchPairs={activeMatchPairs}
             role={role}
           />
         </section>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import Link from "next/link";
 import { cn } from "@/lib/cn";
 import type { Candidate, TimelineEvent } from "@/lib/types";
 
@@ -29,22 +30,40 @@ export function DashboardStatBar({ candidates, timelineEvents }: DashboardStatBa
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4">
-      {STATS_CONFIG.map((stat, index) => (
-        <div
-          key={stat.key}
-          className={cn(
-            "flex flex-1 items-center justify-center gap-2 px-3 py-2.5 sm:gap-2.5 sm:px-4 sm:py-3.5",
-            index < 2 && "border-b border-slate-100 sm:border-b-0",
-            index % 2 === 0 && "border-r border-slate-100",
-            index === 1 && "sm:border-r sm:border-slate-100",
-          )}
-        >
-          <span className="text-sm font-medium text-slate-500">{stat.label}</span>
-          <strong className="text-sm font-semibold tabular-nums text-primary">
-            {values[stat.key]}
-          </strong>
-        </div>
-      ))}
+      {STATS_CONFIG.map((stat, index) => {
+        const cellClassName = cn(
+          "flex flex-1 items-center justify-center gap-2 px-3 py-2.5 sm:gap-2.5 sm:px-4 sm:py-3.5",
+          index < 2 && "border-b border-slate-100 sm:border-b-0",
+          index % 2 === 0 && "border-r border-slate-100",
+          index === 1 && "sm:border-r sm:border-slate-100",
+        );
+        const inner = (
+          <>
+            <span className="text-sm font-medium text-slate-500">{stat.label}</span>
+            <strong className="text-sm font-semibold tabular-nums text-primary">
+              {values[stat.key]}
+            </strong>
+          </>
+        );
+
+        if (stat.key === "record") {
+          return (
+            <Link
+              key={stat.key}
+              href="/timeline"
+              className={cn(cellClassName, "cursor-pointer transition-colors hover:bg-rose-50/60")}
+            >
+              {inner}
+            </Link>
+          );
+        }
+
+        return (
+          <div key={stat.key} className={cellClassName}>
+            {inner}
+          </div>
+        );
+      })}
     </div>
   );
 }

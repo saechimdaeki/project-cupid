@@ -11,6 +11,25 @@ import type { AppRole } from "@/lib/types";
 import type { DashboardBoardCandidate } from "./dashboard-flow-board";
 import type { PairedLaneRow } from "./flow-board-paired-lane";
 
+// 페어 카드의 draggable id는 관계(양쪽 후보 id)를 인코딩한다.
+// 1:N에서 한 후보가 여러 페어 카드에 등장해도 id가 충돌하지 않도록 하기 위함.
+export function buildPairDraggableId(row: PairedLaneRow): string {
+  return `pair::${row.male?.id ?? "none"}::${row.female?.id ?? "none"}`;
+}
+
+export function parsePairDraggableId(
+  id: string,
+): { primaryId: string; partnerId: string | null } | null {
+  if (!id.startsWith("pair::")) return null;
+  const [, maleRaw, femaleRaw] = id.split("::");
+  const maleId = maleRaw && maleRaw !== "none" ? maleRaw : null;
+  const femaleId = femaleRaw && femaleRaw !== "none" ? femaleRaw : null;
+  const primaryId = maleId ?? femaleId;
+  if (!primaryId) return null;
+  const partnerId = maleId && femaleId ? (primaryId === maleId ? femaleId : maleId) : null;
+  return { primaryId, partnerId };
+}
+
 type DraggableWrapperProps = {
   id: string;
   disabled: boolean;
@@ -217,7 +236,7 @@ export function FlowBoardPairCard({
 
   return (
     <DraggableWrapper
-      id={primaryCandidate?.id ?? "pair-placeholder"}
+      id={buildPairDraggableId(row)}
       disabled={draggableDisabled}
       className={cn(isPending && "pointer-events-none opacity-60")}
     >

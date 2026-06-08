@@ -4,6 +4,7 @@ import { useDroppable } from "@dnd-kit/core";
 import { cn } from "@/lib/cn";
 import { getLaneSurfaceClass } from "@/lib/status-ui";
 import { Badge } from "@/components/ui/badge";
+import type { ActiveMatchPair } from "@/lib/match-flow-columns";
 import type { AppRole, CandidateStatus } from "@/lib/types";
 import type { DashboardBoardCandidate } from "./dashboard-flow-board";
 import { FlowBoardActiveLaneContent } from "./flow-board-active-lane";
@@ -17,6 +18,7 @@ export type FlowBoardLaneProps = {
   description: string;
   compact?: boolean;
   items: DashboardBoardCandidate[];
+  activeMatchPairs: ActiveMatchPair[];
   isDropTarget: boolean;
   role: AppRole;
   canOperate: boolean;
@@ -66,6 +68,7 @@ export function FlowBoardLane({
   description,
   compact = false,
   items,
+  activeMatchPairs,
   isDropTarget,
   role,
   canOperate,
@@ -98,6 +101,7 @@ export function FlowBoardLane({
       {isPairedLane ? (
         <FlowBoardPairedLaneContent
           items={items}
+          activeMatchPairs={activeMatchPairs}
           role={role}
           canOperate={canOperate}
           pendingCandidateIds={pendingCandidateIds}
