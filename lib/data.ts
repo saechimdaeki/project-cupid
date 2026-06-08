@@ -5,6 +5,7 @@ import {
   TAG_DASHBOARD_TIMELINE,
 } from "@/lib/cache-tags";
 import { isDirectImageUrl } from "@/lib/image-url-utils";
+import { buildActiveMatchPairs, type ActiveMatchPair } from "@/lib/match-flow-columns";
 import { unstable_cache } from "next/cache";
 import { mockCandidates, mockMatchRecords, mockMemberships } from "@/lib/mock-data";
 import {
@@ -605,6 +606,35 @@ export async function getDashboardTimelineData(): Promise<{
   totalCount: number;
 }> {
   return unstable_cache(loadDashboardTimelineDataUncached, ["cupid-dashboard-timeline-data"], {
+    tags: [TAG_DASHBOARD_TIMELINE],
+    revalidate: 90,
+  })();
+}
+
+async function loadActiveMatchPairsUncached(): Promise<ActiveMatchPair[]> {
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return buildActiveMatchPairs(mockMatchRecords);
+  }
+
+  // 현재 매칭(진행중+커플)만 도출 — closed가 아닌 레코드는 소수이므로 limit 없이 조회한다.
+  const { data, error } = await supabase
+    .from("cupid_match_records")
+    .select(
+      "id, candidate_id, counterpart_label, counterpart_candidate_id, matchmaker_name, outcome, summary, happened_on",
+    )
+    .neq("outcome", "closed");
+
+  if (error || !data) {
+    return buildActiveMatchPairs(mockMatchRecords);
+  }
+
+  return buildActiveMatchPairs(data.map(mapMatchRecord));
+}
+
+export async function getActiveMatchPairs(): Promise<ActiveMatchPair[]> {
+  return unstable_cache(loadActiveMatchPairsUncached, ["cupid-active-match-pairs"], {
     tags: [TAG_DASHBOARD_TIMELINE],
     revalidate: 90,
   })();
