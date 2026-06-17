@@ -40,6 +40,10 @@ const nextConfig: NextConfig = {
     formats: ["image/avif", "image/webp"],
     remotePatterns: supabaseRemotePatterns,
   },
+  experimental: {
+    // barrel import 패키지의 트리셰이킹을 개선해 초기 번들 크기 감소
+    optimizePackageImports: ["lucide-react", "date-fns"],
+  },
 };
 
 export default nextConfig;
