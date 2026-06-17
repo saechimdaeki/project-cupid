@@ -16,7 +16,7 @@ export default async function HomePage() {
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-gradient-to-br from-rose-50 via-pink-50/30 to-orange-50/50">
-      <SakuraRain petalCount={56} />
+      <SakuraRain petalCount={40} />
       <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_top,rgba(255,242,245,0.84),rgba(255,247,243,0.68),rgba(255,255,255,0.38))]" />
 
       <GlobalNav membership={isLoggedIn ? membership : null} />

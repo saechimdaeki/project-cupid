@@ -52,11 +52,11 @@ function createSakuraPetals(count: number) {
 }
 
 type SakuraRainProps = {
-  /** 최소 50개 권장 — 기본 60 */
+  /** 기본 36 — 노드/페인트 비용을 줄이기 위해 과도한 수는 지양 */
   petalCount?: number;
 };
 
-export function SakuraRain({ petalCount = 60 }: SakuraRainProps) {
+export function SakuraRain({ petalCount = 36 }: SakuraRainProps) {
   const petals = useMemo(() => createSakuraPetals(petalCount), [petalCount]);
 
   return (

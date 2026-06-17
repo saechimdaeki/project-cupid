@@ -139,6 +139,17 @@
   filter: drop-shadow(0 8px 14px rgba(251, 113, 133, 0.12));
 }
 
+/* 모션 최소화 사용자에게는 상시 애니메이션 부담을 제거 */
+@media (prefers-reduced-motion: reduce) {
+  .sakura-petal-track,
+  .sakura-petal-drift {
+    animation: none;
+  }
+  .sakura-petal-track {
+    display: none;
+  }
+}
+
 @keyframes sakura-fall {
   0% {
     opacity: 0;

@@ -207,17 +207,24 @@ async function getMembershipFullNameByUserId(
     return undefined;
   }
 
-  const { data, error } = await supabase
-    .from("cupid_memberships")
-    .select("full_name")
-    .eq("user_id", userId)
-    .maybeSingle();
+  // 멤버십 이름은 거의 변하지 않음 — 동일 작성자의 후보가 여럿일 때 반복 쿼리 방지
+  return unstable_cache(
+    async () => {
+      const { data, error } = await supabase
+        .from("cupid_memberships")
+        .select("full_name")
+        .eq("user_id", userId)
+        .maybeSingle();
 
-  if (error || !data?.full_name) {
-    return undefined;
-  }
+      if (error || !data?.full_name) {
+        return undefined;
+      }
 
-  return data.full_name;
+      return data.full_name;
+    },
+    ["membership-full-name", userId],
+    { revalidate: PROFILE_CONTENT_CACHE_SECONDS },
+  )();
 }
 
 function mapMatchRecord(row: any): MatchRecord {
