@@ -772,6 +772,15 @@ export async function moveCandidateStatus(
       UNMATCH_TO_ACTIVE_SUMMARY,
     );
 
+    // 매칭 레코드가 없거나 한쪽만 있는 레거시 페어는 partnerIds에 안 잡힌다.
+    // paired_candidate_id 짝도 재계산 대상에 합집합으로 포함해 stale matched 방지.
+    const recomputeTargets = [
+      ...new Set([
+        ...partnerIds,
+        ...(candidate.paired_candidate_id ? [candidate.paired_candidate_id] : []),
+      ]),
+    ].filter((id) => id !== candidateId);
+
     const { error: updateError } = await supabase
       .from("cupid_candidates")
       .update({ status: "active", paired_candidate_id: null })
@@ -781,11 +790,11 @@ export async function moveCandidateStatus(
       return { ok: false, message: updateError.message };
     }
 
-    for (const partnerId of partnerIds) {
+    for (const partnerId of recomputeTargets) {
       await recomputeCandidateStatus(supabase, partnerId);
     }
 
-    revalidateDashboardCaches([candidateId, ...partnerIds]);
+    revalidateDashboardCaches([candidateId, ...recomputeTargets]);
     return { ok: true, status: "active" };
   }
 
@@ -1009,6 +1018,44 @@ export async function unmatchPair(
 
   revalidateDashboardCaches([candidateAId, candidateBId]);
   return { ok: true };
+}
+
+/**
+ * 모든 후보의 status·paired_candidate_id를 매칭 레코드(진실 소스) 기준으로 일괄 재계산한다.
+ * stale하게 남은 matched/paired 데이터를 정리하는 일회성 정합용. super_admin 전용, idempotent.
+ */
+export async function reconcileCandidateMatchStates(): Promise<{
+  ok: boolean;
+  message?: string;
+  count?: number;
+}> {
+  const membership = await requireMembership();
+
+  if (!canManageRoles(membership.role)) {
+    return { ok: false, message: "권한이 없습니다." };
+  }
+
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return { ok: false, message: "Supabase 환경변수가 없습니다." };
+  }
+
+  const { data: candidates, error } = await supabase
+    .from("cupid_candidates")
+    .select("id");
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  // graduated/archived는 recomputeCandidateStatus 내부에서 보존된다.
+  for (const candidate of candidates ?? []) {
+    await recomputeCandidateStatus(supabase, candidate.id);
+  }
+
+  revalidateDashboardCaches((candidates ?? []).map((candidate) => candidate.id));
+  return { ok: true, count: candidates?.length ?? 0 };
 }
 
 export async function createMatchRecord(formData: FormData) {

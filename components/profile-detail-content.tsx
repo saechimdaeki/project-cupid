@@ -81,15 +81,27 @@ export async function ProfileDetailContent({ id, message, membership }: ProfileD
     ),
   ];
 
+  const closedPartnerIds = new Set(
+    records
+      .filter((record) => record.outcome === "closed" && record.counterpart_candidate_id)
+      .map((record) => record.counterpart_candidate_id as string),
+  );
+
   // 현재 매칭 상대는 진행중/커플(closed가 아닌) 매칭 레코드에서 도출 (1:N).
-  // 레코드가 없는 레거시 커플/매칭 보강을 위해 paired_candidate_id도 합집합으로 포함.
+  // 레코드가 없는 레거시 커플/매칭 보강을 위해 paired_candidate_id도 합집합으로 포함하되,
+  // 그 상대와의 관계가 이미 종료(closed)된 경우는 stale 데이터이므로 제외한다.
+  const pairedStillOpen =
+    candidate.paired_candidate_id && !closedPartnerIds.has(candidate.paired_candidate_id)
+      ? [candidate.paired_candidate_id]
+      : [];
+
   const currentPartnerIds = [
     ...new Set(
       [
         ...records
           .filter((record) => record.outcome !== "closed" && record.counterpart_candidate_id)
           .map((record) => record.counterpart_candidate_id as string),
-        ...(candidate.paired_candidate_id ? [candidate.paired_candidate_id] : []),
+        ...pairedStillOpen,
       ],
     ),
   ];
