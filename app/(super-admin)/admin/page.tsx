@@ -1,8 +1,13 @@
+import { redirect } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { GlobalNav } from "@/components/global-nav";
-import { rejectMembership, updateMembershipRole } from "@/lib/admin-actions";
+import {
+  reconcileCandidateMatchStates,
+  rejectMembership,
+  updateMembershipRole,
+} from "@/lib/admin-actions";
 import { getApprovedMemberships, getPendingMemberships } from "@/lib/data";
 import { requireMembershipRole } from "@/lib/permissions";
 import type { AppRole, Membership } from "@/lib/types";
@@ -160,6 +165,15 @@ function DirectoryRow({ member, currentUserId }: { member: Membership; currentUs
   );
 }
 
+async function reconcileMatchStatesAction() {
+  "use server";
+  const result = await reconcileCandidateMatchStates();
+  const message = result.ok
+    ? `매칭 상태 정합을 완료했습니다 (후보 ${result.count ?? 0}명 재계산).`
+    : (result.message ?? "매칭 상태 정합에 실패했습니다.");
+  redirect(`/admin?message=${encodeURIComponent(message)}`);
+}
+
 /** 이 페이지와 하위 폼 액션의 권한 변경은 서버에서 super_admin만 통과(requireMembershipRole + canManageRoles). */
 export default async function AdminPage({ searchParams }: AdminPageProps) {
   const [{ message }, currentMembership, pendingUsers, managedMembers] = await Promise.all([
@@ -280,6 +294,28 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                   아직 승인된 운영 계정이 없습니다.
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          <Card className="p-5 sm:p-6">
+            <CardContent className="p-0">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                  <p className="text-sm font-medium text-slate-500">Maintenance</p>
+                  <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-slate-800">
+                    매칭 상태 정합
+                  </h2>
+                  <p className="mt-3 text-sm text-slate-500">
+                    모든 후보의 상태와 매칭 상대를 매칭 레코드 기준으로 다시 계산합니다. 매칭을
+                    되돌렸는데 한쪽만 남거나, 종료된 매칭이 진행중으로 표시되는 경우 실행하세요.
+                  </p>
+                </div>
+                <form action={reconcileMatchStatesAction}>
+                  <Button type="submit" variant="outline" className="h-11 rounded-full px-5">
+                    매칭 상태 정합 실행
+                  </Button>
+                </form>
+              </div>
             </CardContent>
           </Card>
         </div>
